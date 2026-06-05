@@ -215,17 +215,17 @@ a:hover { color: var(--yellow); }
   position: relative;
 }
 
+.hero-avatar img {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
 .hero-avatar {
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 20px rgba(179, 136, 255, 0.4));
-}
-.hero-avatar img {
-  width: 180px;
-  height: 180px;
-  object-fit: contain;
-  image-rendering: pixelated;
+  filter: drop-shadow(0 0 24px rgba(66, 133, 244, 0.5));
 }
 
 .hero-title {
