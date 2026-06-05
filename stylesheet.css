@@ -273,7 +273,7 @@ a:hover { color: var(--yellow); }
   position: absolute;
   bottom: 30px;
   font-family: var(--font-cn);
-  font-size: 12px;         /* Zpix 基准 12px */
+  font-size: 24px;         /* Zpix 位图字体，整倍数保持清晰 */
   color: var(--text-dim);
   animation: bounce 1.5s ease-in-out infinite;
 }
