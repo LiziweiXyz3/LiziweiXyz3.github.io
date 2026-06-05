@@ -222,8 +222,8 @@ a:hover { color: var(--yellow); }
   filter: drop-shadow(0 0 20px rgba(179, 136, 255, 0.4));
 }
 .hero-avatar img {
-  width: 120px;
-  height: 120px;
+  width: 180px;
+  height: 180px;
   object-fit: contain;
   image-rendering: pixelated;
 }
