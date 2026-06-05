@@ -58,7 +58,7 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     document.getElementById('heroAvatar').textContent = user.avatar;
-    document.getElementById('heroTitle').textContent = user.name + '.Dev';
+    document.getElementById('heroTitle').textContent = user.name;
     document.getElementById('heroDesc').textContent = user.bio;
     typeWriter('heroSubtitle', '> ' + user.title, 60);
   }
