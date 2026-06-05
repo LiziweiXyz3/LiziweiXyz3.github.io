@@ -236,15 +236,14 @@ a:hover { color: var(--yellow); }
 
 .hero-subtitle {
   font-family: var(--font-cn);
-  font-size: 24px;
-  color: var(--terminal);
+  font-size: 20px;
   min-height: 24px;
 }
 
 .hero-subtitle .cursor {
   display: inline-block;
-  width: 12px;
-  height: 24px;
+  width: 10px;
+  height: 20px;
   background: var(--terminal);
   animation: blink 0.8s step-end infinite;
   vertical-align: text-bottom;
@@ -267,14 +266,14 @@ a:hover { color: var(--yellow); }
   font-family: var(--font-cn);
   color: var(--text-dim);
   max-width: 500px;
-  font-size: 24px;
+  font-size: 18px;
 }
 
 .hero-scroll-hint {
   position: absolute;
   bottom: 30px;
   font-family: var(--font-cn);
-  font-size: 24px;
+  font-size: 16px;
   color: var(--text-dim);
   animation: bounce 1.5s ease-in-out infinite;
 }
