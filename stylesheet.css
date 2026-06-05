@@ -208,19 +208,10 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-avatar {
+  font-size: 80px;
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
-}
-
-/* 像素 Snoopy — CSS box-shadow 像素画 */
-.snoopy-pixel {
-  width: 6px;
-  height: 6px;
-  position: relative;
   image-rendering: pixelated;
-}
-.snoopy-wrapper {
-  display: inline-block;
   filter: drop-shadow(0 0 20px rgba(179, 136, 255, 0.4));
 }
 
@@ -273,8 +264,8 @@ a:hover { color: var(--yellow); }
 .hero-scroll-hint {
   position: absolute;
   bottom: 30px;
-  font-family: var(--font-pixel);
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 20px;
   color: var(--text-dim);
   animation: bounce 1.5s ease-in-out infinite;
 }
@@ -364,8 +355,8 @@ a:hover { color: var(--yellow); }
 .stat-label {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-pixel);
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 18px;
   margin-bottom: 4px;
 }
 .stat-label .stat-name { color: var(--text-dim); }
@@ -497,8 +488,8 @@ a:hover { color: var(--yellow); }
   padding: 60px 20px;
   color: var(--text-dim);
   border: 2px dashed var(--border);
-  font-family: var(--font-pixel);
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 20px;
 }
 .project-empty .lock-icon {
   font-size: 48px;
@@ -669,8 +660,8 @@ a:hover { color: var(--yellow); }
   text-align: center;
   padding: 40px var(--gap);
   border-top: 2px solid var(--border);
-  font-family: var(--font-pixel);
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 20px;
   color: var(--text-dim);
   position: relative;
 }
@@ -680,6 +671,7 @@ a:hover { color: var(--yellow); }
 }
 
 .footer-gameover {
+  font-family: var(--font-pixel);
   font-size: 14px;
   animation: blink 1.5s step-end infinite;
   margin-bottom: 12px;
