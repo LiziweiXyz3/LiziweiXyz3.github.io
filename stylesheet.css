@@ -578,103 +578,6 @@ a:hover { color: var(--yellow); }
 }
 
 /* ============================================================
-   面经 — 图鉴
-   ============================================================ */
-.interview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--gap);
-}
-
-.interview-card {
-  background: var(--bg-card);
-  border: 2px solid var(--border);
-  box-shadow: var(--pixel-shadow);
-  padding: 0;
-  cursor: inherit;
-  overflow: hidden;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.interview-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 rgba(0,0,0,0.5);
-}
-
-.interview-card-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.interview-company {
-  font-family: var(--font-pixel);
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-
-.interview-role {
-  color: var(--text-dim);
-  font-size: 18px;
-}
-
-.interview-stars {
-  font-size: 16px;
-  letter-spacing: 2px;
-}
-
-.interview-date {
-  font-family: var(--font-pixel);
-  font-size: 8px;
-  color: var(--text-dim);
-}
-
-.interview-summary {
-  padding: 16px 20px;
-  color: var(--text-dim);
-  font-size: 18px;
-}
-
-.interview-tags {
-  padding: 0 20px 12px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.interview-tag {
-  font-family: var(--font-pixel);
-  font-size: 7px;
-  padding: 3px 8px;
-  border: 1px solid var(--border);
-  color: var(--purple);
-}
-
-.interview-detail {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-  background: #0d0d1a;
-  border-top: 1px solid var(--border);
-}
-.interview-detail.open { max-height: 600px; overflow-y: auto; }
-.interview-detail-content {
-  padding: 16px 20px;
-  font-size: 18px;
-  white-space: pre-wrap;
-  line-height: 1.5;
-}
-
-.interview-toggle {
-  padding: 10px 20px 14px;
-  font-family: var(--font-pixel);
-  font-size: 8px;
-  color: var(--text-dim);
-  cursor: inherit;
-}
-.interview-toggle:hover { color: var(--yellow); }
-
-/* ============================================================
    Contact — 终端
    ============================================================ */
 .terminal {
@@ -830,8 +733,7 @@ a:hover { color: var(--yellow); }
   .about-layout {
     grid-template-columns: 1fr;
   }
-  .projects-grid,
-  .interview-grid {
+  .projects-grid {
     grid-template-columns: 1fr;
   }
   .nav-inner {
@@ -853,19 +755,4 @@ a:hover { color: var(--yellow); }
   .hero-title { font-size: 14px; }
   .section-title { font-size: 12px; }
   .nav-link { font-size: 6px; }
-}
-
-/* ---------- 辅助：没有面经时的空状态 ---------- */
-.empty-state {
-  text-align: center;
-  padding: 48px 20px;
-  color: var(--text-dim);
-  border: 2px dashed var(--border);
-  font-family: var(--font-pixel);
-  font-size: 11px;
-}
-.empty-state .empty-icon {
-  font-size: 40px;
-  display: block;
-  margin-bottom: 12px;
 }

@@ -13,8 +13,8 @@ const user = {
   title: "Data Analyst / AI Learner",
   bio: "互联网数据分析师，正在学习 AI。用数据理解世界，用 AI 拓展边界。",
   avatar: "👾",          // 可以用 emoji，后续换成图片路径如 "assets/avatar.png"
-  email: "your-email@example.com",
-  github: "https://github.com/your-username",
+  email: "zhongzhengzhng@gmail.com",
+  github: "https://github.com/LiziweiXyz3",
   location: "中国"
 };
 
@@ -24,7 +24,6 @@ const navItems = [
   { id: "about",    label: "ABOUT",     color: "#EA4335" },
   { id: "projects", label: "PROJECTS",  color: "#FBBC05" },
   { id: "resume",   label: "RESUME",    color: "#34A853" },
-  { id: "interview",label: "面经",       color: "#b388ff" },
   { id: "contact",  label: "TERMINAL",  color: "#00ff41" }
 ];
 
@@ -83,29 +82,14 @@ const experiences = [
   }
 ];
 
-// ---------- 面经 ----------
-// difficulty: 1-5 星难度
-const interviewNotes = [
-  {
-    company: "示例公司",
-    role: "数据分析师",
-    difficulty: 3,
-    date: "2026-01",
-    tags: ["SQL", "AB测试"],
-    summary: "这是一条示例面经，点击可以展开查看详情。后续把真实面经加进来就行。",
-    detail: "## 一面（技术面）\n\n主要考察 SQL 和产品思维...\n\n## 二面（交叉面）\n\n...\n\n## 三面（HR面）\n\n..."
-  }
-];
-
 // ---------- 联系方式 ----------
 const contact = {
   intro: "> 输入 help 查看可用命令，输入 clear 清屏",
   commands: {
-    help:   "可用命令: about | projects | resume | interview | contact | clear",
+    help:   "可用命令: about | projects | resume | contact | clear",
     about:  `> ${user.name} / ${user.title}\n> ${user.bio}`,
     projects: "> 跳转到项目展示区...",
     resume: "> 跳转到简历区...",
-    interview: "> 跳转到面经区...",
     contact: `> Email: ${user.email}\n> GitHub: ${user.github}`,
     whoami: `> ${user.name}`,
     pwd:    "> /home/suian",

@@ -190,71 +190,6 @@
     });
   }
 
-  // ========== 面经渲染 ==========
-  function renderInterview() {
-    var grid = document.getElementById('interviewGrid');
-    if (!grid) return;
-
-    if (interviewNotes.length === 0) {
-      grid.innerHTML =
-        '<div class="empty-state">' +
-          '<span class="empty-icon">📭</span>' +
-          '<p>暂无面经图鉴</p>' +
-          '<p style="margin-top:8px;font-size:10px;">— 图鉴为空，等待冒险记录 —</p>' +
-        '</div>';
-      return;
-    }
-
-    interviewNotes.forEach(function (note, idx) {
-      var card = document.createElement('div');
-      card.className = 'interview-card';
-
-      var starsHtml = '';
-      for (var i = 1; i <= 5; i++) {
-        starsHtml += i <= note.difficulty ? '⭐' : '☆';
-      }
-
-      var tagsHtml = note.tags.map(function (t) {
-        return '<span class="interview-tag">#' + t + '</span>';
-      }).join('');
-
-      card.innerHTML =
-        '<div class="interview-card-header">' +
-          '<div>' +
-            '<div class="interview-company">' + note.company + '</div>' +
-            '<div class="interview-role">' + note.role + '</div>' +
-          '</div>' +
-          '<div class="interview-date">' + note.date + '</div>' +
-        '</div>' +
-        '<div class="interview-stars" style="padding:0 20px;">' + starsHtml + '</div>' +
-        '<div class="interview-summary">' + note.summary + '</div>' +
-        '<div class="interview-tags">' + tagsHtml + '</div>' +
-        '<div class="interview-detail" id="detail-' + idx + '">' +
-          '<div class="interview-detail-content">' + escapeHtml(note.detail) + '</div>' +
-        '</div>' +
-        '<div class="interview-toggle" data-idx="' + idx + '">▶ 展开详情</div>';
-
-      grid.appendChild(card);
-    });
-
-    // 展开/折叠
-    grid.querySelectorAll('.interview-toggle').forEach(function (toggle) {
-      toggle.addEventListener('click', function () {
-        var idx = this.getAttribute('data-idx');
-        var detail = document.getElementById('detail-' + idx);
-        if (!detail) return;
-        var isOpen = detail.classList.contains('open');
-        if (isOpen) {
-          detail.classList.remove('open');
-          this.textContent = '▶ 展开详情';
-        } else {
-          detail.classList.add('open');
-          this.textContent = '▼ 收起详情';
-        }
-      });
-    });
-  }
-
   function escapeHtml(text) {
     return text
       .replace(/&/g, '&amp;')
@@ -418,7 +353,6 @@
     renderAbout();
     renderProjects();
     renderResume();
-    renderInterview();
     setupTerminal();
     initParticles();
     initScrollReveal();
