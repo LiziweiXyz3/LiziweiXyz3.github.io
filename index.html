@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>岁安 · SuiAn.Dev</title>
+  <meta name="description" content="岁安的个人网站 — 数据分析师 & AI 学习者">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- CRT 扫描线 -->
+  <div class="crt-overlay"></div>
+
+  <!-- 粒子背景 -->
+  <canvas class="particles-canvas" id="particles"></canvas>
+
+  <!-- 导航栏 -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <span class="nav-brand">◈ SUIAN.DEV ◈</span>
+      <div class="nav-links" id="navLinks">
+        <!-- JS 动态生成 -->
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero 区 -->
+  <section class="hero" id="hero">
+    <div class="hero-avatar" id="heroAvatar"></div>
+    <h1 class="hero-title" id="heroTitle"></h1>
+    <div class="hero-subtitle" id="heroSubtitle"></div>
+    <div class="hero-divider"></div>
+    <p class="hero-desc" id="heroDesc"></p>
+    <div class="hero-scroll-hint">▼ 按下 START 键 ▼</div>
+  </section>
+
+  <!-- 关于我 -->
+  <section class="section" id="about">
+    <h2 class="section-title">
+      <span class="icon">📋</span> ABOUT ME
+      <span class="bar"></span>
+    </h2>
+    <p class="section-subtitle" id="aboutIntro"></p>
+    <div class="about-layout">
+      <!-- 属性面板 -->
+      <div class="about-card" id="statsPanel">
+        <div class="about-card-title">⚔️ CHARACTER STATS</div>
+        <div id="statsContainer"></div>
+      </div>
+      <!-- 技能槽 -->
+      <div class="about-card" id="skillsPanel">
+        <div class="about-card-title">🎒 SKILL SLOTS</div>
+        <div class="skill-slots" id="skillsContainer"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 项目 -->
+  <section class="section" id="projects">
+    <h2 class="section-title">
+      <span class="icon">📦</span> PROJECTS
+      <span class="bar"></span>
+    </h2>
+    <p class="section-subtitle">// QUEST LOG — 任务日志</p>
+    <div class="projects-grid" id="projectsGrid"></div>
+  </section>
+
+  <!-- 简历 -->
+  <section class="section" id="resume">
+    <h2 class="section-title">
+      <span class="icon">📜</span> RESUME
+      <span class="bar"></span>
+    </h2>
+    <p class="section-subtitle">// LEVEL PROGRESS — 关卡进度</p>
+    <div class="timeline" id="timeline"></div>
+  </section>
+
+  <!-- 面经 -->
+  <section class="section" id="interview">
+    <h2 class="section-title">
+      <span class="icon">📖</span> 面经图鉴
+      <span class="bar"></span>
+    </h2>
+    <p class="section-subtitle">// BESTIARY — 面试怪物图鉴</p>
+    <div class="interview-grid" id="interviewGrid"></div>
+  </section>
+
+  <!-- 终端 -->
+  <section class="section" id="contact">
+    <h2 class="section-title">
+      <span class="icon">💻</span> TERMINAL
+      <span class="bar"></span>
+    </h2>
+    <p class="section-subtitle">// CONTACT — 建立连接</p>
+    <div class="terminal">
+      <div class="terminal-header">
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-dot"></span>
+        <span class="terminal-title">sui@dev:~</span>
+      </div>
+      <div class="terminal-body" id="terminalBody">
+        <div class="terminal-line"><span class="output" id="terminalIntro"></span></div>
+        <div class="terminal-line">&nbsp;</div>
+      </div>
+      <div class="terminal-footer">
+        <span class="terminal-input-line">
+          <span class="prompt" style="color:var(--green);">sui@dev:~$</span>
+          <input class="terminal-input" id="terminalInput" type="text" autofocus placeholder="输入 help 查看可用命令...">
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-gameover">— GAME OVER —</div>
+    <div class="footer-colors">
+      <span class="footer-color"></span>
+      <span class="footer-color"></span>
+      <span class="footer-color"></span>
+      <span class="footer-color"></span>
+    </div>
+    <p class="footer-text">© 2026 岁安 · Built with 8-bit love</p>
+    <p style="font-size:8px;margin-top:4px;">PRESS ANY KEY TO CONTINUE...</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
