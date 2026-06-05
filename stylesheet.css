@@ -216,11 +216,16 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-avatar {
-  font-size: 80px;
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 20px rgba(179, 136, 255, 0.4));
+}
+.hero-avatar img {
+  width: 120px;
+  height: 120px;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .hero-title {
