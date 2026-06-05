@@ -5,6 +5,13 @@
 /* ---------- Google Fonts ---------- */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Fira+Code:wght@400;700&display=swap');
 
+/* ---------- Zpix 像素中文字体 ---------- */
+@font-face {
+  font-family: 'Zpix';
+  src: url('fonts/zpix.ttf') format('truetype');
+  font-display: swap;
+}
+
 /* ---------- CSS 变量 ---------- */
 :root {
   --bg-deep:    #0a0a0a;
@@ -23,6 +30,7 @@
 
   --font-pixel:  'Press Start 2P', monospace;
   --font-mono:   'VT323', monospace;
+  --font-cn:     'Zpix', 'Press Start 2P', monospace;  /* 支持中文的像素字体 */
   --font-code:   'Fira Code', monospace;
   --font-size-mono: 22px;
   --font-size-pixel-sm: 10px;
@@ -264,21 +272,10 @@ a:hover { color: var(--yellow); }
 .hero-scroll-hint {
   position: absolute;
   bottom: 30px;
-  font-family: var(--font-mono);
-  font-size: 20px;
+  font-family: var(--font-cn);
+  font-size: 12px;         /* Zpix 基准 12px */
   color: var(--text-dim);
   animation: bounce 1.5s ease-in-out infinite;
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px;
-  line-height: 1.2;
-}
-.hint-arrow,
-.hint-cn,
-.hint-en {
-  display: inline-block;
-  line-height: 1.2;
 }
 
 /* ============================================================
