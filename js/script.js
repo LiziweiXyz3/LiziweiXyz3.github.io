@@ -348,6 +348,12 @@
 
   // ========== 全局初始化 ==========
   function init() {
+    // 禁止浏览器恢复上次滚动位置，每次打开都从顶部开始
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
     renderNav();
     renderHero();
     renderAbout();
