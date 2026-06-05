@@ -365,6 +365,15 @@
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
+
+    // 按下 Enter 键跳转到 About 区
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && document.activeElement !== document.getElementById('terminalInput')) {
+        e.preventDefault();
+        var aboutSection = document.getElementById('about');
+        if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
   }
 
   // DOM 加载完成后启动
