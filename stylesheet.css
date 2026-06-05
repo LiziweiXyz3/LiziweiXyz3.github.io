@@ -208,10 +208,19 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-avatar {
-  font-size: 80px;
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
+}
+
+/* 像素 Snoopy — CSS box-shadow 像素画 */
+.snoopy-pixel {
+  width: 6px;
+  height: 6px;
+  position: relative;
   image-rendering: pixelated;
+}
+.snoopy-wrapper {
+  display: inline-block;
   filter: drop-shadow(0 0 20px rgba(179, 136, 255, 0.4));
 }
 

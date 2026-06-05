@@ -55,9 +55,56 @@
     setActiveNav(current);
   }
 
+  // ========== 像素 Snoopy ==========
+  var snoopyData = [
+    [0,0,0,0,1,1,1,1,1,1,0,0,0,0],
+    [0,0,1,1,1,2,2,2,2,1,1,1,0,0],
+    [0,1,1,2,2,2,2,2,2,2,2,1,1,0],
+    [0,1,2,2,1,2,2,2,2,1,2,2,1,0],
+    [1,1,2,2,2,2,2,2,2,2,2,2,1,1],
+    [1,2,2,2,2,1,1,1,2,2,2,2,2,1],
+    [1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,2,2,1,2,2,2,2,1,2,2,2,1],
+    [0,1,2,2,2,2,2,2,2,2,2,2,1,0],
+    [0,0,1,2,2,2,2,2,2,2,2,1,0,0],
+    [0,0,0,1,3,3,3,3,3,3,1,0,0,0],
+    [0,0,0,0,1,1,1,1,1,1,0,0,0,0]
+  ];
+  var snoopyColors = {
+    0: null,
+    1: '#1a1a1a',
+    2: '#ffffff',
+    3: '#EA4335'
+  };
+  var PX = 6; // 每个像素点的大小
+
+  function buildSnoopy() {
+    var shadows = [];
+    for (var y = 0; y < snoopyData.length; y++) {
+      for (var x = 0; x < snoopyData[y].length; x++) {
+        var c = snoopyData[y][x];
+        if (c === 0) continue;
+        shadows.push((x * PX) + 'px ' + (y * PX) + 'px ' + snoopyColors[c]);
+      }
+    }
+    // 总尺寸: 14*6=84px 宽, 12*6=72px 高
+    var wrapper = document.createElement('div');
+    wrapper.className = 'snoopy-wrapper';
+    wrapper.style.width = (14 * PX) + 'px';
+    wrapper.style.height = (12 * PX) + 'px';
+
+    var pixel = document.createElement('div');
+    pixel.className = 'snoopy-pixel';
+    pixel.style.boxShadow = shadows.join(',');
+    wrapper.appendChild(pixel);
+    return wrapper;
+  }
+
   // ========== Hero 渲染 ==========
   function renderHero() {
-    document.getElementById('heroAvatar').textContent = user.avatar;
+    var avatarEl = document.getElementById('heroAvatar');
+    avatarEl.innerHTML = '';
+    avatarEl.appendChild(buildSnoopy());
     document.getElementById('heroTitle').textContent = user.name;
     document.getElementById('heroDesc').textContent = user.bio;
     typeWriter('heroSubtitle', '> ' + user.title, 60);
