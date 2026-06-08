@@ -767,23 +767,13 @@ a:hover { color: var(--yellow); }
   .section { padding: 60px 16px; }
   .terminal-body { min-height: 200px; max-height: 300px; }
 
-  /* 移动端视频光晕：drop-shadow 不认 alpha 通道，改用径向渐变 */
+  /* 移动端视频光晕：Safari 渲染视频透明通道为黑底，不能用 z-index:-1 放背后 */
   .hero-avatar img,
   .hero-avatar video {
     filter: none;
   }
-  .hero-avatar::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(66, 133, 244, 0.35) 0%, transparent 70%);
-    z-index: -1;
-    pointer-events: none;
+  .hero-avatar {
+    box-shadow: 0 0 60px 40px rgba(66, 133, 244, 0.25);
   }
 }
 
