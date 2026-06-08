@@ -215,15 +215,16 @@ a:hover { color: var(--yellow); }
   position: relative;
 }
 
-.hero-avatar img {
-  width: 240px;
-  height: 240px;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
 .hero-avatar {
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
+}
+
+.hero-avatar img,
+.hero-avatar video {
+  width: 240px;
+  height: 240px;
+  object-fit: contain;
   image-rendering: pixelated;
   filter: drop-shadow(0 0 24px rgba(66, 133, 244, 0.5));
 }

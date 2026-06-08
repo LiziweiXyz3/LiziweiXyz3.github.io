@@ -58,10 +58,22 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var img = document.createElement('img');
-    img.src = 'selfie_pixel.png';
-    img.alt = user.name;
-    avatarEl.appendChild(img);
+    var video = document.createElement('video');
+    video.src = 'video.webm';
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.preload = 'auto';
+    video.alt = user.name;
+
+    video.addEventListener('ended', function () {
+      video.currentTime = video.duration;
+      video.pause();
+    });
+
+    avatarEl.appendChild(video);
+
     document.getElementById('heroTitle').textContent = user.name;
     document.getElementById('heroDesc').textContent = user.bio;
     typeWriter('heroSubtitle', '> ' + user.title, 60);
