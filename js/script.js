@@ -58,7 +58,7 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var switched = false;
+    var videoPlaying = false;
 
     // 先显示 selfie 静态图
     var img = document.createElement('img');
@@ -110,16 +110,51 @@
     video.addEventListener('seeked', drawFrame);
     video.addEventListener('ended', drawFrame);
 
-    // 切换到视频
+    // 切换到视频播放
     function switchToVideo() {
-      if (switched) return;
-      switched = true;
+      if (videoPlaying) return;
+      videoPlaying = true;
       avatarEl.removeChild(img);
       avatarEl.appendChild(canvas);
       video.play();
-      // 移除滚动监听
       window.removeEventListener('scroll', scrollHandler);
     }
+
+    // 滚动 → 切换到 selfie_pixel_end（视觉反馈）
+    function switchToEnd() {
+      if (videoPlaying) return;
+      if (img.src.indexOf('selfie_pixel_end') === -1) {
+        img.src = 'selfie_pixel_end.png';
+        img.style.transform = 'scale(1.12)';
+      }
+    }
+    function switchToStart() {
+      if (videoPlaying) return;
+      if (img.src.indexOf('selfie_pixel_start') === -1) {
+        img.src = 'selfie_pixel_start.png';
+        img.style.transform = '';
+      }
+    }
+
+    // 点击：在 start 状态 → 切换到 end；在 end 状态 → 播放视频
+    img.addEventListener('click', function () {
+      if (videoPlaying) return;
+      if (img.src.indexOf('selfie_pixel_end') === -1) {
+        switchToEnd();
+      } else {
+        switchToVideo();
+      }
+    });
+
+    var scrollHandler = function () {
+      if (videoPlaying) return;
+      if (window.scrollY > 50) {
+        switchToEnd();
+      } else {
+        switchToStart();
+      }
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
 
     // 点击 selfie 切换
     img.addEventListener('click', switchToVideo);
