@@ -58,96 +58,41 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var videoPlaying = false;
+    var phase = 0; // 0=start, 1=end, 2=zzz_new
 
-    // 先显示 selfie 静态图
     var img = document.createElement('img');
     img.src = 'selfie_pixel_start.png';
     img.alt = user.name;
     avatarEl.appendChild(img);
 
-    // 预加载视频（隐藏，iOS 需要在 DOM 中才能播放）
-    var video = document.createElement('video');
-    video.src = 'video.webm';
-    video.autoplay = false;
-    video.muted = true;
-    video.playsInline = true;
-    video.setAttribute('playsinline', '');
-    video.preload = 'auto';
-    video.style.position = 'absolute';
-    video.style.width = '0';
-    video.style.height = '0';
-    video.style.opacity = '0';
-    video.style.pointerEvents = 'none';
-    avatarEl.appendChild(video);
-
-    // Canvas 用于逐帧去黑
-    var canvas = document.createElement('canvas');
-    canvas.width = 240;
-    canvas.height = 240;
-    var ctx = canvas.getContext('2d');
-
-    function drawFrame() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      try {
-        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        var data = imageData.data;
-        for (var i = 0; i < data.length; i += 4) {
-          var brightness = data[i] + data[i + 1] + data[i + 2];
-          if (brightness < 20) {
-            data[i + 3] = 0;
-          }
-        }
-        ctx.putImageData(imageData, 0, 0);
-      } catch (e) {}
-      if (!video.paused && !video.ended) {
-        requestAnimationFrame(drawFrame);
-      }
+    function switchToEnd() {
+      if (phase >= 1) return;
+      phase = 1;
+      img.src = 'selfie_pixel_end.png';
+      img.style.transform = 'scale(1.12)';
     }
-
-    video.addEventListener('play', drawFrame);
-    video.addEventListener('seeked', drawFrame);
-    video.addEventListener('ended', drawFrame);
-
-    // 切换到视频播放
-    function switchToVideo() {
-      if (videoPlaying) return;
-      videoPlaying = true;
-      avatarEl.removeChild(img);
-      avatarEl.appendChild(canvas);
-      video.play();
+    function switchToStart() {
+      if (phase !== 1) return;
+      phase = 0;
+      img.src = 'selfie_pixel_start.png';
+      img.style.transform = '';
+    }
+    function switchToFinal() {
+      if (phase >= 2) return;
+      phase = 2;
+      img.src = 'zzz_new.png';
+      img.style.transform = '';
       window.removeEventListener('scroll', scrollHandler);
     }
 
-    // 滚动 → 切换到 selfie_pixel_end（视觉反馈）
-    function switchToEnd() {
-      if (videoPlaying) return;
-      if (img.src.indexOf('selfie_pixel_end') === -1) {
-        img.src = 'selfie_pixel_end.png';
-        img.style.transform = 'scale(1.12)';
-      }
-    }
-    function switchToStart() {
-      if (videoPlaying) return;
-      if (img.src.indexOf('selfie_pixel_start') === -1) {
-        img.src = 'selfie_pixel_start.png';
-        img.style.transform = '';
-      }
-    }
-
-    // 点击：在 start 状态 → 切换到 end；在 end 状态 → 播放视频
+    // 点击：start→end, end→zzz_new
     img.addEventListener('click', function () {
-      if (videoPlaying) return;
-      if (img.src.indexOf('selfie_pixel_end') === -1) {
-        switchToEnd();
-      } else {
-        switchToVideo();
-      }
+      if (phase === 0) switchToEnd();
+      else if (phase === 1) switchToFinal();
     });
 
     var scrollHandler = function () {
-      if (videoPlaying) return;
+      if (phase >= 2) return;
       if (window.scrollY > 50) {
         switchToEnd();
       } else {
