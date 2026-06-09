@@ -258,10 +258,18 @@
       if (!cmd) return;
 
       // 回显命令
-      addLine('sui@dev:~$ ' + cmd, 'cmd');
+      addLine('SuiAn@dev:~$ ' + cmd, 'cmd');
 
       if (cmd === 'clear') {
         body.innerHTML = '';
+      } else if (cmd === 'home') {
+        addLine(contact.commands[cmd], 'output');
+        var hero = document.getElementById('hero');
+        if (hero) hero.scrollIntoView({ behavior: 'smooth' });
+      } else if (cmd === 'game') {
+        addLine(contact.commands[cmd], 'output');
+        startDinoGame();
+        setTimeout(function () { input.blur(); }, 10);
       } else if (contact.commands[cmd]) {
         addLine(contact.commands[cmd], 'output');
       } else {
@@ -410,6 +418,138 @@
         if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });
       }
     });
+  }
+
+  // ========== 终端内嵌小恐龙游戏 ==========
+  function startDinoGame() {
+    var body = document.getElementById('terminalBody');
+    if (!body) return;
+
+    // 创建游戏容器插入终端
+    var wrap = document.createElement('div');
+    wrap.className = 'dino-game-wrap';
+    var scoreEl = document.createElement('div');
+    scoreEl.className = 'dino-game-score';
+    var canvas = document.createElement('canvas');
+    canvas.width = 600;
+    canvas.height = 200;
+    wrap.appendChild(scoreEl);
+    wrap.appendChild(canvas);
+    body.appendChild(wrap);
+    body.scrollTop = body.scrollHeight;
+
+    var ctx = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+    var groundY = H - 30;
+
+    var score = 0, running = false, speed = 4, started = false;
+    var dino = { x: 40, y: groundY - 30, w: 22, h: 30, vy: 0, jumping: false };
+    var GRAVITY = 0.55, JUMP_VEL = -10;
+    var obstacles = [], frame = 0;
+
+    function spawnObstacle() {
+      if (frame % 70 === 0) {
+        var h = 18 + Math.round(Math.random() * 16);
+        obstacles.push({ x: W, y: groundY - h, w: 12, h: h });
+      }
+      if (frame % 400 === 0 && speed < 8) speed += 0.3;
+    }
+
+    function update() {
+      if (!running) return;
+      frame++;
+      score++;
+      if (dino.jumping) {
+        dino.y += dino.vy;
+        dino.vy += GRAVITY;
+        if (dino.y >= groundY - dino.h) { dino.y = groundY - dino.h; dino.jumping = false; dino.vy = 0; }
+      }
+      spawnObstacle();
+      for (var i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].x -= speed;
+        if (obstacles[i].x + obstacles[i].w < 0) { obstacles.splice(i, 1); continue; }
+        var o = obstacles[i];
+        if (dino.x + dino.w - 3 > o.x && dino.x + 3 < o.x + o.w && dino.y + dino.h - 3 > o.y && dino.y + 3 < o.y + o.h) { running = false; }
+      }
+      draw();
+      scoreEl.textContent = 'SCORE: ' + Math.floor(score / 5);
+      if (running) requestAnimationFrame(update);
+      else gameOver();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = '#333';
+      ctx.fillRect(0, groundY + 5, W, 3);
+      ctx.fillStyle = '#4285F4';
+      ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(dino.x + 14, dino.y + 4, 5, 5);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(dino.x + 16, dino.y + 5, 2, 2);
+      ctx.fillStyle = '#FBBC05';
+      for (var i = 0; i < obstacles.length; i++) {
+        var o = obstacles[i];
+        ctx.fillRect(o.x, o.y, o.w, o.h);
+      }
+      // 初始提示
+      if (!started) {
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#e0e0e0';
+        ctx.font = '14px Zpix';
+        ctx.fillText('跳跃躲避障碍 Jump to Dodge', W / 2, H / 2 - 12);
+        ctx.font = '12px Zpix';
+        ctx.fillText('按空格或点击开始 SPACE / CLICK', W / 2, H / 2 + 14);
+        ctx.textAlign = 'start';
+      }
+    }
+
+    function gameOver() {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#EA4335';
+      ctx.font = '16px Zpix';
+      ctx.fillText('游戏结束 GAME OVER', W / 2, H / 2 - 14);
+      ctx.fillStyle = '#e0e0e0';
+      ctx.font = '12px Zpix';
+      ctx.fillText('空格:重新开始  |  ESC:退出', W / 2, H / 2 + 16);
+      ctx.textAlign = 'start';
+    }
+
+    function jump() {
+      e_prevent = true;
+      if (!dino.jumping) { dino.jumping = true; dino.vy = JUMP_VEL; }
+      if (!running) restart();
+    }
+
+    function restart() {
+      started = true; running = true; score = 0; speed = 4; frame = 0; obstacles = [];
+      dino.y = groundY - dino.h; dino.vy = 0; dino.jumping = false;
+      update();
+    }
+
+    function exitGame() {
+      running = false;
+      document.removeEventListener('keydown', keyHandler);
+      canvas.removeEventListener('click', jump);
+      wrap.parentNode.removeChild(wrap);
+    }
+
+    var e_prevent = false;
+    function keyHandler(e) {
+      if (document.activeElement === document.getElementById('terminalInput')) return;
+      if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); jump(); }
+      if (e.key === 'Escape') exitGame();
+    }
+
+    document.addEventListener('keydown', keyHandler);
+    canvas.addEventListener('click', jump);
+
+    // 初始渲染提示
+    draw();
   }
 
   // DOM 加载完成后启动

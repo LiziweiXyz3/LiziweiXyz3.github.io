@@ -472,13 +472,15 @@ a:hover { color: var(--yellow); }
 
 .project-title {
   font-family: var(--font-pixel);
-  font-size: 11px;
+  font-size: 14px;
   margin-bottom: 8px;
 }
 
 .project-desc {
+  font-family: var(--font-cn);
   color: var(--text-dim);
-  font-size: 18px;
+  font-size: 15px;
+  line-height: 1.7;
   margin-bottom: 12px;
 }
 
@@ -553,16 +555,17 @@ a:hover { color: var(--yellow); }
 .node-type-edu::before  { border-color: var(--green); background: var(--green); }
 
 .timeline-node .node-period {
-  font-family: var(--font-pixel);
-  font-size: 9px;
+  font-family: var(--font-cn);
+  font-size: 14px;
   margin-bottom: 4px;
 }
 .node-period.work { color: var(--blue); }
 .node-period.edu  { color: var(--green); }
 
 .timeline-node .node-title {
-  font-family: var(--font-pixel);
-  font-size: 11px;
+  font-family: var(--font-cn);
+  font-size: 13px;
+  font-weight: normal;
   margin-bottom: 4px;
 }
 
@@ -575,7 +578,7 @@ a:hover { color: var(--yellow); }
 .timeline-node .node-desc {
   color: var(--text-dim);
   margin-bottom: 8px;
-  font-size: 18px;
+  font-size: 15px;
 }
 
 .timeline-node .node-tags {
@@ -585,7 +588,7 @@ a:hover { color: var(--yellow); }
 }
 .timeline-node .node-tag {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 11px;
   padding: 3px 8px;
   border: 1px solid var(--border);
   color: var(--yellow);
@@ -770,4 +773,25 @@ a:hover { color: var(--yellow); }
   .hero-title { font-size: 14px; }
   .section-title { font-size: 12px; }
   .nav-link { font-size: 6px; }
+}
+
+/* ======== 终端内嵌小恐龙游戏 ======== */
+.dino-game-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px 0;
+}
+.dino-game-wrap canvas {
+  display: block;
+  background: #1a1a2e;
+  border: 2px solid var(--blue);
+  image-rendering: pixelated;
+  max-width: 100%;
+}
+.dino-game-score {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--blue);
+  margin-top: 4px;
 }

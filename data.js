@@ -68,25 +68,34 @@ const experiences = [
     period: "2024 - 至今",
     title: "数据分析师",
     company: "虎牙",
-    type: "work",           // "work" | "edu"
-    desc: "负责XX业务线数据分析，搭建指标体系，输出业务洞察",
-    highlights: ["日活监控看板搭建", "用户留存分析", "AB 测试设计"]
+    type: "work",
+    desc: "负责 SDK 及渠道业务线数据分析，搭建指标体系，输出业务洞察与自动化报表",
+    highlights: ["日活监控看板搭建", "渠道产能分析", "SDK 周报自动化", "AB 测试设计"]
   },
   {
-    period: "20XX - 20XX",
-    title: "XX大学 XX专业",
-    company: "XX大学",
+    period: "2023 - 2024",
+    title: "数据分析师",
+    company: "京东",
+    type: "work",
+    desc: "负责供应链/物流相关业务数据分析与运营支持",
+    highlights: ["仓储运营分析", "物流时效监控", "业务看板搭建"]
+  },
+  {
+    period: "2021 - 2022",
+    title: "MSc Digital Strategy & Information Systems",
+    company: "英国南安普顿大学",
     type: "edu",
-    desc: "本科/硕士，GPA X.X",
-    highlights: ["XX课程", "XX竞赛"]
+    desc: "数字战略与信息系统硕士，一等学位 (Distinction)",
+    highlights: ["数据分析", "信息系统管理", "数字战略", "商业智能"]
   }
 ];
 
 // ---------- 联系方式 ----------
 const contact = {
-  intro: "> 输入 help 查看可用命令，输入 clear 清屏",
+  intro: "> help 查看命令 | game 玩小游戏 | contact 联系方式 | clear 清屏",
   commands: {
-    help:   "可用命令: about | projects | resume | contact | clear",
+    help:   "可用命令: home | about | projects | resume | contact | game | clear",
+    home:   "> 跳回首页...",
     about:  `> ${user.name} / ${user.title}\n> ${user.bio}`,
     projects: "> 跳转到项目展示区...",
     resume: "> 跳转到简历区...",
@@ -94,6 +103,7 @@ const contact = {
     whoami: `> ${user.name}`,
     pwd:    "> /home/suian",
     date:   `> ${new Date().toLocaleDateString("zh-CN")}`,
-    hello:  "> 你好，旅行者！欢迎来到我的个人站点。输入 help 查看可以做什么。"
+    hello:  "> 你好，旅行者！欢迎来到我的个人站点。输入 help 查看可以做什么。",
+    game:   "> 🎮 启动小游戏..."
   }
 };
