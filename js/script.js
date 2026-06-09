@@ -58,41 +58,23 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var img = document.createElement('img');
-    img.src = 'selfie_pixel_start.png';
-    img.alt = user.name;
+    var video = document.createElement('video');
+    video.src = 'video.webm';
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    video.alt = user.name;
 
-    function switchToEnd() {
-      if (img.src.indexOf('selfie_pixel_end') === -1) {
-        img.src = 'selfie_pixel_end.png';
-        img.style.transform = 'scale(1.12)';
-      }
-    }
-    function switchToStart() {
-      if (img.src.indexOf('selfie_pixel_start') === -1) {
-        img.src = 'selfie_pixel_start.png';
-        img.style.transform = '';
-      }
-    }
-
-    img.addEventListener('click', function () {
-      if (img.src.indexOf('selfie_pixel_end') === -1) {
-        switchToEnd();
+    video.addEventListener('click', function () {
+      if (video.paused) {
+        video.play();
       } else {
-        switchToStart();
+        video.pause();
       }
     });
 
-    var scrollHandler = function () {
-      if (window.scrollY > 50) {
-        switchToEnd();
-      } else {
-        switchToStart();
-      }
-    };
-    window.addEventListener('scroll', scrollHandler, { passive: true });
-
-    avatarEl.appendChild(img);
+    avatarEl.appendChild(video);
 
     document.getElementById('heroTitle').textContent = user.name;
     document.getElementById('heroDesc').textContent = user.bio;

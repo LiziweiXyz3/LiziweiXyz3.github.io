@@ -218,6 +218,8 @@ a:hover { color: var(--yellow); }
 .hero-avatar {
   margin-bottom: var(--gap);
   animation: float 3s ease-in-out infinite;
+  isolation: isolate;
+  filter: drop-shadow(0 0 24px rgba(66, 133, 244, 0.5));
 }
 
 .hero-avatar img,
@@ -225,8 +227,7 @@ a:hover { color: var(--yellow); }
   width: 240px;
   height: 240px;
   object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 0 24px rgba(66, 133, 244, 0.5));
+  mix-blend-mode: screen;
 }
 
 .hero-title {
