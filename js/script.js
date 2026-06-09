@@ -64,9 +64,14 @@
     video.muted = true;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
-    video.crossOrigin = 'anonymous';
     video.preload = 'auto';
     video.alt = user.name;
+    // video 隐藏但仍加入 DOM，iOS 需要它在 DOM 中才能播放
+    video.style.position = 'absolute';
+    video.style.width = '0';
+    video.style.height = '0';
+    video.style.opacity = '0';
+    video.style.pointerEvents = 'none';
 
     var canvas = document.createElement('canvas');
     canvas.width = 240;
@@ -75,21 +80,29 @@
 
     // 逐帧渲染：绘制视频帧并去除黑色背景
     function drawFrame() {
-      if (video.paused || video.ended) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      var data = imageData.data;
-      for (var i = 0; i < data.length; i += 4) {
-        var brightness = data[i] + data[i + 1] + data[i + 2];
-        if (brightness < 20) {
-          data[i + 3] = 0; // 黑色像素变透明
+      try {
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        var data = imageData.data;
+        for (var i = 0; i < data.length; i += 4) {
+          var brightness = data[i] + data[i + 1] + data[i + 2];
+          if (brightness < 20) {
+            data[i + 3] = 0; // 黑色像素变透明
+          }
         }
+        ctx.putImageData(imageData, 0, 0);
+      } catch (e) {
+        // canvas 被污染时回退：直接显示原始帧
       }
-      ctx.putImageData(imageData, 0, 0);
-      requestAnimationFrame(drawFrame);
+      if (!video.paused && !video.ended) {
+        requestAnimationFrame(drawFrame);
+      }
     }
 
+    video.addEventListener('loadeddata', function () {
+      drawFrame();
+    });
     video.addEventListener('play', drawFrame);
     video.addEventListener('seeked', drawFrame);
 
@@ -107,6 +120,7 @@
       }
     });
 
+    avatarEl.appendChild(video);
     avatarEl.appendChild(canvas);
 
     document.getElementById('heroTitle').textContent = user.name;
