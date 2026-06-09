@@ -32,13 +32,13 @@ const about = {
   intro: "Hey！我是岁安，一个游走在数据与代码之间的探索者。白天和 SQL 打交道，晚上折腾 AI 项目。\n\n这个网站是我在数字世界的「存档点」——记录学到的技能、做过的项目、踩过的坑。",
   stats: [
     { label: "HP",  name: "学习热情", value: 95, color: "#EA4335" },
-    { label: "MP",  name: "技能点数", value: 60, color: "#4285F4" },
-    { label: "EXP", name: "项目经验", value: 35, color: "#34A853" }
+    { label: "MP",  name: "技能点数", value: 70, color: "#4285F4" },
+    { label: "EXP", name: "项目经验", value: 55, color: "#34A853" }
   ],
   skills: [
     { name: "SQL",        level: 90, category: "data" },
     { name: "Python",     level: 55, category: "code"  },
-    { name: "Excel",      level: 85, category: "data"  },
+    { name: "Excel",      level: 85 , category: "data"  },
     { name: "Tableau",    level: 60, category: "data"  },
     { name: "HTML/CSS",   level: 30, category: "code"  },
     { name: "JavaScript", level: 20, category: "code"  },
@@ -65,9 +65,9 @@ const projects = [
 // ---------- 简历 / 经历 ----------
 const experiences = [
   {
-    period: "20XX - 至今",
+    period: "2024 - 至今",
     title: "数据分析师",
-    company: "某互联网公司",
+    company: "虎牙",
     type: "work",           // "work" | "edu"
     desc: "负责XX业务线数据分析，搭建指标体系，输出业务洞察",
     highlights: ["日活监控看板搭建", "用户留存分析", "AB 测试设计"]

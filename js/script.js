@@ -58,57 +58,39 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var phase = 0; // 0=start, 1=end, 2=zzz_new
+    var isFinal = false;
 
     var img = document.createElement('img');
     img.src = 'selfie_pixel_start.png';
     img.alt = user.name;
     avatarEl.appendChild(img);
 
-    function switchToEnd() {
-      if (phase >= 1) return;
-      phase = 1;
-      img.src = 'selfie_pixel_end.png';
-      img.style.transform = 'scale(1.12)';
-    }
     function switchToStart() {
-      if (phase !== 1) return;
-      phase = 0;
+      if (!isFinal) return;
+      isFinal = false;
       img.src = 'selfie_pixel_start.png';
       img.style.transform = '';
     }
     function switchToFinal() {
-      if (phase >= 2) return;
-      phase = 2;
+      if (isFinal) return;
+      isFinal = true;
       img.src = 'zzz_new.png';
-      img.style.transform = '';
-      window.removeEventListener('scroll', scrollHandler);
+      img.style.transform = 'scale(0.78)';
     }
 
-    // 点击：start→end, end→zzz_new
+    // 点击切换
     img.addEventListener('click', function () {
-      if (phase === 0) switchToEnd();
-      else if (phase === 1) switchToFinal();
+      if (isFinal) switchToStart();
+      else switchToFinal();
     });
 
+    // 滚动方向切换
+    var lastScroll = 0;
     var scrollHandler = function () {
-      if (phase >= 2) return;
-      if (window.scrollY > 50) {
-        switchToEnd();
-      } else {
-        switchToStart();
-      }
-    };
-    window.addEventListener('scroll', scrollHandler, { passive: true });
-
-    // 点击 selfie 切换
-    img.addEventListener('click', switchToVideo);
-
-    // 向下滚动切换
-    var scrollHandler = function () {
-      if (window.scrollY > 50) {
-        switchToVideo();
-      }
+      var now = window.scrollY;
+      if (now - lastScroll > 10) switchToFinal();      // 下滑
+      else if (lastScroll - now > 10) switchToStart(); // 上滑
+      lastScroll = now;
     };
     window.addEventListener('scroll', scrollHandler, { passive: true });
 
