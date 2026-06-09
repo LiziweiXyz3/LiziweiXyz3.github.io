@@ -58,27 +58,35 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
+    var switched = false;
+
+    // 先显示 selfie 静态图
+    var img = document.createElement('img');
+    img.src = 'selfie_pixel_start.png';
+    img.alt = user.name;
+    avatarEl.appendChild(img);
+
+    // 预加载视频（隐藏，iOS 需要在 DOM 中才能播放）
     var video = document.createElement('video');
     video.src = 'video.webm';
-    video.autoplay = true;
+    video.autoplay = false;
     video.muted = true;
     video.playsInline = true;
     video.setAttribute('playsinline', '');
     video.preload = 'auto';
-    video.alt = user.name;
-    // video 隐藏但仍加入 DOM，iOS 需要它在 DOM 中才能播放
     video.style.position = 'absolute';
     video.style.width = '0';
     video.style.height = '0';
     video.style.opacity = '0';
     video.style.pointerEvents = 'none';
+    avatarEl.appendChild(video);
 
+    // Canvas 用于逐帧去黑
     var canvas = document.createElement('canvas');
     canvas.width = 240;
     canvas.height = 240;
     var ctx = canvas.getContext('2d');
 
-    // 逐帧渲染：绘制视频帧并去除黑色背景
     function drawFrame() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -88,40 +96,41 @@
         for (var i = 0; i < data.length; i += 4) {
           var brightness = data[i] + data[i + 1] + data[i + 2];
           if (brightness < 20) {
-            data[i + 3] = 0; // 黑色像素变透明
+            data[i + 3] = 0;
           }
         }
         ctx.putImageData(imageData, 0, 0);
-      } catch (e) {
-        // canvas 被污染时回退：直接显示原始帧
-      }
+      } catch (e) {}
       if (!video.paused && !video.ended) {
         requestAnimationFrame(drawFrame);
       }
     }
 
-    video.addEventListener('loadeddata', function () {
-      drawFrame();
-    });
     video.addEventListener('play', drawFrame);
     video.addEventListener('seeked', drawFrame);
+    video.addEventListener('ended', drawFrame);
 
-    // 视频播完定格最后一帧
-    video.addEventListener('ended', function () {
-      drawFrame();
-    });
+    // 切换到视频
+    function switchToVideo() {
+      if (switched) return;
+      switched = true;
+      avatarEl.removeChild(img);
+      avatarEl.appendChild(canvas);
+      video.play();
+      // 移除滚动监听
+      window.removeEventListener('scroll', scrollHandler);
+    }
 
-    // 点击暂停/播放
-    canvas.addEventListener('click', function () {
-      if (video.paused) {
-        video.play();
-      } else {
-        video.pause();
+    // 点击 selfie 切换
+    img.addEventListener('click', switchToVideo);
+
+    // 向下滚动切换
+    var scrollHandler = function () {
+      if (window.scrollY > 50) {
+        switchToVideo();
       }
-    });
-
-    avatarEl.appendChild(video);
-    avatarEl.appendChild(canvas);
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
 
     document.getElementById('heroTitle').textContent = user.name;
     document.getElementById('heroDesc').textContent = user.bio;

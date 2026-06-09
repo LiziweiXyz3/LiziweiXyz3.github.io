@@ -221,6 +221,7 @@ a:hover { color: var(--yellow); }
   filter: drop-shadow(0 0 24px rgba(66, 133, 244, 0.5));
 }
 
+.hero-avatar img,
 .hero-avatar canvas {
   width: 240px;
   height: 240px;
