@@ -61,20 +61,20 @@
     var isFinal = false;
 
     var img = document.createElement('img');
-    img.src = 'selfie_pixel_start.png';
+    img.src = 'selfie_stand.png';
     img.alt = user.name;
     avatarEl.appendChild(img);
 
     function switchToStart() {
       if (!isFinal) return;
       isFinal = false;
-      img.src = 'selfie_pixel_start.png';
+      img.src = 'selfie_stand.png';
       img.style.transform = '';
     }
     function switchToFinal() {
       if (isFinal) return;
       isFinal = true;
-      img.src = 'zzz_new.png';
+      img.src = 'selfie_jump.png';
       img.style.transform = 'scale(0.78)';
     }
 
@@ -281,7 +281,8 @@
     });
 
     // 点击终端区域聚焦输入框
-    body.addEventListener('click', function () {
+    body.addEventListener('click', function (e) {
+      if (e.target.closest('.dino-game-wrap')) return;
       input.focus();
     });
   }
@@ -420,19 +421,18 @@
     });
   }
 
-  // ========== 终端内嵌小恐龙游戏 ==========
+  // ========== 终端内嵌小游戏 ==========
   function startDinoGame() {
     var body = document.getElementById('terminalBody');
     if (!body) return;
 
-    // 创建游戏容器插入终端
     var wrap = document.createElement('div');
     wrap.className = 'dino-game-wrap';
     var scoreEl = document.createElement('div');
     scoreEl.className = 'dino-game-score';
     var canvas = document.createElement('canvas');
-    canvas.width = 600;
-    canvas.height = 200;
+    canvas.width = 800;
+    canvas.height = 280;
     wrap.appendChild(scoreEl);
     wrap.appendChild(canvas);
     body.appendChild(wrap);
@@ -440,94 +440,178 @@
 
     var ctx = canvas.getContext('2d');
     var W = canvas.width, H = canvas.height;
-    var groundY = H - 30;
+    var groundY = H - 38;
 
-    var score = 0, running = false, speed = 4, started = false;
-    var dino = { x: 40, y: groundY - 30, w: 22, h: 30, vy: 0, jumping: false };
-    var GRAVITY = 0.55, JUMP_VEL = -10;
+    var score = 0, running = false, speed = 5, started = false;
+    var monster = { x: 50, y: groundY - 38, w: 28, h: 38, vy: 0, jumping: false };
+    var GRAVITY = 0.6, JUMP_VEL = -11;
     var obstacles = [], frame = 0;
 
+    var stars = [];
+    var starSpeeds = [];
+    for (var si = 0; si < 50; si++) {
+      stars.push({
+        x: Math.random() * W, y: Math.random() * (groundY - 20),
+        size: Math.random() < 0.15 ? 2 : 1,
+        bright: Math.random() < 0.25
+      });
+      starSpeeds.push(0.15 + Math.random() * 0.4);
+    }
+
     function spawnObstacle() {
-      if (frame % 70 === 0) {
-        var h = 18 + Math.round(Math.random() * 16);
-        obstacles.push({ x: W, y: groundY - h, w: 12, h: h });
+      if (frame % 60 === 0) {
+        var type = Math.random() < 0.35 ? 'cactus-big' : 'cactus-small';
+        obstacles.push({ x: W, y: groundY, type: type });
       }
-      if (frame % 400 === 0 && speed < 8) speed += 0.3;
+      if (frame % 400 === 0 && speed < 9) speed += 0.3;
     }
 
     function update() {
       if (!running) return;
       frame++;
       score++;
-      if (dino.jumping) {
-        dino.y += dino.vy;
-        dino.vy += GRAVITY;
-        if (dino.y >= groundY - dino.h) { dino.y = groundY - dino.h; dino.jumping = false; dino.vy = 0; }
+      if (monster.jumping) {
+        monster.y += monster.vy;
+        monster.vy += GRAVITY;
+        if (monster.y >= groundY - monster.h) { monster.y = groundY - monster.h; monster.jumping = false; monster.vy = 0; }
       }
       spawnObstacle();
       for (var i = obstacles.length - 1; i >= 0; i--) {
         obstacles[i].x -= speed;
-        if (obstacles[i].x + obstacles[i].w < 0) { obstacles.splice(i, 1); continue; }
         var o = obstacles[i];
-        if (dino.x + dino.w - 3 > o.x && dino.x + 3 < o.x + o.w && dino.y + dino.h - 3 > o.y && dino.y + 3 < o.y + o.h) { running = false; }
+        var ow = o.type === 'cactus-big' ? 16 : 10;
+        var oh = o.type === 'cactus-big' ? 38 : 26;
+        if (o.x + ow < 0) { obstacles.splice(i, 1); continue; }
+        if (monster.x + monster.w - 6 > o.x + 2 && monster.x + 6 < o.x + ow - 2 && monster.y + monster.h - 4 > groundY - oh && monster.y + 4 < groundY) { running = false; }
       }
       draw();
-      scoreEl.textContent = 'SCORE: ' + Math.floor(score / 5);
+      scoreEl.textContent = 'SCORE  ' + Math.floor(score / 6);
       if (running) requestAnimationFrame(update);
-      else gameOver();
+    }
+
+    // 像素仙人掌
+    function drawCactus(x, y, type) {
+      var G1 = '#2a8', G2 = '#3b9', S1 = '#d44';
+      if (type === 'cactus-big') {
+        ctx.fillStyle = G1;
+        ctx.fillRect(x+5, y-38, 8, 38);
+        ctx.fillRect(x+1, y-22, 5, 6);
+        ctx.fillRect(x+1, y-16, 10, 4);
+        ctx.fillRect(x+12,y-26, 5, 6);
+        ctx.fillRect(x+8, y-20, 10, 4);
+        ctx.fillStyle = G2;
+        ctx.fillRect(x+7, y-38, 4, 38);
+        ctx.fillStyle = S1;
+        ctx.fillRect(x+6, y-34, 2, 3);
+        ctx.fillRect(x+2, y-20, 2, 2);
+        ctx.fillRect(x+13,y-24, 2, 2);
+      } else {
+        ctx.fillStyle = G1;
+        ctx.fillRect(x+3, y-26, 4, 26);
+        ctx.fillRect(x,   y-14, 10, 4);
+        ctx.fillRect(x,   y-18, 4, 5);
+        ctx.fillStyle = G2;
+        ctx.fillRect(x+5, y-26, 2, 26);
+        ctx.fillStyle = S1;
+        ctx.fillRect(x+4, y-24, 1, 2);
+        ctx.fillRect(x+1, y-16, 2, 2);
+      }
+    }
+
+    // Claude 风格像素角色
+    function drawMonster(x, y) {
+      ctx.fillStyle = '#c86dff'; ctx.fillRect(x+6, y+4,  16,6);
+      ctx.fillStyle = '#b04de8'; ctx.fillRect(x+4, y+10, 20,8);
+      ctx.fillStyle = '#9830c8'; ctx.fillRect(x+2, y+18, 24,8);
+      ctx.fillStyle = '#7a20a8'; ctx.fillRect(x,   y+26, 28,5);
+      ctx.fillStyle = '#e8a0ff'; ctx.fillRect(x+5, y,   4,5);
+      ctx.fillRect(x+19,y,   4,5);
+      ctx.fillStyle = '#d070f8'; ctx.fillRect(x+6, y-1, 2,3);
+      ctx.fillRect(x+20,y-1, 2,3);
+      ctx.fillStyle = '#fff'; ctx.fillRect(x+8, y+6, 5,5);
+      ctx.fillRect(x+15,y+6, 5,5);
+      ctx.fillStyle = '#111'; ctx.fillRect(x+10,y+7, 2,3);
+      ctx.fillRect(x+17,y+7, 2,3);
+      ctx.fillStyle = '#222'; ctx.fillRect(x+11,y+14,6,2);
+      ctx.fillStyle = '#d66'; ctx.fillRect(x+13,y+14,2,2);
+      ctx.fillStyle = '#e8c8ff'; ctx.fillRect(x+7, y+20,14,4);
+      ctx.fillStyle = '#7a20a8'; ctx.fillRect(x+2, y+31,6,3);
+      ctx.fillRect(x+20,y+31,6,3);
+      if (monster.jumping) {
+        ctx.fillStyle = '#222'; ctx.fillRect(x+10,y+14,8,3);
+        ctx.fillStyle = '#d00'; ctx.fillRect(x+13,y+14,2,3);
+        ctx.fillStyle = '#f84'; ctx.fillRect(x+10,y+34,3,3);
+        ctx.fillRect(x+15,y+34,3,3);
+      }
+    }
+
+    var offsetX = 0;
+    function drawGround() {
+      ctx.fillStyle = '#1a2028';
+      ctx.fillRect(0, groundY, W, 38);
+      ctx.fillStyle = 'rgba(180,160,220,0.18)';
+      ctx.fillRect(0, groundY, W, 1);
+      for (var gx = Math.floor(offsetX % 16); gx < W; gx += 16) {
+        ctx.fillStyle = 'rgba(180,160,220,0.08)';
+        ctx.fillRect(gx + 6, groundY + 3, 4, 1);
+      }
     }
 
     function draw() {
-      ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = '#333';
-      ctx.fillRect(0, groundY + 5, W, 3);
-      ctx.fillStyle = '#4285F4';
-      ctx.fillRect(dino.x, dino.y, dino.w, dino.h);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(dino.x + 14, dino.y + 4, 5, 5);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(dino.x + 16, dino.y + 5, 2, 2);
-      ctx.fillStyle = '#FBBC05';
+      var bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0, '#08081a');
+      bg.addColorStop(0.5, '#111133');
+      bg.addColorStop(1, '#1a1a40');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+      for (var si = 0; si < stars.length; si++) {
+        stars[si].x -= starSpeeds[si];
+        if (stars[si].x < 0) stars[si].x = W;
+        if (stars[si].bright && frame % 30 < 15) continue;
+        var a = stars[si].bright ? 0.5 : 0.2;
+        ctx.fillStyle = 'rgba(200,180,255,' + a + ')';
+        ctx.fillRect(Math.floor(stars[si].x), Math.floor(stars[si].y), stars[si].size, stars[si].size);
+      }
+      drawMonster(monster.x, monster.y);
       for (var i = 0; i < obstacles.length; i++) {
         var o = obstacles[i];
-        ctx.fillRect(o.x, o.y, o.w, o.h);
+        drawCactus(o.x, o.y, o.type);
       }
-      // 初始提示
+      offsetX = (offsetX + 1) % 16;
+      drawGround();
       if (!started) {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillStyle = 'rgba(4,4,16,0.7)';
         ctx.fillRect(0, 0, W, H);
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#e0e0e0';
-        ctx.font = '14px Zpix';
-        ctx.fillText('跳跃躲避障碍 Jump to Dodge', W / 2, H / 2 - 12);
-        ctx.font = '12px Zpix';
-        ctx.fillText('按空格或点击开始 SPACE / CLICK', W / 2, H / 2 + 14);
+        ctx.fillStyle = '#c8b0f0';
+        ctx.font = 'bold 20px Zpix';
+        ctx.fillText('跳跃躲避仙人掌  DODGE THE CACTUS', W/2, H/2-22);
+        ctx.fillStyle = '#a098d0';
+        ctx.font = '15px Zpix';
+        ctx.fillText('点击或按空格開始遊戲  CLICK / SPACE TO START', W/2, H/2+16);
+        ctx.textAlign = 'start';
+      }
+      if (!running && started) {
+        ctx.fillStyle = 'rgba(4,4,16,0.75)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#f66';
+        ctx.font = 'bold 22px Zpix';
+        ctx.fillText('游戏结束  GAME OVER', W/2, H/2-20);
+        ctx.fillStyle = '#aab';
+        ctx.font = '15px Zpix';
+        ctx.fillText('空格 重新开始  /  ESC 退出', W/2, H/2+14);
         ctx.textAlign = 'start';
       }
     }
 
-    function gameOver() {
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#EA4335';
-      ctx.font = '16px Zpix';
-      ctx.fillText('游戏结束 GAME OVER', W / 2, H / 2 - 14);
-      ctx.fillStyle = '#e0e0e0';
-      ctx.font = '12px Zpix';
-      ctx.fillText('空格:重新开始  |  ESC:退出', W / 2, H / 2 + 16);
-      ctx.textAlign = 'start';
-    }
-
     function jump() {
-      e_prevent = true;
-      if (!dino.jumping) { dino.jumping = true; dino.vy = JUMP_VEL; }
+      if (!monster.jumping) { monster.jumping = true; monster.vy = JUMP_VEL; }
       if (!running) restart();
     }
 
     function restart() {
-      started = true; running = true; score = 0; speed = 4; frame = 0; obstacles = [];
-      dino.y = groundY - dino.h; dino.vy = 0; dino.jumping = false;
+      started = true; running = true; score = 0; speed = 5; frame = 0; obstacles = [];
+      monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false;
       update();
     }
 
@@ -535,20 +619,23 @@
       running = false;
       document.removeEventListener('keydown', keyHandler);
       canvas.removeEventListener('click', jump);
+      var finalScore = Math.floor(score / 6);
+      var line = document.createElement('div');
+      line.className = 'terminal-line';
+      line.innerHTML = '<span class="error">GAME OVER  SCORE ' + finalScore + '</span>';
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
       wrap.parentNode.removeChild(wrap);
     }
 
-    var e_prevent = false;
     function keyHandler(e) {
-      if (document.activeElement === document.getElementById('terminalInput')) return;
-      if (e.key === ' ' || e.key === 'ArrowUp') { e.preventDefault(); jump(); }
-      if (e.key === 'Escape') exitGame();
+      if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { e.preventDefault(); jump(); return; }
+      if (e.key === 'Escape') { exitGame(); return; }
     }
 
     document.addEventListener('keydown', keyHandler);
     canvas.addEventListener('click', jump);
 
-    // 初始渲染提示
     draw();
   }
 
