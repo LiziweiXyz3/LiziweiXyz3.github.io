@@ -443,7 +443,7 @@
     var groundY = H - 38;
 
     var score = 0, running = false, speed = 5, started = false;
-    var monster = { x: 50, y: groundY - 38, w: 28, h: 38, vy: 0, jumping: false };
+    var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0 };
     var GRAVITY = 0.6, JUMP_VEL = -11;
     var obstacles = [], frame = 0;
 
@@ -470,10 +470,11 @@
       if (!running) return;
       frame++;
       score++;
+      if (monster.landTimer > 0) monster.landTimer--;
       if (monster.jumping) {
         monster.y += monster.vy;
         monster.vy += GRAVITY;
-        if (monster.y >= groundY - monster.h) { monster.y = groundY - monster.h; monster.jumping = false; monster.vy = 0; }
+        if (monster.y >= groundY - monster.h) { monster.y = groundY - monster.h; monster.jumping = false; monster.vy = 0; monster.landTimer = 3; }
       }
       spawnObstacle();
       for (var i = obstacles.length - 1; i >= 0; i--) {
@@ -482,7 +483,7 @@
         var ow = o.type === 'cactus-big' ? 16 : 10;
         var oh = o.type === 'cactus-big' ? 38 : 26;
         if (o.x + ow < 0) { obstacles.splice(i, 1); continue; }
-        if (monster.x + monster.w - 6 > o.x + 2 && monster.x + 6 < o.x + ow - 2 && monster.y + monster.h - 4 > groundY - oh && monster.y + 4 < groundY) { running = false; }
+        if (monster.x + monster.w - 10 > o.x + 2 && monster.x + 10 < o.x + ow - 2 && monster.y + monster.h - 4 > groundY - oh && monster.y + 4 < groundY) { running = false; }
       }
       draw();
       scoreEl.textContent = 'SCORE  ' + Math.floor(score / 6);
@@ -518,31 +519,68 @@
       }
     }
 
-    // Claude 风格像素角色
-    function drawMonster(x, y) {
-      ctx.fillStyle = '#c86dff'; ctx.fillRect(x+6, y+4,  16,6);
-      ctx.fillStyle = '#b04de8'; ctx.fillRect(x+4, y+10, 20,8);
-      ctx.fillStyle = '#9830c8'; ctx.fillRect(x+2, y+18, 24,8);
-      ctx.fillStyle = '#7a20a8'; ctx.fillRect(x,   y+26, 28,5);
-      ctx.fillStyle = '#e8a0ff'; ctx.fillRect(x+5, y,   4,5);
-      ctx.fillRect(x+19,y,   4,5);
-      ctx.fillStyle = '#d070f8'; ctx.fillRect(x+6, y-1, 2,3);
-      ctx.fillRect(x+20,y-1, 2,3);
-      ctx.fillStyle = '#fff'; ctx.fillRect(x+8, y+6, 5,5);
-      ctx.fillRect(x+15,y+6, 5,5);
-      ctx.fillStyle = '#111'; ctx.fillRect(x+10,y+7, 2,3);
-      ctx.fillRect(x+17,y+7, 2,3);
-      ctx.fillStyle = '#222'; ctx.fillRect(x+11,y+14,6,2);
-      ctx.fillStyle = '#d66'; ctx.fillRect(x+13,y+14,2,2);
-      ctx.fillStyle = '#e8c8ff'; ctx.fillRect(x+7, y+20,14,4);
-      ctx.fillStyle = '#7a20a8'; ctx.fillRect(x+2, y+31,6,3);
-      ctx.fillRect(x+20,y+31,6,3);
-      if (monster.jumping) {
-        ctx.fillStyle = '#222'; ctx.fillRect(x+10,y+14,8,3);
-        ctx.fillStyle = '#d00'; ctx.fillRect(x+13,y+14,2,3);
-        ctx.fillStyle = '#f84'; ctx.fillRect(x+10,y+34,3,3);
-        ctx.fillRect(x+15,y+34,3,3);
+    // Clawd 角色（来源：vibe-motion/jumping-clawd，viewBox 0 0 274 178）
+    function drawClawd(px, py) {
+      var s = 0.196;   // 50 / 254.94，把源坐标缩到 50px 宽
+      var ox = 9.23;   // 源最左 x（左手臂）
+      var oy = 8.74;   // 源最上 y（身体顶）
+
+      // 手臂摆动角度（参考源 ARM_PIVOTS / ARM_*_SWING_DEGREES）
+      function getArmAngleRad() {
+        if (monster.landTimer > 0) return 30 * Math.PI / 180;   // 落地瞬间：下摆 30°
+        if (!monster.jumping)    return 0;                      // 静止：0°
+        if (monster.vy <= 0) {
+          // 上升：38°（起跳）→ -42°（最高点）
+          var t = 1 - (monster.vy / JUMP_VEL);
+          return (38 + t * -80) * Math.PI / 180;
+        } else {
+          // 下落：-42°（最高点）→ 30°（落地前一帧）
+          var t = Math.min(monster.vy / 11, 1);
+          return (-42 + t * 72) * Math.PI / 180;
+        }
       }
+      var armAngle = getArmAngleRad();
+
+      function r(sx, sy, sw, sh, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.round(px + (sx - ox) * s),
+          Math.round(py + (sy - oy) * s),
+          Math.round(sw * s),
+          Math.round(sh * s)
+        );
+      }
+      // 绕源坐标 pivot 旋转绘制一个矩形
+      function drawArm(pivotSrcX, pivotSrcY, armSrcX, armSrcY, armSrcW, armSrcH, color) {
+        ctx.save();
+        ctx.translate(
+          px + (pivotSrcX - ox) * s,
+          py + (pivotSrcY - oy) * s
+        );
+        ctx.rotate(armAngle);
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.round((armSrcX - pivotSrcX) * s),
+          Math.round((armSrcY - pivotSrcY) * s),
+          Math.round(armSrcW * s),
+          Math.round(armSrcH * s)
+        );
+        ctx.restore();
+      }
+
+      // 身体
+      r(40.9,  8.74,  191.6,  127.85, '#DA7756');
+      // 手臂（绕 pivot 旋转）
+      drawArm(48.9, 58.45,  9.23, 42.62, 39.67, 31.66, '#DA7756'); // 左臂，pivot 在右边缘 (48.9, 58.45)
+      drawArm(224,  58.45,  224,  42.62, 40.17, 31.66, '#DA7756'); // 右臂，pivot 在左边缘 (224, 58.45)
+      // 四条腿
+      r(57.4,  144.59, 15.39, 28.18, '#DA7756');
+      r(89.29, 144.59, 15.76, 28.18, '#DA7756');
+      r(168.67,144.59, 15.6,  28.18, '#DA7756');
+      r(200.04,144.59, 15.18, 28.18, '#DA7756');
+      // 眼睛
+      r(73.24, 42.62,  16.26, 30.66, '#000');
+      r(183.9, 42.62,  16.26, 30.66, '#000');
     }
 
     var offsetX = 0;
@@ -571,7 +609,7 @@
         ctx.fillStyle = 'rgba(200,180,255,' + a + ')';
         ctx.fillRect(Math.floor(stars[si].x), Math.floor(stars[si].y), stars[si].size, stars[si].size);
       }
-      drawMonster(monster.x, monster.y);
+      drawClawd(monster.x, monster.y);
       for (var i = 0; i < obstacles.length; i++) {
         var o = obstacles[i];
         drawCactus(o.x, o.y, o.type);
