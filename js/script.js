@@ -443,8 +443,9 @@
     var groundY = H - 38;
 
     var score = 0, running = false, speed = 5, started = false;
-    var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0 };
+    var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
     var GRAVITY = 0.6, JUMP_VEL = -11;
+    var ANTICIPATION_FRAMES = 6;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
     var obstacles = [], frame = 0;
 
     var stars = [];
@@ -471,6 +472,14 @@
       frame++;
       score++;
       if (monster.landTimer > 0) monster.landTimer--;
+      // 蓄力阶段：倒计时，归零时正式启动跳跃
+      if (monster.anticipationTimer > 0) {
+        monster.anticipationTimer--;
+        if (monster.anticipationTimer === 0) {
+          monster.jumping = true;
+          monster.vy = JUMP_VEL;
+        }
+      }
       if (monster.jumping) {
         monster.y += monster.vy;
         monster.vy += GRAVITY;
@@ -525,9 +534,24 @@
       var ox = 9.23;   // 源最左 x（左手臂）
       var oy = 8.74;   // 源最上 y（身体顶）
 
+      // 身体压拉（Plan A：蓄力 + 落地）
+      // 参考源：ANTICIPATION_SCALE_X=1.12, ANTICIPATION_SCALE_Y=0.77
+      // 参考源：LANDING_SCALE_X=1.15, LANDING_SCALE_Y=0.7
+      var scaleX = 1, scaleY = 1;
+      if (monster.anticipationTimer > 0) {
+        var tAt = 1 - (monster.anticipationTimer / ANTICIPATION_FRAMES); // 0 → 1
+        scaleX = 1 + 0.12 * tAt;
+        scaleY = 1 - 0.23 * tAt;
+      } else if (monster.landTimer > 0) {
+        var tL = monster.landTimer / 3; // 1 → 0
+        scaleX = 1 + 0.15 * tL;
+        scaleY = 1 - 0.3 * tL;
+      }
+
       // 手臂摆动角度（参考源 ARM_PIVOTS / ARM_*_SWING_DEGREES）
       function getArmAngleRad() {
         if (monster.landTimer > 0) return 30 * Math.PI / 180;   // 落地瞬间：下摆 30°
+        if (monster.anticipationTimer > 0) return 38 * Math.PI / 180; // 蓄力：下摆 38°
         if (!monster.jumping)    return 0;                      // 静止：0°
         if (monster.vy <= 0) {
           // 上升：38°（起跳）→ -42°（最高点）
@@ -550,14 +574,15 @@
           Math.round(sh * s)
         );
       }
-      // 绕源坐标 pivot 旋转绘制一个矩形
-      function drawArm(pivotSrcX, pivotSrcY, armSrcX, armSrcY, armSrcW, armSrcH, color) {
+      // 绕源坐标 pivot 旋转绘制一个矩形（在外部 scale 包裹的坐标系里）
+      // sign=-1 用于左臂：左臂在 pivot 左侧，需取反才能跟右臂同步往同一方向甩
+      function drawArm(pivotSrcX, pivotSrcY, armSrcX, armSrcY, armSrcW, armSrcH, color, sign) {
         ctx.save();
         ctx.translate(
           px + (pivotSrcX - ox) * s,
           py + (pivotSrcY - oy) * s
         );
-        ctx.rotate(armAngle);
+        ctx.rotate(armAngle * sign);
         ctx.fillStyle = color;
         ctx.fillRect(
           Math.round((armSrcX - pivotSrcX) * s),
@@ -568,11 +593,22 @@
         ctx.restore();
       }
 
+      // 整体围绕角色底部中心 (136.7, 172.77) 缩放（脚不动，身子挤压拉伸）
+      var pivotSrcX = 136.7;
+      var pivotSrcY = 172.77;
+      var pivotScreenX = px + (pivotSrcX - ox) * s;
+      var pivotScreenY = py + (pivotSrcY - oy) * s;
+
+      ctx.save();
+      ctx.translate(pivotScreenX, pivotScreenY);
+      ctx.scale(scaleX, scaleY);
+      ctx.translate(-pivotScreenX, -pivotScreenY);
+
       // 身体
       r(40.9,  8.74,  191.6,  127.85, '#DA7756');
-      // 手臂（绕 pivot 旋转）
-      drawArm(48.9, 58.45,  9.23, 42.62, 39.67, 31.66, '#DA7756'); // 左臂，pivot 在右边缘 (48.9, 58.45)
-      drawArm(224,  58.45,  224,  42.62, 40.17, 31.66, '#DA7756'); // 右臂，pivot 在左边缘 (224, 58.45)
+      // 手臂（绕 pivot 旋转；左臂取反保持镜像同步）
+      drawArm(48.9, 58.45,  9.23, 42.62, 39.67, 31.66, '#DA7756', -1); // 左臂，pivot 在右边缘
+      drawArm(224,  58.45,  224,  42.62, 40.17, 31.66, '#DA7756',  1); // 右臂，pivot 在左边缘
       // 四条腿
       r(57.4,  144.59, 15.39, 28.18, '#DA7756');
       r(89.29, 144.59, 15.76, 28.18, '#DA7756');
@@ -581,6 +617,8 @@
       // 眼睛
       r(73.24, 42.62,  16.26, 30.66, '#000');
       r(183.9, 42.62,  16.26, 30.66, '#000');
+
+      ctx.restore();
     }
 
     var offsetX = 0;
@@ -643,7 +681,7 @@
     }
 
     function jump() {
-      if (!monster.jumping) { monster.jumping = true; monster.vy = JUMP_VEL; }
+      if (!monster.jumping && monster.anticipationTimer === 0) { monster.anticipationTimer = ANTICIPATION_FRAMES; }
       if (!running) restart();
     }
 
