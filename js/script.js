@@ -191,12 +191,22 @@
         return '<span class="project-tag">#' + t + '</span>';
       }).join('');
 
+      var titleHtml =
+        '<span class="project-title-cn">' + proj.title + '</span>' +
+        (proj.titleEn ? '<span class="project-title-en">' + proj.titleEn + '</span>' : '');
+      var iconHtml = proj.image
+        ? '<img class="project-image" src="' + proj.image + '" alt="">'
+        : '<div class="project-icon">' + (proj.icon || String.fromCodePoint(0x1f4e6)) + '</div>';
+
       card.innerHTML =
         '<span class="project-status ' + statusClass + '">' + statusText + '</span>' +
         '<div class="project-icon">' + (proj.icon || '📦') + '</div>' +
         '<h3 class="project-title">' + proj.title + '</h3>' +
         '<p class="project-desc">' + proj.desc + '</p>' +
         '<div class="project-tags">' + tagsHtml + '</div>';
+
+      card.querySelector('.project-icon').outerHTML = iconHtml;
+      card.querySelector('.project-title').innerHTML = titleHtml;
 
       grid.appendChild(card);
     });

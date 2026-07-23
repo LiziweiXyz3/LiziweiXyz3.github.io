@@ -32,6 +32,12 @@
   --font-mono:   'VT323', monospace;
   --font-cn:     'Zpix', 'Press Start 2P', monospace;  /* 支持中文的像素字体 */
   --font-code:   'Fira Code', monospace;
+  --font-title-cn: 'Zpix', monospace;
+  --font-title-en: 'Press Start 2P', monospace;
+  --font-title-cn-scale: 1.05;
+  --font-title-en-scale: 0.9;
+  --project-title-leading: 1.25;
+  --project-title-gap: 0.45em;
   --font-size-mono: 22px;
   --font-size-pixel-sm: 10px;
 
@@ -483,10 +489,31 @@ a:hover { color: var(--yellow); }
   image-rendering: pixelated;
 }
 
+.project-image {
+  width: 40px;
+  height: 40px;
+  display: block;
+  margin-bottom: 12px;
+  image-rendering: pixelated;
+}
+
 .project-title {
-  font-family: var(--font-pixel);
   font-size: 14px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--project-title-gap);
+  line-height: var(--project-title-leading);
   margin-bottom: 8px;
+}
+
+.project-title-cn {
+  font-family: var(--font-title-cn);
+  font-size: calc(1em * var(--font-title-cn-scale));
+}
+
+.project-title-en {
+  font-family: var(--font-title-en);
+  font-size: calc(1em * var(--font-title-en-scale));
 }
 
 .project-desc {

@@ -68,6 +68,9 @@ const projects = [
     status: "wip",
     link: "https://github.com/LiziweiXyz3/songbang",
     icon: "\u{1FAA2}"
+    , title: String.fromCodePoint(0x677e, 0x7ed1)
+    , titleEn: "Songbang"
+    , image: "assets/songbang-knot.svg"
   }
 ];
 
