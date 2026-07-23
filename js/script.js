@@ -175,8 +175,14 @@
     }
 
     projects.forEach(function (proj) {
-      var card = document.createElement('div');
-      card.className = 'project-card';
+      var card = document.createElement(proj.link ? 'a' : 'div');
+      card.className = 'project-card' + (proj.link ? ' project-card-link' : '');
+
+      if (proj.link) {
+        card.href = proj.link;
+        card.target = '_blank';
+        card.rel = 'noopener';
+      }
 
       var statusClass = 'status-' + proj.status;
       var statusText = { done: 'DONE', wip: 'WIP', planned: 'TODO' }[proj.status] || '???';
@@ -185,17 +191,12 @@
         return '<span class="project-tag">#' + t + '</span>';
       }).join('');
 
-      var linkHtml = proj.link
-        ? '<a href="' + proj.link + '" target="_blank" rel="noopener" style="font-family:var(--font-pixel);font-size:9px;color:var(--blue);">🔗 VIEW</a>'
-        : '';
-
       card.innerHTML =
         '<span class="project-status ' + statusClass + '">' + statusText + '</span>' +
         '<div class="project-icon">' + (proj.icon || '📦') + '</div>' +
         '<h3 class="project-title">' + proj.title + '</h3>' +
         '<p class="project-desc">' + proj.desc + '</p>' +
-        '<div class="project-tags">' + tagsHtml + '</div>' +
-        (linkHtml ? '<div style="margin-top:10px;">' + linkHtml + '</div>' : '');
+        '<div class="project-tags">' + tagsHtml + '</div>';
 
       grid.appendChild(card);
     });
