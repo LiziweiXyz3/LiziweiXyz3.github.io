@@ -67,7 +67,7 @@ const projects = [
     tags: ["React", "Vite", "Tailwind CSS", "PWA"],
     status: "wip",
     link: "https://github.com/LiziweiXyz3/songbang",
-    icon: "🍁"
+    icon: "\u{1FAA2}"
   }
 ];
 
