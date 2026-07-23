@@ -442,6 +442,7 @@ a:hover { color: var(--yellow); }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--gap);
+  align-items: stretch;
 }
 
 .project-card {
@@ -452,6 +453,7 @@ a:hover { color: var(--yellow); }
   transition: transform 0.15s, box-shadow 0.15s;
   position: relative;
   overflow: hidden;
+  height: 100%;
 }
 .project-card-link {
   display: block;
@@ -498,7 +500,7 @@ a:hover { color: var(--yellow); }
 }
 
 .project-title {
-  font-size: 14px;
+  font-size: 18px;
   display: inline-flex;
   align-items: baseline;
   gap: var(--project-title-gap);
@@ -519,8 +521,13 @@ a:hover { color: var(--yellow); }
 .project-desc {
   font-family: var(--font-cn);
   color: var(--text-dim);
-  font-size: 15px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(1.6em * 2);
   margin-bottom: 12px;
 }
 

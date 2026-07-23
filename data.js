@@ -63,12 +63,11 @@ const projects = [
   {
     id: 2,
     title: "松绑",
-    desc: "面向职场青年的心理韧性训练与理想生活探索工具，用情绪觉察、压力拆解和微行动帮助找回主动选择。",
+    desc: "面向职场青年的心理韧性训练与理想生活探索工具。",
     tags: ["React", "Vite", "Tailwind CSS", "PWA"],
     status: "wip",
     link: "https://github.com/LiziweiXyz3/songbang",
-    titleEn: "Songbang",
-    image: "assets/songbang-knot.svg"
+    icon: "💼"
   }
 ];
 
