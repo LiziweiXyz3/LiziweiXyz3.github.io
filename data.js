@@ -57,8 +57,17 @@ const projects = [
     desc: "极客像素风格个人主页，数据驱动渲染，部署在 GitHub Pages",
     tags: ["HTML", "CSS", "JavaScript"],
     status: "done",
-    link: null,
+    link: "https://github.com/LiziweiXyz3/LiziweiXyz3.github.io",
     icon: "🌐"
+  },
+  {
+    id: 2,
+    title: "松绑 Songbang",
+    desc: "面向职场青年的心理韧性训练与理想生活探索工具，用情绪觉察、压力拆解和微行动帮助找回主动选择。",
+    tags: ["React", "Vite", "Tailwind CSS", "PWA"],
+    status: "wip",
+    link: "https://github.com/LiziweiXyz3/songbang",
+    icon: "🍁"
   }
 ];
 
