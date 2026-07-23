@@ -8,6 +8,3 @@ Thumbs.db
 
 # Env
 .env
-
-# Local subagent execution ledger and handoff files
-.superpowers/
