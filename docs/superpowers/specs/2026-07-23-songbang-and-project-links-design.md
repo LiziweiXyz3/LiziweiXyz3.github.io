@@ -10,7 +10,7 @@
 ## 范围与发布
 
 - 仅修改 `D:\PersonalSite` 的本地文件与 Git 历史；不推送远程仓库。
-- Songbang 仅新增 README，不改动应用代码；同样只在本地提交，不推送。
+- Songbang 仅新增 README，不改动应用代码；完成本地提交后将 README 推送到 GitHub。
 
 ## 验收
 
