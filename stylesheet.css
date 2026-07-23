@@ -453,6 +453,9 @@ a:hover { color: var(--yellow); }
   text-decoration: none;
   cursor: pointer;
 }
+.project-card-link:hover {
+  color: inherit;
+}
 .project-card-link:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 3px;
