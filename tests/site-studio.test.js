@@ -201,19 +201,25 @@ function createPanelHarness(savedValue) {
   const close = createElement('button');
   const sections = createElement('div');
   const resetAll = createElement('button');
+  const save = createElement('button');
+  const undo = createElement('button');
+  const status = createElement('output');
   const ids = {
     siteStudioToggle: toggle,
     siteStudioPanel: panel,
     siteStudioClose: close,
     siteStudioSections: sections,
-    siteStudioResetAll: resetAll
+    siteStudioResetAll: resetAll,
+    siteStudioSave: save,
+    siteStudioUndo: undo,
+    siteStudioStatus: status
   };
   const doc = createDocument(base.editables, ids);
   base.doc = doc;
   const controller = api.createController(doc, base.storage);
   api.bindPanel(doc, controller);
   return Object.assign(base, {
-    doc, controller, toggle, panel, close, sections, resetAll,
+    doc, controller, toggle, panel, close, sections, resetAll, save, undo, status,
     root: doc.documentElement,
     outside: createElement('div')
   });
@@ -224,7 +230,7 @@ test('normalizes V2 text styles and UI state against known edit keys', function 
     version: 2,
     text: { 'hero.title': '', unknown: 'drop me' },
     textStyles: {
-      'hero.title': { font: 'terminal', scale: 120 },
+      'hero.title': { font: 'terminal', scale: 120, bold: true, italic: true },
       'hero.subtitle': { font: 'invalid', scale: 103 }
     },
     ui: { selectedKey: 'hero.title', openSections: ['hero', 'unknown', 'hero'] }
@@ -232,8 +238,8 @@ test('normalizes V2 text styles and UI state against known edit keys', function 
 
   assert.equal(draft.text['hero.title'], '');
   assert.equal(draft.text.unknown, undefined);
-  assert.deepEqual(draft.textStyles['hero.title'], { font: 'terminal', scale: 120 });
-  assert.deepEqual(draft.textStyles['hero.subtitle'], { font: 'classic', scale: 100 });
+  assert.deepEqual(draft.textStyles['hero.title'], { font: 'terminal', scale: 120, bold: true, italic: true });
+  assert.deepEqual(draft.textStyles['hero.subtitle'], { font: 'classic', scale: 100, bold: false, italic: false });
   assert.deepEqual(draft.ui, { selectedKey: 'hero.title', openSections: ['hero'] });
 });
 
@@ -246,8 +252,8 @@ test('migrates V1 section typography to every known item and writes V2 back', fu
   const normalized = api.normalizeDraft(raw, ['hero.title', 'hero.subtitle', 'about.intro']);
   assert.equal(normalized.version, 2);
   assert.equal(normalized.text['hero.title'], '新名字');
-  assert.deepEqual(normalized.textStyles['hero.title'], { font: 'code', scale: 125 });
-  assert.deepEqual(normalized.textStyles['hero.subtitle'], { font: 'code', scale: 125 });
+  assert.deepEqual(normalized.textStyles['hero.title'], { font: 'code', scale: 125, bold: false, italic: false });
+  assert.deepEqual(normalized.textStyles['hero.subtitle'], { font: 'code', scale: 125, bold: false, italic: false });
   assert.equal(normalized.textStyles['about.intro'], undefined);
 
   const harness = createStudioHarness(raw);
@@ -285,14 +291,18 @@ test('edited mixed text keeps separate English and Chinese language nodes', func
   ]);
 });
 
-test('applies font and scale independently to sibling Hero text', function () {
+test('applies font, scale, bold and italic independently to sibling Hero text', function () {
   const harness = createStudioHarness(null);
   const controller = api.createController(harness.doc, harness.storage);
-  controller.setTextStyle('hero.title', 'arcade', 90);
-  controller.setTextStyle('hero.subtitle', 'terminal', 125);
+  controller.setTextStyle('hero.title', 'arcade', 90, true, false);
+  controller.setTextStyle('hero.subtitle', 'terminal', 125, false, true);
   assert.equal(harness.heroTitle.getAttribute('data-studio-font'), 'arcade');
+  assert.equal(harness.heroTitle.getAttribute('data-studio-bold'), 'true');
+  assert.equal(harness.heroTitle.getAttribute('data-studio-italic'), null);
   assert.equal(harness.heroTitle.style.getPropertyValue('--studio-item-scale'), '0.9');
   assert.equal(harness.heroSubtitle.getAttribute('data-studio-font'), 'terminal');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-bold'), null);
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-italic'), 'true');
   assert.equal(harness.heroSubtitle.style.getPropertyValue('--studio-item-scale'), '1.25');
 });
 
@@ -307,11 +317,11 @@ test('item, section and global resets clear only their intended V2 scope', funct
   controller.resetItem('hero.title');
   assert.equal(harness.heroTitle.textContent, '岁安');
   assert.equal(controller.getDraft().textStyles['hero.title'], undefined);
-  assert.deepEqual(controller.getDraft().textStyles['hero.subtitle'], { font: 'terminal', scale: 120 });
+  assert.deepEqual(controller.getDraft().textStyles['hero.subtitle'], { font: 'terminal', scale: 120, bold: false, italic: false });
 
   controller.resetSection('hero');
   assert.equal(controller.getDraft().textStyles['hero.subtitle'], undefined);
-  assert.deepEqual(controller.getDraft().textStyles['about.intro'], { font: 'arcade', scale: 90 });
+  assert.deepEqual(controller.getDraft().textStyles['about.intro'], { font: 'arcade', scale: 90, bold: false, italic: false });
 
   controller.resetAll();
   assert.deepEqual(controller.getDraft(), api.createEmptyDraft());
@@ -319,6 +329,9 @@ test('item, section and global resets clear only their intended V2 scope', funct
 
 test('page provides a generated sidebar mount instead of section-wide controls', function () {
   assert.match(html, /id="siteStudioSections"/);
+  assert.match(html, /id="siteStudioSave"/);
+  assert.match(html, /id="siteStudioUndo"/);
+  assert.match(html, /id="siteStudioStatus"/);
   assert.doesNotMatch(html, /id="siteStudioEditMode"/);
   assert.doesNotMatch(html, /data-studio-font-control/);
 });
@@ -344,16 +357,70 @@ test('sidebar generates all controls and edits copy and typography live', functi
   const textInput = control.querySelector('[data-studio-text-input]');
   const font = control.querySelector('[data-studio-item-font]');
   const scale = control.querySelector('[data-studio-item-scale]');
+  const bold = control.querySelector('[data-studio-item-bold]');
+  const italic = control.querySelector('[data-studio-item-italic]');
   textInput.value = '> AI Product Manager';
   textInput.fire('input');
   font.value = 'code';
   font.fire('change');
   scale.value = '130';
   scale.fire('input');
+  bold.checked = true;
+  bold.fire('change');
+  italic.checked = true;
+  italic.fire('change');
 
   assert.equal(harness.heroSubtitle.textContent, '> AI Product Manager');
   assert.equal(harness.heroSubtitle.getAttribute('data-studio-font'), 'code');
   assert.equal(harness.heroSubtitle.style.getPropertyValue('--studio-item-scale'), '1.3');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-bold'), 'true');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-italic'), 'true');
+});
+
+test('multiline copy preserves authored line breaks on the page', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+  controller.setText('about.intro', '互联网数据分析师，正在学习 AI。\n用数据理解世界，用 AI 拓展边界。');
+
+  assert.equal(harness.aboutIntro.textContent, '互联网数据分析师，正在学习 AI。\n用数据理解世界，用 AI 拓展边界。');
+  assert.match(css, /\[data-edit-key\]\[data-edit-multiline="true"\][^{]*\{[^}]*white-space:\s*pre-wrap/);
+});
+
+test('editing an About stat value updates and clamps its linked bar width', function () {
+  const row = createElement('div');
+  row.className = 'stat-row';
+  const value = editable('about.stats.0.value', '分析能力 · 属性数值', '75/100');
+  const bar = createElement('div');
+  bar.className = 'stat-bar-inner';
+  row.appendChild(value);
+  row.appendChild(bar);
+  const controller = api.createController(createDocument([value]), null);
+
+  controller.setText('about.stats.0.value', '42/100');
+  assert.equal(bar.style.getPropertyValue('width'), '42%');
+  assert.equal(bar.getAttribute('data-width'), '42%');
+  controller.setText('about.stats.0.value', '135');
+  assert.equal(bar.style.getPropertyValue('width'), '100%');
+});
+
+test('sidebar save confirms persistence and undo restores the previous editing step', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  const control = harness.sections.querySelector('[data-studio-item-control="hero.title"]');
+  const input = control.querySelector('[data-studio-text-input]');
+  input.value = '岁';
+  input.fire('input');
+  input.value = '岁安的新名字';
+  input.fire('input');
+  input.fire('blur');
+
+  assert.equal(harness.heroTitle.textContent, '岁安的新名字');
+  assert.equal(harness.undo.disabled, false);
+  harness.undo.fire('click');
+  assert.equal(harness.heroTitle.textContent, '岁安');
+  harness.save.fire('click');
+  assert.equal(harness.status.textContent, '已保存到本地');
+  assert.equal(JSON.parse(harness.writes.at(-1)[1]).version, 2);
 });
 
 test('outside click and Escape keep sidebar open while only close exits editing', function () {
@@ -511,9 +578,17 @@ test('studio CSS applies per-item scaling, font presets and selected states', fu
   assert.match(css, /\[data-edit-key\][\s\S]*--studio-item-scale:\s*1/);
   assert.match(css, /font-size:\s*calc\([^;]+var\(--studio-item-scale, 1\)\)/);
   assert.match(css, /\[data-edit-key\]\[data-studio-font="code"\]/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-bold="true"\][^{]*\{[^}]*font-weight:\s*700/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-italic="true"\][^{]*\{[^}]*font-style:\s*italic/);
   assert.match(css, /\[data-edit-key\]\[data-studio-selected="true"\]/);
   assert.doesNotMatch(css, /\[data-studio-section\][\s\S]{0,400}--studio-text-scale/);
   assert.doesNotMatch(css, /\.project-icon\s*\{[^}]*--studio-item-scale/);
+});
+
+test('Chinese Hero title font presets override the default Zpix rule', function () {
+  assert.match(css, /\[data-edit-key\]\[data-studio-font="terminal"\][^{]*\{[^}]*font-family:[^}]*Microsoft YaHei/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-font="arcade"\][^{]*\{[^}]*font-family:[^}]*SimHei/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-font="code"\][^{]*\{[^}]*font-family:[^}]*FangSong/);
 });
 
 test('selected text highlight preserves gradient-backed text such as the site brand', function () {

@@ -65,7 +65,12 @@
   function normalizeTextStyle(value) {
     var font = value && has(CONFIG.presets, value.font) ? value.font : 'classic';
     var scale = Number(value && value.scale);
-    return { font: font, scale: isValidScale(scale) ? scale : CONFIG.defaultScale };
+    return {
+      font: font,
+      scale: isValidScale(scale) ? scale : CONFIG.defaultScale,
+      bold: !!(value && value.bold === true),
+      italic: !!(value && value.italic === true)
+    };
   }
 
   function parseDraft(value) {
@@ -227,9 +232,25 @@
     setPlainText(doc, element, text);
   }
 
+  function syncDerivedDisplay(element, key, text) {
+    if (!/^about\.stats\.\d+\.value$/.test(String(key)) || !element || !element.closest) return;
+    var row = element.closest('.stat-row');
+    var bar = row && row.querySelector ? row.querySelector('.stat-bar-inner') : null;
+    if (!bar) return;
+    var match = String(text).match(/-?\d+(?:\.\d+)?/);
+    var value = match ? Number(match[0]) : 0;
+    if (!Number.isFinite(value)) value = 0;
+    value = Math.max(0, Math.min(100, value));
+    var width = String(value) + '%';
+    if (bar.style && bar.style.setProperty) bar.style.setProperty('width', width);
+    bar.setAttribute('data-width', width);
+  }
+
   function clearTextStyle(element) {
     if (!element) return;
     element.removeAttribute('data-studio-font');
+    element.removeAttribute('data-studio-bold');
+    element.removeAttribute('data-studio-italic');
     if (element.style && element.style.removeProperty) element.style.removeProperty('--studio-item-scale');
   }
 
@@ -237,6 +258,10 @@
     if (!element) return;
     var safe = normalizeTextStyle(setting);
     element.setAttribute('data-studio-font', safe.font);
+    if (safe.bold) element.setAttribute('data-studio-bold', 'true');
+    else element.removeAttribute('data-studio-bold');
+    if (safe.italic) element.setAttribute('data-studio-italic', 'true');
+    else element.removeAttribute('data-studio-italic');
     if (element.style && element.style.setProperty) {
       element.style.setProperty('--studio-item-scale', String(safe.scale / 100));
     }
@@ -270,12 +295,30 @@
     }
     var parsedSaved = parseDraft(saved);
     var draft = normalizeDraft(parsedSaved, knownKeys);
+    var history = [];
+    var activeHistoryGroup = null;
     var legacySections = parsedSaved && parsedSaved.version === 1 && parsedSaved.sections &&
       typeof parsedSaved.sections === 'object' ? parsedSaved.sections : null;
 
     function persist() {
-      if (!storage) return;
-      try { storage.setItem(CONFIG.storageKey, JSON.stringify(draft)); } catch (error) { /* optional */ }
+      if (!storage) return false;
+      try {
+        storage.setItem(CONFIG.storageKey, JSON.stringify(draft));
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function recordHistory(group) {
+      if (group && activeHistoryGroup === group) return;
+      history.push(cloneDraft(draft, knownKeys));
+      if (history.length > 100) history.shift();
+      activeHistoryGroup = group || null;
+    }
+
+    function endHistoryGroup() {
+      activeHistoryGroup = null;
     }
 
     function applyItem(key, restoreSourceText) {
@@ -283,11 +326,13 @@
       if (!element) return;
       if (hasOwn(draft.text, key)) {
         applyEditableText(doc, element, draft.text[key]);
+        syncDerivedDisplay(element, key, draft.text[key]);
         element.setAttribute('data-studio-draft-applied', 'true');
       } else if (restoreSourceText) {
         if (!restoreSourceTemplate(element, sourceTemplates[key])) {
           applyEditableText(doc, element, sourceText[key]);
         }
+        syncDerivedDisplay(element, key, sourceText[key]);
         element.removeAttribute('data-studio-draft-applied');
       }
       if (hasOwn(draft.textStyles, key)) applyTextStyle(element, draft.textStyles[key]);
@@ -346,7 +391,7 @@
         sourceText: sourceText[key],
         style: hasOwn(draft.textStyles, key)
           ? normalizeTextStyle(draft.textStyles[key])
-          : { font: 'classic', scale: CONFIG.defaultScale }
+          : { font: 'classic', scale: CONFIG.defaultScale, bold: false, italic: false }
       };
     }
 
@@ -361,19 +406,28 @@
       getElement: function (key) { return elementByKey[key] || null; },
       getItemState: getItemState,
       refreshRegistry: refreshRegistry,
-      setText: function (key, text) {
+      setText: function (key, text, historyGroup) {
         if (!elementByKey[key] || typeof text !== 'string') return false;
         var safeText = text.slice(0, CONFIG.maxTextLength);
+        var currentText = hasOwn(draft.text, key) ? draft.text[key] : sourceText[key];
+        if (safeText === currentText) return true;
+        recordHistory(historyGroup);
         if (safeText === sourceText[key]) delete draft.text[key];
         else draft.text[key] = safeText;
         applyItem(key, true);
         persist();
         return true;
       },
-      setTextStyle: function (key, font, scale) {
+      setTextStyle: function (key, font, scale, bold, italic, historyGroup) {
         if (!elementByKey[key]) return false;
-        var setting = normalizeTextStyle({ font: font, scale: Number(scale) });
-        if (setting.font === 'classic' && setting.scale === CONFIG.defaultScale) {
+        var setting = normalizeTextStyle({ font: font, scale: Number(scale), bold: bold, italic: italic });
+        var current = hasOwn(draft.textStyles, key)
+          ? normalizeTextStyle(draft.textStyles[key])
+          : normalizeTextStyle(null);
+        if (setting.font === current.font && setting.scale === current.scale &&
+            setting.bold === current.bold && setting.italic === current.italic) return true;
+        recordHistory(historyGroup);
+        if (setting.font === 'classic' && setting.scale === CONFIG.defaultScale && !setting.bold && !setting.italic) {
           delete draft.textStyles[key];
         } else {
           draft.textStyles[key] = setting;
@@ -381,6 +435,20 @@
         applyItem(key, false);
         persist();
         return true;
+      },
+      endHistoryGroup: endHistoryGroup,
+      canUndo: function () { return history.length > 0; },
+      undo: function () {
+        if (!history.length) return false;
+        draft = cloneDraft(history.pop(), knownKeys);
+        endHistoryGroup();
+        applyAll(true);
+        persist();
+        return true;
+      },
+      save: function () {
+        endHistoryGroup();
+        return persist();
       },
       setUi: function (selectedKey, openSections) {
         draft.ui.selectedKey = has(currentKeys, selectedKey) ? selectedKey : null;
@@ -394,6 +462,8 @@
       },
       resetItem: function (key) {
         if (!elementByKey[key]) return false;
+        if (!hasOwn(draft.text, key) && !hasOwn(draft.textStyles, key)) return true;
+        recordHistory();
         delete draft.text[key];
         delete draft.textStyles[key];
         applyItem(key, true);
@@ -402,6 +472,11 @@
       },
       resetSection: function (name) {
         if (!has(CONFIG.sections, name)) return false;
+        var hasChanges = knownKeys.some(function (key) {
+          return sectionFromKey(key) === name && (hasOwn(draft.text, key) || hasOwn(draft.textStyles, key));
+        });
+        if (!hasChanges) return true;
+        recordHistory();
         knownKeys.forEach(function (key) {
           if (sectionFromKey(key) === name) {
             delete draft.text[key];
@@ -413,6 +488,7 @@
         return true;
       },
       resetAll: function () {
+        if (Object.keys(draft.text).length || Object.keys(draft.textStyles).length) recordHistory();
         draft = createEmptyDraft();
         applyAll(true);
         if (storage && storage.removeItem) {
@@ -444,11 +520,22 @@
     var close = doc.getElementById('siteStudioClose');
     var mount = doc.getElementById('siteStudioSections');
     var resetAll = doc.getElementById('siteStudioResetAll');
+    var saveButton = doc.getElementById('siteStudioSave');
+    var undoButton = doc.getElementById('siteStudioUndo');
+    var status = doc.getElementById('siteStudioStatus');
     if (!toggle || !panel || !close || !mount) return;
 
     var itemControls = {};
     var sectionControls = {};
     var selectedKey = controller.getDraft().ui.selectedKey;
+
+    function setStatus(message) {
+      if (status) status.textContent = message || '';
+    }
+
+    function updateActionState() {
+      if (undoButton) undoButton.disabled = !controller.canUndo();
+    }
 
     function editingIsOpen() {
       return panel.hidden === false;
@@ -481,6 +568,8 @@
       controls.text.value = state.text;
       controls.font.value = state.style.font;
       controls.scale.value = String(state.style.scale);
+      controls.bold.checked = state.style.bold;
+      controls.italic.checked = state.style.italic;
       controls.output.textContent = state.style.scale + '%';
       controls.preview.textContent = truncatePreview(state.text) || '（空）';
     }
@@ -568,6 +657,30 @@
       scaleLabel.appendChild(scale);
       details.appendChild(scaleLabel);
 
+      var formatOptions = doc.createElement('div');
+      formatOptions.className = 'site-studio-format-options';
+      var boldLabel = doc.createElement('label');
+      boldLabel.className = 'site-studio-format-option';
+      var bold = doc.createElement('input');
+      bold.setAttribute('type', 'checkbox');
+      bold.setAttribute('data-studio-item-bold', '');
+      bold.setAttribute('aria-label', item.label + '加粗');
+      bold.checked = item.style.bold;
+      boldLabel.appendChild(bold);
+      appendText(doc, boldLabel, 'B 加粗');
+      var italicLabel = doc.createElement('label');
+      italicLabel.className = 'site-studio-format-option';
+      var italic = doc.createElement('input');
+      italic.setAttribute('type', 'checkbox');
+      italic.setAttribute('data-studio-item-italic', '');
+      italic.setAttribute('aria-label', item.label + '斜体');
+      italic.checked = item.style.italic;
+      italicLabel.appendChild(italic);
+      appendText(doc, italicLabel, 'I 斜体');
+      formatOptions.appendChild(boldLabel);
+      formatOptions.appendChild(italicLabel);
+      details.appendChild(formatOptions);
+
       var reset = doc.createElement('button');
       reset.className = 'site-studio-reset-item';
       reset.setAttribute('type', 'button');
@@ -582,22 +695,41 @@
         text: textInput,
         font: font,
         scale: scale,
+        bold: bold,
+        italic: italic,
         output: output
       };
 
       textInput.addEventListener('input', function () {
-        controller.setText(item.key, textInput.value);
+        controller.setText(item.key, textInput.value, 'text:' + item.key);
         preview.textContent = truncatePreview(textInput.value) || '（空）';
+        setStatus('');
+        updateActionState();
       });
-      function saveStyle() {
-        controller.setTextStyle(item.key, font.value, Number(scale.value));
+      textInput.addEventListener('blur', controller.endHistoryGroup);
+      function saveStyle(historyGroup) {
+        controller.setTextStyle(
+          item.key,
+          font.value,
+          Number(scale.value),
+          bold.checked,
+          italic.checked,
+          historyGroup
+        );
         syncItem(item.key);
+        setStatus('');
+        updateActionState();
       }
-      font.addEventListener('change', saveStyle);
-      scale.addEventListener('input', saveStyle);
+      font.addEventListener('change', function () { saveStyle(); });
+      scale.addEventListener('input', function () { saveStyle('scale:' + item.key); });
+      scale.addEventListener('change', controller.endHistoryGroup);
+      bold.addEventListener('change', function () { saveStyle(); });
+      italic.addEventListener('change', function () { saveStyle(); });
       reset.addEventListener('click', function () {
         controller.resetItem(item.key);
         syncItem(item.key);
+        setStatus('');
+        updateActionState();
       });
       details.addEventListener('toggle', function () {
         if (!details.open) return;
@@ -641,6 +773,8 @@
         reset.addEventListener('click', function () {
           controller.resetSection(section);
           items.forEach(function (item) { syncItem(item.key); });
+          setStatus('');
+          updateActionState();
         });
         details.appendChild(reset);
         details.addEventListener('toggle', saveUi);
@@ -685,14 +819,33 @@
       if (panel.hidden) setPanelOpen(true, false);
     });
     close.addEventListener('click', function () { setPanelOpen(false, true); });
+    if (saveButton) {
+      saveButton.addEventListener('click', function () {
+        setStatus(controller.save() ? '已保存到本地' : '保存失败');
+        updateActionState();
+      });
+    }
+    if (undoButton) {
+      undoButton.addEventListener('click', function () {
+        if (!controller.undo()) return;
+        selectedKey = controller.getDraft().ui.selectedKey;
+        buildSidebar();
+        if (selectedKey) selectItem(selectedKey, false);
+        setStatus('已撤销上一步');
+        updateActionState();
+      });
+    }
     if (resetAll) {
       resetAll.addEventListener('click', function () {
         controller.resetAll();
         selectedKey = null;
         clearPageSelection();
         buildSidebar();
+        setStatus('');
+        updateActionState();
       });
     }
+    updateActionState();
     setPanelOpen(false, false);
   }
 
