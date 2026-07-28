@@ -241,6 +241,11 @@
       if (open) syncControls();
     }
 
+    function closePanel() {
+      setPanelOpen(false);
+      if (typeof toggle.focus === 'function') toggle.focus();
+    }
+
     function syncControls() {
       var draft = controller.getDraft();
       Array.prototype.slice.call(doc.querySelectorAll('[data-studio-control]')).forEach(function (group) {
@@ -260,6 +265,9 @@
       getTextElements(doc).forEach(function (element) {
         if (enabled) {
           element.setAttribute('contenteditable', 'plaintext-only');
+          if ('contentEditable' in element && element.contentEditable !== 'plaintext-only') {
+            element.setAttribute('contenteditable', 'true');
+          }
           element.setAttribute('spellcheck', 'false');
         } else {
           element.removeAttribute('contenteditable');
@@ -271,7 +279,7 @@
     }
 
     toggle.addEventListener('click', function () { setPanelOpen(panel.hidden); });
-    if (close) close.addEventListener('click', function () { setPanelOpen(false); });
+    if (close) close.addEventListener('click', closePanel);
     editMode.addEventListener('change', function () { setEditMode(editMode.checked); });
 
     getTextElements(doc).forEach(function (element) {
@@ -313,8 +321,12 @@
     });
 
     if (resetAll) resetAll.addEventListener('click', function () { controller.resetAll(); syncControls(); });
+    doc.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!panel.hidden && (!panel.contains(target) && !toggle.contains(target))) closePanel();
+    });
     doc.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && panel.hidden === false && !editMode.checked) setPanelOpen(false);
+      if (event.key === 'Escape' && panel.hidden === false && !editMode.checked) closePanel();
     });
     setPanelOpen(false);
     setEditMode(false);

@@ -19,13 +19,20 @@ function createStyle() {
 
 function createElement(attributes, text) {
   const attrs = Object.assign(Object.create(null), attributes || {});
+  const listeners = Object.create(null);
   return {
     attributes: attrs,
     style: createStyle(),
     textContent: text || '',
+    hidden: false,
+    focused: false,
     getAttribute: function (name) { return Object.hasOwn(attrs, name) ? attrs[name] : null; },
     setAttribute: function (name, value) { attrs[name] = String(value); },
-    removeAttribute: function (name) { delete attrs[name]; }
+    removeAttribute: function (name) { delete attrs[name]; },
+    addEventListener: function (name, listener) { listeners[name] = listener; },
+    fire: function (name, event) { if (listeners[name]) listeners[name](event || { target: this, preventDefault: function () {} }); },
+    contains: function (target) { return target === this; },
+    focus: function () { this.focused = true; }
   };
 }
 
@@ -138,6 +145,82 @@ test('resetAll clears only the temporary studio draft', function () {
   assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
 });
 
+test('panel controls open, edit, close outside and restore focus to the trigger', function () {
+  const hero = createElement({ 'data-studio-section': 'hero' });
+  const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
+  const toggle = createElement();
+  const panel = createElement();
+  panel.hidden = true;
+  const close = createElement();
+  const editMode = createElement();
+  const resetAll = createElement();
+  const font = createElement();
+  font.value = 'classic';
+  const scale = createElement();
+  scale.value = '100';
+  const output = createElement();
+  const resetSection = createElement();
+  const group = createElement({ 'data-studio-control': 'hero' });
+  group.querySelector = function (selector) {
+    return {
+      '[data-studio-font-control]': font,
+      '[data-studio-scale-control]': scale,
+      '[data-studio-scale-value]': output,
+      '[data-studio-reset-section]': resetSection
+    }[selector] || null;
+  };
+  const listeners = Object.create(null);
+  const root = createElement();
+  const doc = {
+    documentElement: root,
+    getElementById: function (id) {
+      return {
+        siteStudioToggle: toggle,
+        siteStudioPanel: panel,
+        siteStudioClose: close,
+        siteStudioEditMode: editMode,
+        siteStudioResetAll: resetAll
+      }[id] || null;
+    },
+    querySelectorAll: function (selector) {
+      if (selector === '[data-studio-section]') return [hero];
+      if (selector === '[data-edit-key]') return [heroTitle];
+      if (selector === '[data-studio-control]') return [group];
+      return [];
+    },
+    addEventListener: function (name, listener) { listeners[name] = listener; },
+    fire: function (name, event) { listeners[name](event); }
+  };
+  const storage = { getItem: function () { return null; }, setItem: function () {} };
+  const controller = api.createController(doc, storage);
+  api.bindPanel(doc, controller);
+
+  toggle.fire('click');
+  assert.equal(panel.hidden, false);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+
+  editMode.checked = true;
+  editMode.fire('change');
+  assert.equal(heroTitle.getAttribute('contenteditable'), 'plaintext-only');
+  assert.equal(root.getAttribute('data-site-studio-editing'), 'true');
+
+  font.value = 'code';
+  scale.value = '125';
+  scale.fire('input');
+  assert.equal(hero.getAttribute('data-studio-font'), 'code');
+  assert.equal(output.textContent, '125%');
+
+  editMode.checked = false;
+  editMode.fire('change');
+  doc.fire('click', { target: createElement() });
+  assert.equal(panel.hidden, true);
+  assert.equal(toggle.focused, true);
+
+  toggle.fire('click');
+  doc.fire('keydown', { key: 'Escape' });
+  assert.equal(panel.hidden, true);
+});
+
 test('all site regions expose stable edit keys and the studio uses contenteditable only in edit mode', function () {
   assert.match(html, /data-edit-key="nav\.brand"/);
   assert.match(html, /data-edit-key="projects\.subtitle"/);
@@ -147,11 +230,14 @@ test('all site regions expose stable edit keys and the studio uses contenteditab
   assert.match(script, /setEditKey\(field, 'resume\.' \+ index \+ '\.desc'/);
   assert.match(studioScript, /contenteditable.*plaintext-only/);
   assert.match(studioScript, /function bindPanel\(/);
+  assert.match(script, /data-site-studio-editing'\) === 'true'/);
+  assert.match(script, /\[contenteditable\]/);
 });
 
 test('avatar scroll controls and mini game stay playable by default', function () {
-  assert.match(script, /window\.addEventListener\('scroll', scrollHandler, \{ passive: true \}\)/);
-  assert.match(script, /var score = 0, running = false, speed = 3, started = false/);
-  assert.match(script, /frame % 720 === 0 && speed < 5\) speed \+= 0\.2/);
+  assert.match(html, /<script src="js\/site-behaviors\.js"><\/script>\s*<script src="js\/script\.js">/);
+  assert.match(script, /window\.addEventListener\('scroll', avatar\.onScroll, \{ passive: true \}\)/);
+  assert.match(script, /speed = GAME_CONFIG\.startSpeed/);
+  assert.match(script, /speed = Math\.min\(GAME_CONFIG\.maxSpeed, speed \+ GAME_CONFIG\.speedStep\)/);
   assert.doesNotMatch(html, /id="terminalInput"[^>]*autofocus/);
 });

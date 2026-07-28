@@ -20,6 +20,7 @@
       a.style.color = item.color;
       a.addEventListener('click', function (e) {
         e.preventDefault();
+        if (document.documentElement.getAttribute('data-site-studio-editing') === 'true') return;
         var target = document.getElementById(item.id);
         if (target) target.scrollIntoView({ behavior: 'smooth' });
         setActiveNav(item.id);
@@ -90,41 +91,19 @@
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
-    var isFinal = false;
+    if (!avatarEl) return;
 
     var img = document.createElement('img');
     img.src = 'selfie_stand.png';
     img.alt = user.name;
     avatarEl.appendChild(img);
-
-    function switchToStart() {
-      if (!isFinal) return;
-      isFinal = false;
-      img.src = 'selfie_stand.png';
-      img.style.transform = '';
+    var avatar = window.SiteBehaviors && window.SiteBehaviors.createAvatarController
+      ? window.SiteBehaviors.createAvatarController(img, function () { return window.scrollY; })
+      : null;
+    if (avatar) {
+      img.addEventListener('click', avatar.toggle);
+      window.addEventListener('scroll', avatar.onScroll, { passive: true });
     }
-    function switchToFinal() {
-      if (isFinal) return;
-      isFinal = true;
-      img.src = 'selfie_jump.png';
-      img.style.transform = 'scale(0.78)';
-    }
-
-    // 点击切换
-    img.addEventListener('click', function () {
-      if (isFinal) switchToStart();
-      else switchToFinal();
-    });
-
-    // 滚动方向切换
-    var lastScroll = 0;
-    var scrollHandler = function () {
-      var now = window.scrollY;
-      if (now - lastScroll > 10) switchToFinal();      // 下滑
-      else if (lastScroll - now > 10) switchToStart(); // 上滑
-      lastScroll = now;
-    };
-    window.addEventListener('scroll', scrollHandler, { passive: true });
 
     var heroTitle = document.getElementById('heroTitle');
     var heroDesc = document.getElementById('heroDesc');
@@ -435,6 +414,7 @@
     // 点击终端区域聚焦输入框
     body.addEventListener('click', function (e) {
       if (e.target.closest('.dino-game-wrap')) return;
+      if (document.documentElement.getAttribute('data-site-studio-editing') === 'true' && e.target.closest('[data-edit-key]')) return;
       input.focus();
     });
   }
@@ -570,7 +550,7 @@
     // 按下 Enter 键跳转到 About 区
     window.addEventListener('keydown', function (e) {
       var activeElement = document.activeElement;
-      var isInteractive = activeElement && activeElement.matches('button, a, input, select, textarea, [contenteditable="true"]');
+      var isInteractive = activeElement && activeElement.matches('button, a, input, select, textarea, [contenteditable]');
       if (e.key === 'Enter' && !isInteractive) {
         e.preventDefault();
         var aboutSection = document.getElementById('about');
@@ -600,7 +580,10 @@
     var W = canvas.width, H = canvas.height;
     var groundY = H - 38;
 
-    var score = 0, running = false, speed = 3, started = false;
+    var GAME_CONFIG = window.SiteBehaviors && window.SiteBehaviors.GAME_CONFIG || {
+      startSpeed: 3, maxSpeed: 5, speedStep: 0.15, speedEveryFrames: 600
+    };
+    var score = 0, running = false, speed = GAME_CONFIG.startSpeed, started = false;
     var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
     var GRAVITY = 0.6, JUMP_VEL = -11;
     var ANTICIPATION_FRAMES = 6;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
@@ -622,7 +605,9 @@
         var type = Math.random() < 0.35 ? 'cactus-big' : 'cactus-small';
         obstacles.push({ x: W, y: groundY, type: type });
       }
-      if (frame % 720 === 0 && speed < 5) speed += 0.2;
+      if (frame % GAME_CONFIG.speedEveryFrames === 0 && speed < GAME_CONFIG.maxSpeed) {
+        speed = Math.min(GAME_CONFIG.maxSpeed, speed + GAME_CONFIG.speedStep);
+      }
     }
 
     function update() {
@@ -844,7 +829,7 @@
     }
 
     function restart() {
-      started = true; running = true; score = 0; speed = 3; frame = 0; obstacles = [];
+      started = true; running = true; score = 0; speed = GAME_CONFIG.startSpeed; frame = 0; obstacles = [];
       monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false;
       update();
     }
