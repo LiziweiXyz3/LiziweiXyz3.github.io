@@ -7,247 +7,206 @@
   <link rel="stylesheet" href="editor.css">
 </head>
 <body>
-  <header class="studio-topbar">
-    <div class="studio-brand">
-      <span class="studio-logo" aria-hidden="true">PS</span>
-      <span><strong>PIXEL STUDIO</strong><small>本地网站定制器</small></span>
-    </div>
-    <div class="studio-actions">
-      <span class="studio-save-state" id="saveState">已载入正式配置</span>
-      <button id="undoButton" type="button" disabled>撤销</button>
-      <button id="discardDraftButton" type="button" title="清除未保存修改，恢复最后一次正式保存的配置">放弃草稿</button>
-      <button id="saveButton" class="primary" type="button">保存到网站</button>
-      <a class="button-link" href="index.html" target="_blank" rel="noopener">打开公开主页</a>
-    </div>
-  </header>
-
-  <main class="studio-layout">
-    <aside class="studio-tree-panel" aria-label="页面结构">
-      <div class="panel-heading">
-        <div>
-          <strong>页面结构</strong>
-          <small>按模块与内容分组</small>
+  <main class="studio-layout" id="studioLayout">
+    <section class="studio-preview-panel" aria-label="网页实时预览">
+      <div class="studio-panel-content">
+        <div class="preview-toolbar">
+          <div>
+            <strong>网页实时预览</strong>
+            <span id="selectionBreadcrumb">尚未选择元素</span>
+          </div>
         </div>
-        <button id="collapseTreeButton" type="button" aria-label="折叠全部">全部折叠</button>
-      </div>
-      <div class="studio-tree" id="structureTree"></div>
-      <div class="tree-footer">
-        <button id="importLegacyButton" type="button">导入旧版草稿</button>
-        <input id="legacyFileInput" type="file" accept="application/json" hidden>
-        <a href="legacy-export.html" target="_blank" rel="noopener">打开旧版导出工具</a>
-      </div>
-    </aside>
-
-    <section class="studio-preview-panel">
-      <div class="preview-toolbar">
-        <div>
-          <strong>实时预览</strong>
-          <span id="selectionBreadcrumb">尚未选择元素</span>
+        <div class="preview-stage" id="previewStage">
+          <iframe id="sitePreview" title="个人网站实时预览" src="index.html?studio-preview=1"></iframe>
         </div>
-        <div class="viewport-switch" role="group" aria-label="预览尺寸">
-          <button type="button" data-viewport="desktop" aria-pressed="true">桌面</button>
-          <button type="button" data-viewport="mobile" aria-pressed="false">手机</button>
-        </div>
-      </div>
-      <div class="preview-stage" id="previewStage" data-viewport="desktop">
-        <iframe id="sitePreview" title="个人网站实时预览" src="index.html?studio-preview=1"></iframe>
       </div>
     </section>
 
-    <aside class="studio-inspector" aria-label="属性面板">
-      <nav class="inspector-tabs" aria-label="编辑类别">
-        <button type="button" data-tab="element" aria-selected="true">元素</button>
-        <button type="button" data-tab="theme" aria-selected="false">主题</button>
-        <button type="button" data-tab="assets" aria-selected="false">素材</button>
-        <button type="button" data-tab="effects" aria-selected="false">交互</button>
-        <button type="button" data-tab="game" aria-selected="false">游戏</button>
-        <button type="button" data-tab="history" aria-selected="false">历史</button>
-      </nav>
-
-      <div class="inspector-body">
-        <section class="inspector-view" data-view="element">
-          <div id="emptySelection" class="empty-selection">
-            <strong>选择一个页面元素</strong>
-            <p>点击中间页面中的文字，或从左侧结构树选择。</p>
+    <aside class="studio-inspector" aria-label="页面编辑器">
+      <button class="panel-rail-toggle" id="showEditorButton" type="button" hidden
+              aria-label="展开页面编辑器">展开编辑器</button>
+      <div class="studio-panel-content">
+        <div class="editor-heading">
+          <div>
+            <strong>页面编辑器</strong>
+            <small id="saveState">已载入正式配置</small>
           </div>
-          <form id="elementForm" hidden>
-            <div class="selection-title">
-              <span id="elementScope">当前元素</span>
-              <strong id="elementLabel">—</strong>
-            </div>
-            <label class="studio-field">
-              <span>文案</span>
-              <textarea id="textControl" rows="5"></textarea>
-            </label>
-            <div class="field-grid">
-              <label class="studio-field">
-                <span>中文字体</span>
-                <select id="fontCnControl">
-                  <option value="">继承默认</option>
-                  <option value="zpix">Zpix 像素</option>
-                  <option value="noto-sans-sc">Noto Sans SC</option>
-                  <option value="lxgw-wenkai">霞鹜文楷</option>
-                </select>
-              </label>
-              <label class="studio-field">
-                <span>英文字体</span>
-                <select id="fontEnControl">
-                  <option value="">继承默认</option>
-                  <option value="press-start">Press Start 2P</option>
-                  <option value="vt323">VT323</option>
-                  <option value="fira-code">Fira Code</option>
-                  <option value="ibm-plex-mono">IBM Plex Mono</option>
-                </select>
-              </label>
-            </div>
-            <label class="studio-field range-field">
-              <span>桌面字号</span>
-              <input id="sizeControl" type="range" min="8" max="96" step="1">
-              <output id="sizeOutput"></output>
-            </label>
-            <label class="studio-field range-field">
-              <span>手机字号覆盖</span>
-              <input id="mobileSizeControl" type="range" min="8" max="72" step="1">
-              <output id="mobileSizeOutput"></output>
-              <button id="clearMobileSizeButton" type="button">跟随桌面</button>
-            </label>
-            <div class="field-grid">
-              <label class="studio-field">
-                <span>行高</span>
-                <input id="lineHeightControl" type="number" min="0.8" max="3" step="0.1">
-              </label>
-              <label class="studio-field">
-                <span>字重</span>
-                <select id="weightControl">
-                  <option value="300">细体 300</option>
-                  <option value="400">常规 400</option>
-                  <option value="500">中等 500</option>
-                  <option value="600">半粗 600</option>
-                  <option value="700">粗体 700</option>
-                  <option value="800">特粗 800</option>
-                  <option value="900">黑体 900</option>
-                </select>
-              </label>
-            </div>
-            <div class="toggle-row">
-              <label><input id="italicControl" type="checkbox"> 斜体</label>
-              <label class="studio-field compact">
-                <span>对齐</span>
-                <select id="alignControl">
-                  <option value="left">左对齐</option>
-                  <option value="center">居中</option>
-                  <option value="right">右对齐</option>
-                </select>
-              </label>
-            </div>
-            <details class="advanced-panel">
-              <summary>高级排版</summary>
-              <label class="studio-field range-field">
-                <span>字间距</span>
-                <input id="letterSpacingControl" type="range" min="-2" max="12" step="0.1">
-                <output id="letterSpacingOutput"></output>
-              </label>
-              <div class="color-editor">
-                <label class="studio-field"><span>文字颜色</span><input id="colorControl" type="color"></label>
-                <label class="studio-field"><span>HEX</span><input id="colorHexControl" type="text" maxlength="7"></label>
-                <label class="studio-field range-field"><span>透明度</span><input id="opacityControl" type="range" min="0" max="100" step="1"><output id="opacityOutput"></output></label>
-                <div class="color-swatches" id="elementColorSwatches"></div>
-                <output id="contrastOutput" class="contrast-output"></output>
+          <div class="editor-heading-actions">
+            <a class="button-link" href="index.html" target="_blank" rel="noopener">公开主页 ↗</a>
+            <button id="hideEditorButton" type="button" aria-label="折叠页面编辑器">折叠编辑器</button>
+          </div>
+        </div>
+
+        <div class="editor-actions" aria-label="保存与撤销">
+          <button id="undoButton" type="button" disabled>撤销</button>
+          <button id="discardDraftButton" type="button"
+                  title="清除未保存修改，恢复最后一次正式保存的配置">放弃草稿</button>
+          <button id="saveButton" class="primary" type="button">保存到网站</button>
+        </div>
+
+        <div class="inspector-body">
+          <section class="editor-group structure-group">
+            <div class="structure-panel-heading">
+              <div>
+                <strong>1. 页面结构</strong>
+                <small>选择要编辑的文字或工具</small>
               </div>
-              <div id="linkedColorControls" class="color-editor" hidden>
+              <button id="collapseTreeButton" type="button">全部折叠</button>
+            </div>
+            <div class="studio-tree" id="structureTree"></div>
+          </section>
+
+          <section class="editor-group settings-group">
+            <div class="settings-heading">
+              <div>
+                <strong>2. 格式与设置</strong>
+                <small>每个属性独立调整，不影响未修改的样式</small>
+              </div>
+            </div>
+
+            <section class="inspector-view" data-view="element">
+              <div id="emptySelection" class="empty-selection">
+                <strong>选择一个页面元素</strong>
+                <p>点击左侧预览中的文字，或从上方页面结构选择。</p>
+              </div>
+              <form id="elementForm" hidden>
+                <div class="selection-title">
+                  <span id="elementScope">当前元素</span>
+                  <strong id="elementLabel">—</strong>
+                </div>
                 <label class="studio-field">
-                  <span id="linkedColorLabel">关联色块颜色</span>
-                  <input id="linkedColorControl" type="color">
+                  <span>文案</span>
+                  <textarea id="textControl" rows="5"></textarea>
                 </label>
+                <div class="field-grid">
+                  <label class="studio-field" id="fontCnField">
+                    <span>中文字体</span>
+                    <select id="fontCnControl">
+                      <option value="zpix">Zpix 最像素</option>
+                      <option value="cubic-11">Cubic 11 俐方体</option>
+                      <option value="boutique-7x7">Boutique 7×7 精品点阵</option>
+                    </select>
+                  </label>
+                  <label class="studio-field" id="fontEnField">
+                    <span>英文字体</span>
+                    <select id="fontEnControl">
+                      <option value="press-start">Press Start 2P</option>
+                      <option value="vt323">VT323</option>
+                      <option value="fira-code">Fira Code</option>
+                      <option value="ibm-plex-mono">IBM Plex Mono</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="field-grid">
+                  <label class="studio-field">
+                    <span>字号（px）</span>
+                    <input id="sizeControl" type="number" min="8" max="96" step="1">
+                  </label>
+                  <label class="studio-field">
+                    <span>行高（倍数）</span>
+                    <input id="lineHeightControl" type="number" min="0.8" max="3" step="0.1">
+                  </label>
+                </div>
+                <div class="toggle-row">
+                  <label><input id="boldControl" type="checkbox"> 粗体</label>
+                  <label><input id="italicControl" type="checkbox"> 斜体</label>
+                </div>
+                <fieldset class="alignment-field">
+                  <legend>对齐</legend>
+                  <div class="segmented-control">
+                    <label><input type="radio" name="alignControl" value="left"><span>左对齐</span></label>
+                    <label><input type="radio" name="alignControl" value="center"><span>居中</span></label>
+                    <label><input type="radio" name="alignControl" value="right"><span>右对齐</span></label>
+                  </div>
+                </fieldset>
+                <div class="field-grid color-basic-grid">
+                  <label class="studio-field">
+                    <span>文字颜色</span>
+                    <input id="colorControl" type="color">
+                  </label>
+                  <label class="studio-field">
+                    <span>颜色值（HEX）</span>
+                    <input id="colorHexControl" type="text" maxlength="7">
+                  </label>
+                </div>
+                <details class="advanced-panel">
+                  <summary>精细排版</summary>
+                  <label class="studio-field range-field">
+                    <span>字间距</span>
+                    <input id="letterSpacingControl" type="range" min="-2" max="12" step="0.1">
+                    <output id="letterSpacingOutput"></output>
+                  </label>
+                  <div class="color-editor">
+                    <label class="studio-field range-field"><span>透明度</span><input id="opacityControl" type="range" min="0" max="100" step="1"><output id="opacityOutput"></output></label>
+                    <div class="color-swatches" id="elementColorSwatches"></div>
+                    <output id="contrastOutput" class="contrast-output"></output>
+                  </div>
+                  <div id="linkedColorControls" class="color-editor" hidden>
+                    <label class="studio-field">
+                      <span id="linkedColorLabel">关联色块颜色</span>
+                      <input id="linkedColorControl" type="color">
+                    </label>
+                  </div>
+                </details>
+                <div class="inspector-actions">
+                  <button id="resetElementButton" type="button">恢复元素默认样式</button>
+                  <button id="resetSectionButton" type="button">恢复本模块</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="inspector-view" data-view="cursor" hidden>
+              <h2>像素光标</h2>
+              <p class="view-help">只提供与网站一致的像素风格预设，不再支持上传素材。</p>
+              <label class="studio-field">
+                <span>光标样式</span>
+                <select id="cursorPresetControl"></select>
+              </label>
+              <div class="cursor-preview" id="cursorPreview" aria-label="光标预览">
+                在这里移动鼠标预览
               </div>
-            </details>
-            <div class="inspector-actions">
-              <button id="resetElementButton" type="button">恢复元素默认样式</button>
-              <button id="resetSectionButton" type="button">恢复本模块</button>
-            </div>
-          </form>
-        </section>
+            </section>
 
-        <section class="inspector-view" data-view="theme" hidden>
-          <h2>全站主题</h2>
-          <p class="view-help">修改 CSS 主题变量，页面立即变化。</p>
-          <div id="themeColorControls" class="theme-color-grid"></div>
-          <details class="advanced-panel" open>
-            <summary>画面细节</summary>
-            <label class="studio-field range-field"><span>扫描线强度</span><input id="scanlineControl" type="range" min="0" max="0.35" step="0.01"><output></output></label>
-            <label class="studio-field range-field"><span>粒子数量</span><input id="particleControl" type="range" min="0" max="200" step="5"><output></output></label>
-            <label class="studio-field range-field"><span>像素阴影</span><input id="shadowControl" type="range" min="0" max="12" step="1"><output></output></label>
-            <label class="studio-field range-field"><span>模块间距</span><input id="sectionGapControl" type="range" min="12" max="96" step="2"><output></output></label>
-          </details>
-          <button id="resetThemeButton" type="button">恢复默认主题</button>
-        </section>
+            <section class="inspector-view" data-view="game" hidden>
+              <h2>终端小游戏</h2>
+              <p class="view-help">打开本设置时，左侧预览会自动定位终端并启动试玩。参数变化后也会自动重新试玩。</p>
+              <div class="field-grid">
+                <label class="studio-field"><span>起始速度</span><input id="gameStartSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
+                <label class="studio-field"><span>最高速度</span><input id="gameMaxSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
+                <label class="studio-field"><span>加速幅度</span><input id="gameSpeedStep" type="number" min="0" max="0.5" step="0.01"></label>
+                <label class="studio-field"><span>加速间隔（帧）</span><input id="gameSpeedFrames" type="number" min="120" max="1800" step="60"></label>
+              </div>
+              <details class="advanced-panel">
+                <summary>跳跃、落地与障碍</summary>
+                <div class="field-grid">
+                  <label class="studio-field"><span>跳跃力度</span><input id="gameJumpVelocity" type="number" min="-10" max="-3" step="0.1"></label>
+                  <label class="studio-field"><span>上升重力</span><input id="gameRiseGravity" type="number" min="0.05" max="0.5" step="0.01"></label>
+                  <label class="studio-field"><span>下降重力</span><input id="gameFallGravity" type="number" min="0.03" max="0.35" step="0.01"></label>
+                  <label class="studio-field"><span>最高点滞空帧</span><input id="gameHangFrames" type="number" min="0" max="30" step="1"></label>
+                  <label class="studio-field"><span>起跳蓄力帧</span><input id="gameAnticipation" type="number" min="0" max="24" step="1"></label>
+                  <label class="studio-field"><span>落地缓冲帧</span><input id="gameLanding" type="number" min="0" max="24" step="1"></label>
+                  <label class="studio-field"><span>最大障碍数</span><input id="gameMaxObstacles" type="number" min="1" max="6" step="1"></label>
+                  <label class="studio-field"><span>最小外部间距</span><input id="gameMinGap" type="number" min="180" max="700" step="10"></label>
+                  <label class="studio-field"><span>最大外部间距</span><input id="gameMaxGap" type="number" min="220" max="900" step="10"></label>
+                </div>
+                <div class="sequence-heading">
+                  <h3>障碍组合</h3>
+                  <button id="addSequenceButton" type="button">新增组合</button>
+                </div>
+                <div id="sequenceEditor"></div>
+              </details>
+              <output id="gameValidation" class="status-box"></output>
+              <button id="testGameButton" class="primary" type="button">重新定位并试玩</button>
+            </section>
 
-        <section class="inspector-view" data-view="assets" hidden>
-          <h2>光标与图片</h2>
-          <label class="studio-field"><span>鼠标光标</span><select id="cursorPresetControl"></select></label>
-          <div class="field-grid">
-            <label class="studio-field"><span>热点 X</span><input id="cursorHotspotX" type="number" min="0" max="127"></label>
-            <label class="studio-field"><span>热点 Y</span><input id="cursorHotspotY" type="number" min="0" max="127"></label>
-          </div>
-          <label class="upload-field"><span>上传自定义光标（PNG/CUR，最大 512KB）</span><input id="cursorUpload" type="file" accept=".png,.cur,image/png,image/x-icon"></label>
-          <hr>
-          <label class="upload-field"><span>Hero 站立人物图</span><input id="heroStandUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
-          <label class="upload-field"><span>Hero 跳跃人物图</span><input id="heroJumpUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
-          <hr>
-          <label class="studio-field"><span>项目</span><select id="projectAssetSelect"></select></label>
-          <label class="upload-field"><span>上传项目图标</span><input id="projectIconUpload" type="file" accept="image/png,image/jpeg,image/webp"></label>
-          <output id="assetStatus" class="status-box"></output>
-        </section>
-
-        <section class="inspector-view" data-view="effects" hidden>
-          <h2>交互与动画</h2>
-          <label class="studio-field range-field"><span>打字机速度</span><input id="typewriterControl" type="range" min="0" max="200" step="5"><output></output></label>
-          <label class="studio-field range-field"><span>人物滚动切换阈值</span><input id="avatarThresholdControl" type="range" min="1" max="100" step="1"><output></output></label>
-          <div class="toggle-stack">
-            <label><input id="smoothScrollControl" type="checkbox"> 平滑滚动</label>
-            <label><input id="particlesControl" type="checkbox"> 粒子背景</label>
-            <label><input id="animationsControl" type="checkbox"> 页面动画</label>
-          </div>
-        </section>
-
-        <section class="inspector-view" data-view="game" hidden>
-          <h2>终端小游戏</h2>
-          <p class="view-help">基础参数保持容易游玩；最高速度始终不超过 2.5。</p>
-          <div class="field-grid">
-            <label class="studio-field"><span>起始速度</span><input id="gameStartSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
-            <label class="studio-field"><span>最高速度</span><input id="gameMaxSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
-            <label class="studio-field"><span>加速幅度</span><input id="gameSpeedStep" type="number" min="0" max="0.5" step="0.01"></label>
-            <label class="studio-field"><span>加速间隔（帧）</span><input id="gameSpeedFrames" type="number" min="120" max="1800" step="60"></label>
-          </div>
-          <details class="advanced-panel">
-            <summary>跳跃与落地</summary>
-            <div class="field-grid">
-              <label class="studio-field"><span>跳跃力度</span><input id="gameJumpVelocity" type="number" min="-10" max="-3" step="0.1"></label>
-              <label class="studio-field"><span>上升重力</span><input id="gameRiseGravity" type="number" min="0.05" max="0.5" step="0.01"></label>
-              <label class="studio-field"><span>下降重力</span><input id="gameFallGravity" type="number" min="0.03" max="0.35" step="0.01"></label>
-              <label class="studio-field"><span>最高点滞空帧</span><input id="gameHangFrames" type="number" min="0" max="30" step="1"></label>
-              <label class="studio-field"><span>起跳蓄力帧</span><input id="gameAnticipation" type="number" min="0" max="24" step="1"></label>
-              <label class="studio-field"><span>落地缓冲帧</span><input id="gameLanding" type="number" min="0" max="24" step="1"></label>
-              <label class="studio-field"><span>最大障碍数</span><input id="gameMaxObstacles" type="number" min="1" max="6" step="1"></label>
-              <label class="studio-field"><span>最小外部间距</span><input id="gameMinGap" type="number" min="180" max="700" step="10"></label>
-              <label class="studio-field"><span>最大外部间距</span><input id="gameMaxGap" type="number" min="220" max="900" step="10"></label>
-            </div>
-          </details>
-          <div class="sequence-heading">
-            <h3>障碍组合</h3>
-            <button id="addSequenceButton" type="button">新增组合</button>
-          </div>
-          <div id="sequenceEditor"></div>
-          <output id="gameValidation" class="status-box"></output>
-          <button id="testGameButton" class="primary" type="button">在页面终端即时试玩</button>
-        </section>
-
-        <section class="inspector-view" data-view="history" hidden>
-          <h2>已保存版本</h2>
-          <p class="view-help">每次正式保存前自动备份，最多保留 20 版。</p>
-          <button id="refreshHistoryButton" type="button">刷新列表</button>
-          <div id="historyList" class="history-list"></div>
-        </section>
+            <section class="inspector-view" data-view="history" hidden>
+              <h2>已保存版本</h2>
+              <p class="view-help">每次正式保存前自动备份，最多保留 20 版。</p>
+              <button id="refreshHistoryButton" type="button">刷新列表</button>
+              <div id="historyList" class="history-list"></div>
+            </section>
+          </section>
+        </div>
       </div>
     </aside>
   </main>

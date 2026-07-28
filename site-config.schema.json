@@ -90,7 +90,7 @@
       "required": ["preset", "hotspotX", "hotspotY"],
       "properties": {
         "preset": {
-          "enum": ["system", "pixel-outline", "crosshair", "pointer", "terminal", "custom"]
+          "enum": ["pixel-arrow", "pixel-hand", "pixel-crosshair", "pixel-terminal", "pixel-outline"]
         },
         "src": { "type": "string" },
         "hotspotX": { "type": "integer", "minimum": 0, "maximum": 127 },
@@ -186,7 +186,7 @@
       "type": "object",
       "properties": {
         "fontCn": {
-          "enum": ["zpix", "noto-sans-sc", "lxgw-wenkai"]
+          "enum": ["zpix", "cubic-11", "boutique-7x7"]
         },
         "fontEn": {
           "enum": ["press-start-2p", "vt323", "fira-code", "ibm-plex-mono"]

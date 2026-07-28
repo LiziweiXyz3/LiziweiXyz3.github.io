@@ -5,10 +5,12 @@
   var savedConfig = null;
   var draft = null;
   var selectedKey = null;
+  var selectedTool = null;
+  var selectionDefaults = {};
   var undoStack = [];
   var activeHistoryGroup = null;
   var previewReady = false;
-  var defaultTheme = null;
+  var gamePreviewTimer = null;
 
   function byId(id) { return document.getElementById(id); }
   function clone(value) { return window.SiteConfig.clone(value); }
@@ -92,6 +94,7 @@
     callback();
     draft = window.SiteConfig.normalizeConfig(draft, savedConfig);
     postDraft();
+    if (selectedTool === 'game') scheduleGamePreview(false);
     if (rebuildTree) buildTree();
     if (rerenderInspector) renderCurrentView();
   }
@@ -294,6 +297,17 @@
     return button;
   }
 
+  function createToolItem(tool, label, description) {
+    var button = el('button', 'tree-item tree-tool');
+    button.type = 'button';
+    button.setAttribute('data-tool', tool);
+    button.setAttribute('aria-current', tool === selectedTool ? 'true' : 'false');
+    button.appendChild(el('span', '', label));
+    button.appendChild(el('small', '', description));
+    button.addEventListener('click', function () { selectTool(tool); });
+    return button;
+  }
+
   function recordActions(kind, id, list, index, onAddChild) {
     var actions = el('div', 'tree-record-actions');
     [
@@ -488,6 +502,16 @@
       { key: 'footer.gameover', label: '结束标题' },
       { key: 'footer.text', label: '版权说明' }
     ]));
+
+    var tools = el('details', 'tree-section');
+    tools.open = !!selectedTool;
+    tools.appendChild(el('summary', '', '高级工具'));
+    var toolItems = el('div', 'tree-items');
+    toolItems.appendChild(createToolItem('cursor', '像素光标', '像素预设'));
+    toolItems.appendChild(createToolItem('game', '终端小游戏', '参数与即时试玩'));
+    toolItems.appendChild(createToolItem('history', '保存历史', '恢复已保存版本'));
+    tools.appendChild(toolItems);
+    root.appendChild(tools);
   }
 
   function createModuleOrderSection() {
@@ -544,12 +568,23 @@
 
   function selectKey(key, focusText) {
     selectedKey = key;
+    selectedTool = null;
     byId('selectionBreadcrumb').textContent = key;
     byId('sitePreview').contentWindow.postMessage({ type: 'studio:select', key: key }, window.location.origin);
     buildTree();
     renderElementInspector();
-    activateTab('element');
+    showInspectorView('element');
     if (focusText) byId('textControl').focus();
+  }
+
+  function selectTool(tool) {
+    selectedTool = tool;
+    selectedKey = null;
+    byId('selectionBreadcrumb').textContent = tool === 'game' ? '终端小游戏' :
+      tool === 'cursor' ? '像素光标' : '保存历史';
+    buildTree();
+    showInspectorView(tool);
+    if (tool === 'game') scheduleGamePreview(true);
   }
 
   function parseColor(value) {
@@ -592,22 +627,28 @@
     empty.hidden = true;
     form.hidden = false;
     var style = draft.styles.elements[selectedKey] || {};
-    var parsed = parseColor(style.color || draft.theme.colors.text);
+    var defaults = selectionDefaults[selectedKey] || {};
+    var parsed = parseColor(style.color || defaults.color || draft.theme.colors.text);
     byId('elementScope').textContent = sectionForKey(selectedKey) + ' / ' + selectedKey.split('.').slice(1, -1).join(' / ');
     byId('elementLabel').textContent = keyLabel(selectedKey);
-    byId('textControl').value = getText(selectedKey);
-    byId('fontCnControl').value = style.fontCn || '';
-    byId('fontEnControl').value = style.fontEn || '';
-    byId('sizeControl').value = style.size || 16;
-    byId('sizeOutput').textContent = (style.size || 16) + 'px';
-    byId('mobileSizeControl').value = style.mobileSize || style.size || 16;
-    byId('mobileSizeOutput').textContent = style.mobileSize ? style.mobileSize + 'px' : '跟随';
-    byId('lineHeightControl').value = style.lineHeight || 1.5;
-    byId('weightControl').value = style.weight || 400;
-    byId('italicControl').checked = style.italic === true;
-    byId('alignControl').value = style.align || 'left';
-    byId('letterSpacingControl').value = style.letterSpacing || 0;
-    byId('letterSpacingOutput').textContent = (style.letterSpacing || 0) + 'px';
+    var currentText = getText(selectedKey);
+    byId('textControl').value = currentText;
+    var hasChinese = /[\u3400-\u9fff]/.test(currentText);
+    var hasLatin = /[A-Za-z]/.test(currentText);
+    byId('fontCnField').hidden = !hasChinese && hasLatin;
+    byId('fontEnField').hidden = !hasLatin && hasChinese;
+    byId('fontCnControl').value = style.fontCn || defaults.fontCn || 'zpix';
+    byId('fontEnControl').value = style.fontEn || defaults.fontEn || 'vt323';
+    byId('sizeControl').value = style.size || defaults.size || 16;
+    byId('lineHeightControl').value = style.lineHeight || defaults.lineHeight || 1.5;
+    byId('boldControl').checked = (style.weight || defaults.weight || 400) >= 600;
+    byId('italicControl').checked = style.italic !== undefined ? style.italic === true : defaults.italic === true;
+    var alignValue = style.align || defaults.align || 'left';
+    var alignInput = document.querySelector('input[name="alignControl"][value="' + alignValue + '"]');
+    if (alignInput) alignInput.checked = true;
+    var letterSpacing = style.letterSpacing !== undefined ? style.letterSpacing : (defaults.letterSpacing || 0);
+    byId('letterSpacingControl').value = letterSpacing;
+    byId('letterSpacingOutput').textContent = letterSpacing + 'px';
     byId('colorControl').value = parsed.hex;
     byId('colorHexControl').value = parsed.hex;
     byId('opacityControl').value = parsed.opacity;
@@ -657,8 +698,6 @@
       ['fontCnControl', 'fontCn', 'change'],
       ['fontEnControl', 'fontEn', 'change'],
       ['lineHeightControl', 'lineHeight', 'input'],
-      ['weightControl', 'weight', 'change'],
-      ['alignControl', 'align', 'change'],
       ['letterSpacingControl', 'letterSpacing', 'input']
     ].forEach(function (entry) {
       byId(entry[0]).addEventListener(entry[2], function () {
@@ -674,21 +713,27 @@
       byId(entry[0]).addEventListener('change', endChange);
     });
     byId('sizeControl').addEventListener('input', function () {
-      byId('sizeOutput').textContent = this.value + 'px';
       mutate('style:' + selectedKey + ':size', function () { styleForKey(selectedKey).size = Number(byId('sizeControl').value); });
     });
     byId('sizeControl').addEventListener('change', endChange);
-    byId('mobileSizeControl').addEventListener('input', function () {
-      byId('mobileSizeOutput').textContent = this.value + 'px';
-      mutate('style:' + selectedKey + ':mobile', function () { styleForKey(selectedKey).mobileSize = Number(byId('mobileSizeControl').value); });
-    });
-    byId('mobileSizeControl').addEventListener('change', endChange);
-    byId('clearMobileSizeButton').addEventListener('click', function () {
-      mutate('style:' + selectedKey + ':mobile-clear', function () { delete styleForKey(selectedKey).mobileSize; }, false, true);
+    byId('boldControl').addEventListener('change', function () {
+      mutate('style:' + selectedKey + ':bold', function () {
+        styleForKey(selectedKey).weight = byId('boldControl').checked ? 700 : 400;
+      });
+      endChange();
     });
     byId('italicControl').addEventListener('change', function () {
       mutate('style:' + selectedKey + ':italic', function () { styleForKey(selectedKey).italic = byId('italicControl').checked; });
       endChange();
+    });
+    document.querySelectorAll('input[name="alignControl"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        if (!selectedKey || !input.checked) return;
+        mutate('style:' + selectedKey + ':align', function () {
+          styleForKey(selectedKey).align = input.value;
+        });
+        endChange();
+      });
     });
     function updateElementColor(group) {
       var hex = byId('colorControl').value;
@@ -743,125 +788,53 @@
     });
   }
 
-  function activateTab(name) {
-    document.querySelectorAll('.inspector-tabs button').forEach(function (button) {
-      button.setAttribute('aria-selected', button.getAttribute('data-tab') === name ? 'true' : 'false');
-    });
+  function showInspectorView(name) {
     document.querySelectorAll('.inspector-view').forEach(function (view) {
       view.hidden = view.getAttribute('data-view') !== name;
     });
-    if (name === 'theme') renderTheme();
-    if (name === 'assets') renderAssets();
-    if (name === 'effects') renderEffects();
+    if (name === 'cursor') renderCursor();
     if (name === 'game') renderGame();
     if (name === 'history') loadHistory();
   }
   function renderCurrentView() {
-    var active = document.querySelector('.inspector-tabs button[aria-selected="true"]');
-    if (!active) return;
-    var name = active.getAttribute('data-tab');
-    if (name === 'element') renderElementInspector();
-    else if (name === 'theme') renderTheme();
-    else if (name === 'assets') renderAssets();
-    else if (name === 'effects') renderEffects();
-    else if (name === 'game') renderGame();
+    showInspectorView(selectedTool || 'element');
   }
 
-  function bindRange(id, path, suffix) {
-    var input = byId(id);
-    input.addEventListener('input', function () {
-      var output = input.parentElement.querySelector('output');
-      if (output) output.textContent = input.value + (suffix || '');
-      mutate('range:' + id, function () { path(Number(input.value)); });
-    });
-    input.addEventListener('change', endChange);
-  }
-  function renderTheme() {
-    var controls = byId('themeColorControls');
-    if (!controls.children.length) {
-      var labels = {
-        bgDeep: '页面背景', bgSurface: '表面背景', bgCard: '卡片背景', text: '主要文字',
-        textDim: '弱化文字', border: '边框', blue: '蓝色', red: '红色', yellow: '黄色',
-        green: '绿色', terminal: '终端绿', purple: '紫色'
-      };
-      Object.keys(labels).forEach(function (key) {
-        var label = el('label', 'studio-field');
-        label.appendChild(el('span', '', labels[key]));
-        var input = document.createElement('input');
-        input.type = 'color';
-        input.setAttribute('data-theme-color', key);
-        input.addEventListener('input', function () {
-          mutate('theme-color:' + key, function () { draft.theme.colors[key] = input.value; });
-        });
-        input.addEventListener('change', endChange);
-        label.appendChild(input);
-        controls.appendChild(label);
-      });
-    }
-    controls.querySelectorAll('[data-theme-color]').forEach(function (input) {
-      input.value = draft.theme.colors[input.getAttribute('data-theme-color')];
-    });
-    [
-      ['scanlineControl', draft.theme.scanlineOpacity, ''],
-      ['particleControl', draft.theme.particleCount, ''],
-      ['shadowControl', draft.theme.shadowSize, 'px'],
-      ['sectionGapControl', draft.theme.sectionGap, 'px']
-    ].forEach(function (entry) {
-      byId(entry[0]).value = entry[1];
-      byId(entry[0]).parentElement.querySelector('output').textContent = entry[1] + entry[2];
-    });
+  function pixelCursorValue(preset) {
+    var shapes = {
+      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#b388ff" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
+      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#fbbc05" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
+      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="#00ff41" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="#00ff41" stroke-width="2"/></svg>',
+      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="#41d9ff" stroke-width="2"/><path stroke="#41d9ff" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
+      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="#b388ff" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="#b388ff"/></svg>'
+    };
+    var svg = shapes[preset] || shapes['pixel-arrow'];
+    var hotspot = preset === 'pixel-arrow' || preset === 'pixel-hand' ? '2 2' : '12 12';
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '") ' + hotspot + ', auto';
   }
 
-  function renderAssets() {
+  function renderCursor() {
     byId('cursorPresetControl').value = draft.cursor.preset;
-    byId('cursorHotspotX').value = draft.cursor.hotspotX;
-    byId('cursorHotspotY').value = draft.cursor.hotspotY;
-    var projects = byId('projectAssetSelect');
-    var current = projects.value;
-    projects.textContent = '';
-    draft.content.projects.forEach(function (project) {
-      var option = el('option', '', project.title);
-      option.value = project.id;
-      projects.appendChild(option);
-    });
-    if (current) projects.value = current;
-  }
-  function fileData(file) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () { resolve(reader.result); };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-  function uploadAsset(file, kind) {
-    if (!file) return Promise.reject(new Error('请选择文件'));
-    byId('assetStatus').textContent = '正在上传…';
-    return fileData(file).then(function (data) {
-      return requestJson('/api/assets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: kind, name: file.name, data: data })
-      });
-    }).then(function (payload) {
-      byId('assetStatus').textContent = '上传完成：' + payload.asset.path;
-      byId('assetStatus').setAttribute('data-state', 'success');
-      return payload.asset.path;
-    }).catch(function (error) {
-      byId('assetStatus').textContent = error.message;
-      byId('assetStatus').setAttribute('data-state', 'error');
-      throw error;
-    });
+    byId('cursorPreview').style.cursor = pixelCursorValue(draft.cursor.preset);
   }
 
-  function renderEffects() {
-    byId('typewriterControl').value = draft.effects.typewriterSpeed;
-    byId('typewriterControl').parentElement.querySelector('output').textContent = draft.effects.typewriterSpeed + 'ms';
-    byId('avatarThresholdControl').value = draft.effects.avatarScrollThreshold;
-    byId('avatarThresholdControl').parentElement.querySelector('output').textContent = draft.effects.avatarScrollThreshold + 'px';
-    byId('smoothScrollControl').checked = draft.effects.smoothScroll;
-    byId('particlesControl').checked = draft.effects.particles;
-    byId('animationsControl').checked = draft.effects.animations;
+  function startGamePreview() {
+    if (!previewReady || selectedTool !== 'game' || !gameError().valid) return;
+    byId('sitePreview').contentWindow.postMessage({
+      type: 'studio:start-game',
+      config: draft
+    }, window.location.origin);
+  }
+
+  function scheduleGamePreview(immediate) {
+    window.clearTimeout(gamePreviewTimer);
+    gamePreviewTimer = window.setTimeout(startGamePreview, immediate ? 80 : 220);
+  }
+
+  function setEditorCollapsed(collapsed) {
+    var layout = byId('studioLayout');
+    layout.setAttribute('data-editor-collapsed', collapsed ? 'true' : 'false');
+    byId('showEditorButton').hidden = !collapsed;
   }
 
   function gameError() {
@@ -1029,7 +1002,7 @@
 
   function saveFormal() {
     var validation = window.SiteConfig.validateConfig(draft);
-    if (!validation.valid) { toast(validation.errors.join('；')); activateTab('game'); return; }
+    if (!validation.valid) { toast(validation.errors.join('；')); selectTool('game'); return; }
     byId('saveButton').disabled = true;
     setStatus('正在保存…', true);
     requestJson('/api/config', {
@@ -1039,7 +1012,6 @@
     }).then(function (payload) {
       savedConfig = payload.config;
       draft = clone(savedConfig);
-      defaultTheme = clone(savedConfig.theme);
       localStorage.removeItem(DRAFT_KEY);
       undoStack = [];
       byId('undoButton').disabled = true;
@@ -1059,77 +1031,26 @@
     byId('collapseTreeButton').addEventListener('click', function () {
       document.querySelectorAll('.studio-tree details').forEach(function (details) { details.open = false; });
     });
-    document.querySelectorAll('.inspector-tabs button').forEach(function (button) {
-      button.addEventListener('click', function () { activateTab(button.getAttribute('data-tab')); });
-    });
-    document.querySelectorAll('[data-viewport]').forEach(function (button) {
-      button.addEventListener('click', function () {
-        document.querySelectorAll('[data-viewport]').forEach(function (item) {
-          item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
-        });
-        byId('previewStage').setAttribute('data-viewport', button.getAttribute('data-viewport'));
-      });
-    });
-    bindRange('scanlineControl', function (value) { draft.theme.scanlineOpacity = value; }, '');
-    bindRange('particleControl', function (value) { draft.theme.particleCount = value; }, '');
-    bindRange('shadowControl', function (value) { draft.theme.shadowSize = value; }, 'px');
-    bindRange('sectionGapControl', function (value) { draft.theme.sectionGap = value; }, 'px');
-    byId('resetThemeButton').addEventListener('click', function () {
-      mutate('reset-theme', function () { draft.theme = clone(defaultTheme); }, false, true);
-    });
+    byId('hideEditorButton').addEventListener('click', function () { setEditorCollapsed(true); });
+    byId('showEditorButton').addEventListener('click', function () { setEditorCollapsed(false); });
 
     var cursorPresets = {
-      system: '系统默认', 'pixel-outline': '像素方框', crosshair: '十字准星',
-      pointer: '手型', terminal: '文本输入', custom: '自定义上传'
+      'pixel-arrow': '像素箭头',
+      'pixel-hand': '像素手型',
+      'pixel-crosshair': '像素准星',
+      'pixel-terminal': '像素终端',
+      'pixel-outline': '像素方框'
     };
     Object.keys(cursorPresets).forEach(function (key) {
       var option = el('option', '', cursorPresets[key]); option.value = key; byId('cursorPresetControl').appendChild(option);
     });
     byId('cursorPresetControl').addEventListener('change', function () {
-      mutate('cursor:preset', function () { draft.cursor.preset = byId('cursorPresetControl').value; });
-    });
-    ['cursorHotspotX', 'cursorHotspotY'].forEach(function (id) {
-      byId(id).addEventListener('input', function () {
-        mutate('cursor:' + id, function () {
-          draft.cursor[id === 'cursorHotspotX' ? 'hotspotX' : 'hotspotY'] = Number(byId(id).value);
-        });
+      mutate('cursor:preset', function () {
+        draft.cursor.preset = byId('cursorPresetControl').value;
+        draft.cursor.src = '';
       });
-    });
-    byId('cursorUpload').addEventListener('change', function () {
-      uploadAsset(this.files[0], 'cursor').then(function (assetPath) {
-        mutate('asset:cursor', function () { draft.cursor.src = assetPath; draft.cursor.preset = 'custom'; });
-      }).catch(function () {});
-    });
-    byId('heroStandUpload').addEventListener('change', function () {
-      uploadAsset(this.files[0], 'avatar').then(function (assetPath) {
-        mutate('asset:hero-stand', function () { draft.assets.heroStand = assetPath; });
-      }).catch(function () {});
-    });
-    byId('heroJumpUpload').addEventListener('change', function () {
-      uploadAsset(this.files[0], 'avatar').then(function (assetPath) {
-        mutate('asset:hero-jump', function () { draft.assets.heroJump = assetPath; });
-      }).catch(function () {});
-    });
-    byId('projectIconUpload').addEventListener('change', function () {
-      var projectId = byId('projectAssetSelect').value;
-      uploadAsset(this.files[0], 'project-icon').then(function (assetPath) {
-        mutate('asset:project:' + projectId, function () {
-          var project = findById(draft.content.projects, projectId);
-          if (project) project.image = assetPath;
-        });
-      }).catch(function () {});
-    });
-
-    bindRange('typewriterControl', function (value) { draft.effects.typewriterSpeed = value; }, 'ms');
-    bindRange('avatarThresholdControl', function (value) { draft.effects.avatarScrollThreshold = value; }, 'px');
-    [
-      ['smoothScrollControl', 'smoothScroll'],
-      ['particlesControl', 'particles'],
-      ['animationsControl', 'animations']
-    ].forEach(function (entry) {
-      byId(entry[0]).addEventListener('change', function () {
-        mutate('effect:' + entry[1], function () { draft.effects[entry[1]] = byId(entry[0]).checked; });
-      });
+      renderCursor();
+      endChange();
     });
 
     var gameMap = {
@@ -1144,6 +1065,7 @@
         mutate('game:' + gameMap[id], function () { draft.game[gameMap[id]] = Number(byId(id).value); });
         byId(id).value = draft.game[gameMap[id]];
         gameError();
+        scheduleGamePreview(false);
       });
       byId(id).addEventListener('change', endChange);
     });
@@ -1152,38 +1074,20 @@
         var id = window.SiteConfig.uniqueId('sequence', draft.game.sequences.map(function (item) { return item.id; }), 'sequence');
         draft.game.sequences.push({ id: id, name: '新障碍组合', enabled: true, weight: 1, items: [{ type: 'cactus-small', gap: 0 }] });
       }, false, true);
+      scheduleGamePreview(false);
     });
     byId('testGameButton').addEventListener('click', function () {
       if (!gameError().valid) return;
-      var previewWindow = byId('sitePreview').contentWindow;
-      previewWindow.postMessage({ type: 'studio:select', key: 'terminal.heading' }, window.location.origin);
-      window.setTimeout(function () {
-        previewWindow.postMessage({ type: 'studio:start-game', config: draft }, window.location.origin);
-      }, 50);
-      toast('已在中间页面打开终端试玩');
+      startGamePreview();
+      toast('左侧预览已定位终端并重新试玩');
     });
     byId('refreshHistoryButton').addEventListener('click', loadHistory);
 
-    byId('importLegacyButton').addEventListener('click', function () { byId('legacyFileInput').click(); });
-    byId('legacyFileInput').addEventListener('change', function () {
-      var file = this.files[0];
-      if (!file) return;
-      file.text().then(function (raw) {
-        var legacy = JSON.parse(raw);
-        beginChange('legacy-import');
-        draft = window.SiteConfig.migrateLegacyDraft(legacy, draft);
-        postDraft();
-        buildTree();
-        renderCurrentView();
-        toast('旧版草稿已导入，请检查后保存');
-      }).catch(function () { toast('旧版草稿文件无法读取'); });
-    });
   }
 
   function init() {
     requestJson('/api/config').then(function (payload) {
       savedConfig = window.SiteConfig.normalizeConfig(payload.config, payload.config);
-      defaultTheme = clone(savedConfig.theme);
       var local = null;
       try { local = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (error) { local = null; }
       draft = local ? window.SiteConfig.normalizeConfig(local, savedConfig) : clone(savedConfig);
@@ -1207,8 +1111,12 @@
     if (event.data.type === 'studio:preview-ready') {
       previewReady = true;
       sendDraft();
+      if (selectedTool === 'game') scheduleGamePreview(true);
     } else if (event.data.type === 'studio:select' && event.data.key) {
       selectKey(event.data.key, false);
+    } else if (event.data.type === 'studio:selection-style' && event.data.key && event.data.style) {
+      selectionDefaults[event.data.key] = event.data.style;
+      if (selectedKey === event.data.key) renderElementInspector();
     }
   });
 

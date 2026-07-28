@@ -3,8 +3,8 @@
 
   var FONT_CN = {
     zpix: "'Zpix', monospace",
-    'noto-sans-sc': "'Noto Sans SC', 'Microsoft YaHei', sans-serif",
-    'lxgw-wenkai': "'LXGW WenKai', 'KaiTi', serif"
+    'cubic-11': "'Cubic 11', 'Zpix', monospace",
+    'boutique-7x7': "'Boutique Bitmap 7x7', 'Zpix', monospace"
   };
   var FONT_EN = {
     'press-start': "'Press Start 2P', monospace",
@@ -105,15 +105,16 @@
 
   function cursorValue(cursor) {
     var preset = cursor && cursor.preset;
-    if (preset === 'system') return 'auto';
-    if (preset === 'crosshair') return 'crosshair';
-    if (preset === 'pointer') return 'pointer';
-    if (preset === 'terminal') return 'text';
-    if (preset === 'custom' && cursor.src) {
-      return 'url("' + cursor.src.replace(/["\n\r]/g, '') + '") ' +
-        Number(cursor.hotspotX || 0) + ' ' + Number(cursor.hotspotY || 0) + ', auto';
-    }
-    return 'url("data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 width=%2716%27 height=%2716%27 viewBox=%270 0 16 16%27><rect x=%270%27 y=%270%27 width=%2714%27 height=%2714%27 fill=%27none%27 stroke=%27%23b388ff%27 stroke-width=%272%27/></svg>") 8 8, crosshair';
+    var shapes = {
+      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#b388ff" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
+      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#fbbc05" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
+      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="#00ff41" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="#00ff41" stroke-width="2"/></svg>',
+      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="#41d9ff" stroke-width="2"/><path stroke="#41d9ff" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
+      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="#b388ff" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="#b388ff"/></svg>'
+    };
+    var svg = shapes[preset] || shapes['pixel-arrow'];
+    var hotspot = preset === 'pixel-arrow' || preset === 'pixel-hand' ? '2 2' : '12 12';
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '") ' + hotspot + ', auto';
   }
 
   function applyCursor(config) {
@@ -158,10 +159,17 @@
     var styles = config.styles && config.styles.elements || {};
     document.querySelectorAll('[data-edit-key]').forEach(function (element) {
       element.removeAttribute('data-studio-style');
+      element.removeAttribute('data-studio-font-cn');
+      element.removeAttribute('data-studio-font-en');
+      element.removeAttribute('data-studio-size');
+      element.removeAttribute('data-studio-line-height');
+      element.removeAttribute('data-studio-weight');
+      element.removeAttribute('data-studio-letter-spacing');
+      element.removeAttribute('data-studio-color');
+      element.removeAttribute('data-studio-align');
       element.style.removeProperty('--studio-font-cn');
       element.style.removeProperty('--studio-font-en');
       element.style.removeProperty('--studio-size');
-      element.style.removeProperty('--studio-mobile-size');
       element.style.removeProperty('--studio-line-height');
       element.style.removeProperty('--studio-weight');
       element.style.removeProperty('--studio-letter-spacing');
@@ -174,17 +182,92 @@
       var style = styles[key];
       if (!element || !style) return;
       element.setAttribute('data-studio-style', 'true');
-      if (FONT_CN[style.fontCn]) element.style.setProperty('--studio-font-cn', FONT_CN[style.fontCn]);
-      if (FONT_EN[style.fontEn]) element.style.setProperty('--studio-font-en', FONT_EN[style.fontEn]);
-      if (style.size) element.style.setProperty('--studio-size', style.size + 'px');
-      if (style.mobileSize) element.style.setProperty('--studio-mobile-size', style.mobileSize + 'px');
-      if (style.lineHeight) element.style.setProperty('--studio-line-height', style.lineHeight);
-      if (style.weight) element.style.setProperty('--studio-weight', style.weight);
-      if (style.letterSpacing !== undefined) element.style.setProperty('--studio-letter-spacing', style.letterSpacing + 'px');
-      if (style.color) element.style.setProperty('--studio-color', style.color);
-      if (style.align) element.style.setProperty('--studio-align', style.align);
-      if (style.italic) element.setAttribute('data-studio-italic', 'true');
+      if (FONT_CN[style.fontCn]) {
+        element.setAttribute('data-studio-font-cn', 'true');
+        element.style.setProperty('--studio-font-cn', FONT_CN[style.fontCn]);
+      }
+      if (FONT_EN[style.fontEn]) {
+        element.setAttribute('data-studio-font-en', 'true');
+        element.style.setProperty('--studio-font-en', FONT_EN[style.fontEn]);
+      }
+      if (style.size) {
+        element.setAttribute('data-studio-size', 'true');
+        element.style.setProperty('--studio-size', style.size + 'px');
+      }
+      if (style.lineHeight) {
+        element.setAttribute('data-studio-line-height', 'true');
+        element.style.setProperty('--studio-line-height', style.lineHeight);
+      }
+      if (style.weight) {
+        element.setAttribute('data-studio-weight', 'true');
+        element.style.setProperty('--studio-weight', style.weight);
+      }
+      if (style.letterSpacing !== undefined) {
+        element.setAttribute('data-studio-letter-spacing', 'true');
+        element.style.setProperty('--studio-letter-spacing', style.letterSpacing + 'px');
+      }
+      if (style.color) {
+        element.setAttribute('data-studio-color', 'true');
+        element.style.setProperty('--studio-color', style.color);
+      }
+      if (style.align) {
+        element.setAttribute('data-studio-align', 'true');
+        element.style.setProperty('--studio-align', style.align);
+      }
+      if (typeof style.italic === 'boolean') {
+        element.setAttribute('data-studio-italic', style.italic ? 'true' : 'false');
+      }
     });
+  }
+
+  function fontId(fontFamily, type) {
+    var value = String(fontFamily || '').toLowerCase();
+    var map = type === 'cn' ? {
+      'boutique bitmap 7x7': 'boutique-7x7',
+      'cubic 11': 'cubic-11',
+      zpix: 'zpix'
+    } : {
+      'press start 2p': 'press-start',
+      vt323: 'vt323',
+      'fira code': 'fira-code',
+      'ibm plex mono': 'ibm-plex-mono'
+    };
+    return Object.keys(map).find(function (name) { return value.indexOf(name) >= 0; })
+      ? map[Object.keys(map).find(function (name) { return value.indexOf(name) >= 0; })]
+      : (type === 'cn' ? 'zpix' : 'vt323');
+  }
+
+  function selectionStyle(element) {
+    if (!element || !window.getComputedStyle) return null;
+    var cn = element.querySelector('.text-cn, [lang="zh-CN"]') || element;
+    var en = element.querySelector('[lang="en"]') || element;
+    var computed = window.getComputedStyle(element);
+    var lineHeight = parseFloat(computed.lineHeight);
+    var letterSpacing = parseFloat(computed.letterSpacing);
+    var weight = Math.round((parseInt(computed.fontWeight, 10) || 400) / 100) * 100;
+    return {
+      fontCn: fontId(window.getComputedStyle(cn).fontFamily, 'cn'),
+      fontEn: fontId(window.getComputedStyle(en).fontFamily, 'en'),
+      size: Math.round(parseFloat(computed.fontSize) || 16),
+      lineHeight: Number.isFinite(lineHeight) && computed.fontSize
+        ? Number((lineHeight / (parseFloat(computed.fontSize) || 16)).toFixed(2)) : 1.5,
+      weight: Math.max(300, Math.min(900, weight)),
+      italic: computed.fontStyle === 'italic' || computed.fontStyle === 'oblique',
+      letterSpacing: Number.isFinite(letterSpacing) ? Number(letterSpacing.toFixed(1)) : 0,
+      align: ['left', 'center', 'right'].indexOf(computed.textAlign) >= 0 ? computed.textAlign : 'left',
+      color: computed.color
+    };
+  }
+
+  function notifySelectionStyle() {
+    if (!previewMode || window.parent === window || !selectedKey) return;
+    var element = document.querySelector('[data-edit-key="' + escapeSelector(selectedKey) + '"]');
+    if (!element) return;
+    window.parent.postMessage({
+      type: 'studio:selection-style',
+      key: selectedKey,
+      style: selectionStyle(element)
+    }, window.location.origin);
   }
 
   function applySelected(reveal) {
@@ -226,6 +309,7 @@
       selectedKey = editable.getAttribute('data-edit-key');
       applySelected();
       window.parent.postMessage({ type: 'studio:select', key: selectedKey }, window.location.origin);
+      notifySelectionStyle();
     }, true);
     window.addEventListener('message', function (event) {
       if (event.origin !== window.location.origin || event.source !== window.parent || !event.data) return;
@@ -235,6 +319,7 @@
       } else if (event.data.type === 'studio:select') {
         selectedKey = event.data.key || null;
         applySelected(true);
+        notifySelectionStyle();
       } else if (event.data.type === 'studio:reload-saved') {
         window.location.reload();
       } else if (event.data.type === 'studio:start-game') {

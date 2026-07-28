@@ -13,14 +13,14 @@
 }
 
 @font-face {
-  font-family: 'Noto Sans SC';
-  src: url('fonts/noto-sans-sc.ttf') format('truetype');
+  font-family: 'Cubic 11';
+  src: url('fonts/cubic-11.woff2') format('woff2');
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'LXGW WenKai';
-  src: url('fonts/lxgw-wenkai.ttf') format('truetype');
+  font-family: 'Boutique Bitmap 7x7';
+  src: url('fonts/boutique-bitmap-7x7.ttf') format('truetype');
   font-display: swap;
 }
 
@@ -49,15 +49,6 @@
 }
 
 html { font-size: 16px; }
-html[data-font-scale="90"]  { font-size: 14.4px; }
-html[data-font-scale="95"]  { font-size: 15.2px; }
-html[data-font-scale="100"] { font-size: 16px; }
-html[data-font-scale="105"] { font-size: 16.8px; }
-html[data-font-scale="110"] { font-size: 17.6px; }
-html[data-font-scale="115"] { font-size: 18.4px; }
-html[data-font-scale="120"] { font-size: 19.2px; }
-html[data-font-scale="125"] { font-size: 20px; }
-html[data-font-scale="130"] { font-size: 20.8px; }
 
 /* ---------- CSS 变量 ---------- */
 :root {
@@ -528,66 +519,6 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.font-scale-control {
-  position: relative;
-}
-
-.font-scale-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border: 2px solid var(--purple);
-  background: var(--bg-deep);
-  color: var(--text);
-  font-family: var(--font-pixel);
-  font-size: var(--type-nav);
-  cursor: pointer;
-}
-
-.font-scale-toggle:hover {
-  background: var(--bg-surface);
-  color: #fff;
-}
-
-.font-scale-toggle:focus-visible,
-.font-scale-range:focus-visible {
-  outline: 2px solid var(--yellow);
-  outline-offset: 3px;
-}
-
-.font-scale-panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 200;
-  width: 240px;
-  max-width: calc(100vw - 32px);
-  padding: 12px;
-  border: 2px solid var(--purple);
-  background: var(--bg-card);
-  box-shadow: 4px 4px 0 var(--bg-deep);
-}
-
-.font-scale-panel[hidden] {
-  display: none;
-}
-
-.font-scale-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  color: var(--text);
-  font-family: var(--font-pixel);
-  font-size: var(--type-nav);
-}
-
-.font-scale-range {
-  width: 100%;
-  margin: 12px 0 0;
-  accent-color: var(--purple);
 }
 
 .nav-link {
@@ -1271,11 +1202,6 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
     width: 100%;
     justify-content: center;
   }
-  .font-scale-panel {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%);
-  }
   .nav-link {
     font-size: calc(0.4375rem * var(--studio-item-scale, 1));
     padding: 4px 7px;
@@ -1419,27 +1345,51 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
 /* ============================================================
    Site Studio V3 — public runtime styles
    ============================================================ */
-[data-edit-key][data-studio-style="true"] {
-  font-size: var(--studio-size, inherit) !important;
-  line-height: var(--studio-line-height, inherit);
-  font-weight: var(--studio-weight, inherit);
-  letter-spacing: var(--studio-letter-spacing, inherit);
-  color: var(--studio-color, inherit) !important;
-  text-align: var(--studio-align, inherit);
+[data-edit-key][data-studio-size="true"] {
+  font-size: var(--studio-size) !important;
 }
 
-[data-edit-key][data-studio-style="true"] .text-cn,
-[data-edit-key][data-studio-style="true"][lang="zh-CN"] {
-  font-family: var(--studio-font-cn, var(--font-cn-pixel)) !important;
+[data-edit-key][data-studio-line-height="true"] {
+  line-height: var(--studio-line-height);
 }
 
-[data-edit-key][data-studio-style="true"] [lang="en"],
-[data-edit-key][data-studio-style="true"][lang="en"] {
-  font-family: var(--studio-font-en, var(--font-en-body)) !important;
+[data-edit-key][data-studio-weight="true"] {
+  font-weight: var(--studio-weight);
+}
+
+[data-edit-key][data-studio-letter-spacing="true"] {
+  letter-spacing: var(--studio-letter-spacing);
+}
+
+[data-edit-key][data-studio-color="true"] {
+  color: var(--studio-color) !important;
+}
+
+[data-edit-key][data-studio-color="true"] [data-studio-text-part] {
+  color: var(--studio-color) !important;
+  -webkit-text-fill-color: var(--studio-color) !important;
+}
+
+[data-edit-key][data-studio-align="true"] {
+  text-align: var(--studio-align);
+}
+
+[data-edit-key][data-studio-font-cn="true"] .text-cn,
+[data-edit-key][data-studio-font-cn="true"][lang="zh-CN"] {
+  font-family: var(--studio-font-cn) !important;
+}
+
+[data-edit-key][data-studio-font-en="true"] [lang="en"],
+[data-edit-key][data-studio-font-en="true"][lang="en"] {
+  font-family: var(--studio-font-en) !important;
 }
 
 [data-edit-key][data-studio-style="true"][data-studio-italic="true"] {
   font-style: italic;
+}
+
+[data-edit-key][data-studio-style="true"][data-studio-italic="false"] {
+  font-style: normal;
 }
 
 html[data-site-studio-preview="true"] [data-edit-key] {
@@ -1463,10 +1413,4 @@ html[data-site-animations="off"] *::before,
 html[data-site-animations="off"] *::after {
   animation: none !important;
   transition: none !important;
-}
-
-@media (max-width: 640px) {
-  [data-edit-key][data-studio-style="true"] {
-    font-size: var(--studio-mobile-size, var(--studio-size, inherit)) !important;
-  }
 }

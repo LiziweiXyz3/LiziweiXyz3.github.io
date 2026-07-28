@@ -8,10 +8,10 @@
 
   var VERSION = 3;
   var MAX_TEXT = 5000;
-  var FONT_CN = ['zpix', 'noto-sans-sc', 'lxgw-wenkai'];
+  var FONT_CN = ['zpix', 'cubic-11', 'boutique-7x7'];
   var FONT_EN = ['press-start', 'vt323', 'fira-code', 'ibm-plex-mono'];
   var ALIGNMENTS = ['left', 'center', 'right'];
-  var CURSORS = ['system', 'pixel-outline', 'crosshair', 'pointer', 'terminal', 'custom'];
+  var CURSORS = ['pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'];
   var OBSTACLES = ['cactus-small', 'cactus-big'];
 
   function clone(value) {
@@ -68,7 +68,7 @@
     }
     if (value.lineHeight !== undefined) style.lineHeight = clamp(value.lineHeight, 0.8, 3, 1.5);
     if (value.weight !== undefined) style.weight = Math.round(clamp(value.weight, 300, 900, 400) / 100) * 100;
-    if (value.italic === true) style.italic = true;
+    if (typeof value.italic === 'boolean') style.italic = value.italic;
     if (value.letterSpacing !== undefined) style.letterSpacing = clamp(value.letterSpacing, -2, 12, 0);
     if (ALIGNMENTS.indexOf(value.align) >= 0) style.align = value.align;
     if (value.color) style.color = color(value.color, '#e0e0e0');
@@ -126,9 +126,9 @@
     var sourceCursor = isObject(source.cursor) ? source.cursor : {};
     result.cursor = {
       preset: CURSORS.indexOf(sourceCursor.preset) >= 0 ? sourceCursor.preset : 'pixel-outline',
-      src: text(sourceCursor.src, '', 240),
-      hotspotX: Math.round(clamp(sourceCursor.hotspotX, 0, 127, 8)),
-      hotspotY: Math.round(clamp(sourceCursor.hotspotY, 0, 127, 8))
+      src: '',
+      hotspotX: 8,
+      hotspotY: 8
     };
 
     var sourceEffects = isObject(source.effects) ? source.effects : {};
@@ -253,9 +253,9 @@
       var old = styles[key] || {};
       var fontMap = {
         classic: { fontCn: 'zpix', fontEn: 'press-start' },
-        terminal: { fontCn: 'noto-sans-sc', fontEn: 'vt323' },
+        terminal: { fontCn: 'cubic-11', fontEn: 'vt323' },
         arcade: { fontCn: 'zpix', fontEn: 'press-start' },
-        code: { fontCn: 'noto-sans-sc', fontEn: 'fira-code' }
+        code: { fontCn: 'boutique-7x7', fontEn: 'fira-code' }
       };
       var next = fontMap[old.font] || fontMap.classic;
       next.size = Math.round(16 * clamp(old.scale, 80, 140, 100) / 100);

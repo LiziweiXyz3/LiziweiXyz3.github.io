@@ -5,6 +5,8 @@
 (function () {
   'use strict';
 
+  var activeGameCleanup = null;
+
   // ========== 初始化导航 ==========
   function renderNav() {
     var container = document.getElementById('navLinks');
@@ -630,6 +632,7 @@
 
   // ========== 终端内嵌小游戏 ==========
   function startDinoGame() {
+    if (activeGameCleanup) activeGameCleanup();
     var body = document.getElementById('terminalBody');
     if (!body) return;
 
@@ -986,20 +989,27 @@
       update();
     }
 
-    function exitGame() {
+    function cleanupGame(showScore) {
       running = false;
       document.removeEventListener('keydown', keyHandler);
       canvas.removeEventListener('click', jump);
-      var finalScore = Math.floor(score / 6);
-      var line = document.createElement('div');
-      line.className = 'terminal-line';
-      var error = document.createElement('span');
-      error.className = 'error';
-      error.textContent = 'GAME OVER  SCORE ' + finalScore;
-      line.appendChild(error);
-      body.appendChild(line);
-      body.scrollTop = body.scrollHeight;
-      wrap.parentNode.removeChild(wrap);
+      if (showScore) {
+        var finalScore = Math.floor(score / 6);
+        var line = document.createElement('div');
+        line.className = 'terminal-line';
+        var error = document.createElement('span');
+        error.className = 'error';
+        error.textContent = 'GAME OVER  SCORE ' + finalScore;
+        line.appendChild(error);
+        body.appendChild(line);
+        body.scrollTop = body.scrollHeight;
+      }
+      if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+      if (activeGameCleanup === cleanupGame) activeGameCleanup = null;
+    }
+
+    function exitGame() {
+      cleanupGame(true);
     }
 
     function keyHandler(e) {
@@ -1009,6 +1019,7 @@
 
     document.addEventListener('keydown', keyHandler);
     canvas.addEventListener('click', jump);
+    activeGameCleanup = cleanupGame;
 
     draw();
   }

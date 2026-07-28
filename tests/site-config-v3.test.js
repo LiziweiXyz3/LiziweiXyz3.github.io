@@ -8,6 +8,7 @@ const root = path.join(__dirname, '..');
 const config = JSON.parse(fs.readFileSync(path.join(root, 'site-config.json'), 'utf8'));
 const schema = JSON.parse(fs.readFileSync(path.join(root, 'site-config.schema.json'), 'utf8'));
 const editorHtml = fs.readFileSync(path.join(root, 'editor.html'), 'utf8');
+const editorCss = fs.readFileSync(path.join(root, 'editor.css'), 'utf8');
 const editorScript = fs.readFileSync(path.join(root, 'js', 'studio-editor.js'), 'utf8');
 const runtimeScript = fs.readFileSync(path.join(root, 'js', 'site-runtime.js'), 'utf8');
 const serverScript = fs.readFileSync(path.join(root, 'scripts', 'studio-server.js'), 'utf8');
@@ -36,7 +37,7 @@ test('normalization caps game speed and preserves per-element styles', function 
   next.game.startSpeed = 5;
   next.game.hangFrames = 99;
   next.styles.elements['resume.huya-2024.title'] = {
-    fontCn: 'lxgw-wenkai',
+    fontCn: 'cubic-11',
     fontEn: 'ibm-plex-mono',
     size: 26,
     mobileSize: 20,
@@ -46,7 +47,7 @@ test('normalization caps game speed and preserves per-element styles', function 
   assert.equal(normalized.game.maxSpeed, 2.5);
   assert.equal(normalized.game.startSpeed, 2.5);
   assert.equal(normalized.game.hangFrames, 30);
-  assert.equal(normalized.styles.elements['resume.huya-2024.title'].fontCn, 'lxgw-wenkai');
+  assert.equal(normalized.styles.elements['resume.huya-2024.title'].fontCn, 'cubic-11');
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].mobileSize, 20);
 });
 
@@ -97,14 +98,19 @@ test('formal save validation rejects incomplete configurations', function () {
   assert.match(validation.errors.join(' '), /缺少光标设置/);
 });
 
-test('editor exposes live preview, content structure, theme, assets, game and history', function () {
+test('editor uses a two-column preview and contextual editor without redundant tabs', function () {
   assert.match(editorHtml, /index\.html\?studio-preview=1/);
   assert.match(editorHtml, /id="discardDraftButton"/);
-  assert.match(editorHtml, /data-tab="element"/);
-  assert.match(editorHtml, /data-tab="theme"/);
-  assert.match(editorHtml, /data-tab="assets"/);
-  assert.match(editorHtml, /data-tab="game"/);
-  assert.match(editorHtml, /data-tab="history"/);
+  assert.match(editorHtml, /id="structureTree"/);
+  assert.match(editorHtml, /id="hideEditorButton"/);
+  assert.match(editorHtml, /打开公开主页|公开主页/);
+  assert.match(editorHtml, /data-view="element"/);
+  assert.match(editorHtml, /data-view="cursor"/);
+  assert.match(editorHtml, /data-view="game"/);
+  assert.match(editorHtml, /data-view="history"/);
+  assert.doesNotMatch(editorHtml, /data-tab=/);
+  assert.doesNotMatch(editorHtml, /studio-topbar|hidePreviewButton|showPreviewButton|折叠预览|手机字号|data-viewport|typewriterControl|自定义光标|heroStandUpload|projectIconUpload|旧版草稿工具/);
+  assert.doesNotMatch(editorHtml, /data-view="theme"|data-view="effects"/);
   assert.match(editorScript, /personal-site-studio-v3-draft/);
   assert.match(editorScript, /studio:apply-draft/);
 });
@@ -114,6 +120,36 @@ test('preview bridge accepts only same-origin editor messages', function () {
   assert.match(runtimeScript, /studio:apply-draft/);
   assert.match(runtimeScript, /studio:select/);
   assert.match(runtimeScript, /studio:start-game/);
+});
+
+test('element formatting applies only the properties explicitly changed', function () {
+  assert.match(runtimeScript, /data-studio-size/);
+  assert.match(runtimeScript, /data-studio-font-cn/);
+  assert.match(runtimeScript, /data-studio-font-en/);
+  assert.match(runtimeScript, /data-studio-color/);
+  assert.match(runtimeScript, /typeof style\.italic === 'boolean'/);
+  assert.match(editorHtml, /id="boldControl"/);
+  assert.match(editorHtml, /字号（px）/);
+  assert.doesNotMatch(editorHtml, /继承默认|字重|weightControl/);
+});
+
+test('preview stays visible while the editor scrolls and can collapse', function () {
+  assert.match(editorCss, /\.inspector-body\s*\{[\s\S]*?grid-template-rows:[\s\S]*?overflow:\s*hidden;/);
+  assert.match(editorCss, /\.settings-group\s*\{[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(editorCss, /\.studio-tree\s*\{[\s\S]*?overflow-y:\s*auto;/);
+  assert.doesNotMatch(editorCss, /data-preview-collapsed="true"/);
+  assert.match(editorCss, /data-editor-collapsed="true"/);
+  assert.doesNotMatch(editorScript, /setPanelCollapsed|showPreviewButton|hidePreviewButton/);
+  assert.match(editorScript, /setEditorCollapsed\(true\)/);
+});
+
+test('cursor choices are pixel presets without asset uploads', function () {
+  assert.deepEqual(schema.properties.cursor.properties.preset.enum, [
+    'pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'
+  ]);
+  assert.match(editorScript, /像素箭头/);
+  assert.match(editorScript, /像素手型/);
+  assert.doesNotMatch(editorHtml, /type="file"[^>]*(?:cursor|Hero|项目图标)/i);
 });
 
 test('local server uses atomic saves, restricted assets and a 20 version history', function () {

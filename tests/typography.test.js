@@ -51,9 +51,9 @@ test('hero scroll hint separates its Chinese copy from the ENTER key', () => {
   assert.match(html, /<div class="hero-scroll-hint"[^>]*>\s*<span class="text-cn" lang="zh-CN">▼ 按下 <\/span>\s*<span class="text-en-body" lang="en">ENTER<\/span>\s*<span class="text-cn" lang="zh-CN"> 键 ▼<\/span>\s*<\/div>/);
 });
 
-test('font scale panel marks the Chinese label as Zpix text', () => {
-  assert.match(html, /<span class="text-cn" lang="zh-CN">字体大小<\/span>/);
-  assert.match(css, /\.text-cn,[\s\S]*?font-family:\s*var\(--font-cn-pixel\)/);
+test('public page has no global font scale control', () => {
+  assert.doesNotMatch(html, /fontScale|font-scale|调整全站字体大小/);
+  assert.doesNotMatch(css, /data-font-scale|font-scale-(?:control|toggle|panel|range)/);
 });
 
 test('empty project copy uses explicit language parts', () => {
