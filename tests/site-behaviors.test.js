@@ -47,6 +47,20 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     startSpeed: 1,
     maxSpeed: 2.5,
     speedStep: 0.15,
-    speedEveryFrames: 600
+    speedEveryFrames: 600,
+    firstObstacleRatio: 0.6,
+    minObstacleGap: 260,
+    maxObstacleGap: 360,
+    maxObstacles: 3
   });
+});
+
+test('mini game pacing starts nearer and spaces at most three obstacles by distance', function () {
+  assert.equal(api.firstObstacleX(800), 480);
+  assert.equal(api.obstacleGap(0), 260);
+  assert.equal(api.obstacleGap(0.5), 310);
+  assert.equal(api.obstacleGap(1), 360);
+  assert.equal(api.canSpawnObstacle(800, 600, 1, 260), false);
+  assert.equal(api.canSpawnObstacle(800, 540, 1, 260), true);
+  assert.equal(api.canSpawnObstacle(800, 400, 3, 260), false);
 });

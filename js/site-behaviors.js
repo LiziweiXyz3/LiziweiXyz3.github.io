@@ -10,8 +10,26 @@
     startSpeed: 1,
     maxSpeed: 2.5,
     speedStep: 0.15,
-    speedEveryFrames: 600
+    speedEveryFrames: 600,
+    firstObstacleRatio: 0.6,
+    minObstacleGap: 260,
+    maxObstacleGap: 360,
+    maxObstacles: 3
   });
+
+  function firstObstacleX(width) {
+    return Math.round(Number(width) * GAME_CONFIG.firstObstacleRatio);
+  }
+
+  function obstacleGap(randomValue) {
+    var safe = Math.max(0, Math.min(1, Number(randomValue)));
+    return Math.round(GAME_CONFIG.minObstacleGap +
+      (GAME_CONFIG.maxObstacleGap - GAME_CONFIG.minObstacleGap) * safe);
+  }
+
+  function canSpawnObstacle(width, latestX, count, nextGap) {
+    return count < GAME_CONFIG.maxObstacles && Number(width) - Number(latestX) >= Number(nextGap);
+  }
 
   function createAvatarController(image, getScrollY) {
     var state = 'stand';
@@ -50,6 +68,9 @@
 
   return {
     GAME_CONFIG: GAME_CONFIG,
+    firstObstacleX: firstObstacleX,
+    obstacleGap: obstacleGap,
+    canSpawnObstacle: canSpawnObstacle,
     createAvatarController: createAvatarController
   };
 });

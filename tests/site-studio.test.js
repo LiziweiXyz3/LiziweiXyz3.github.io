@@ -537,3 +537,10 @@ test('page still loads controller after dynamic rendering and keeps normal regre
   assert.doesNotMatch(html, /id="terminalInput"[^>]*autofocus/);
   assert.doesNotMatch(studioScript, /contenteditable/);
 });
+
+test('mini game uses distance-based obstacle pacing instead of fixed-frame spawning', function () {
+  assert.doesNotMatch(script, /frame % 60/);
+  assert.match(script, /firstObstacleX\(W\)/);
+  assert.match(script, /canSpawnObstacle\(W, latest\.x, obstacles\.length, nextObstacleGap\)/);
+  assert.match(script, /obstacleGap\(Math\.random\(\)\)/);
+});

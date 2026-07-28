@@ -594,14 +594,26 @@
     var W = canvas.width, H = canvas.height;
     var groundY = H - 38;
 
-    var GAME_CONFIG = window.SiteBehaviors && window.SiteBehaviors.GAME_CONFIG || {
-      startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600
+    var gameBehaviors = window.SiteBehaviors || {};
+    var GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
+      startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600,
+      firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3
+    };
+    var firstObstacleX = gameBehaviors.firstObstacleX || function (width) {
+      return Math.round(width * GAME_CONFIG.firstObstacleRatio);
+    };
+    var obstacleGap = gameBehaviors.obstacleGap || function (randomValue) {
+      return Math.round(GAME_CONFIG.minObstacleGap +
+        (GAME_CONFIG.maxObstacleGap - GAME_CONFIG.minObstacleGap) * randomValue);
+    };
+    var canSpawnObstacle = gameBehaviors.canSpawnObstacle || function (width, latestX, count, nextGap) {
+      return count < GAME_CONFIG.maxObstacles && width - latestX >= nextGap;
     };
     var score = 0, running = false, speed = GAME_CONFIG.startSpeed, started = false;
     var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
     var GRAVITY = 0.6, JUMP_VEL = -11;
     var ANTICIPATION_FRAMES = 6;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
-    var obstacles = [], frame = 0;
+    var obstacles = [], frame = 0, nextObstacleGap = obstacleGap(Math.random());
 
     var stars = [];
     var starSpeeds = [];
@@ -614,10 +626,19 @@
       starSpeeds.push(0.15 + Math.random() * 0.4);
     }
 
+    function createObstacle(x) {
+      return {
+        x: x,
+        y: groundY,
+        type: Math.random() < 0.35 ? 'cactus-big' : 'cactus-small'
+      };
+    }
+
     function spawnObstacle() {
-      if (frame % 60 === 0) {
-        var type = Math.random() < 0.35 ? 'cactus-big' : 'cactus-small';
-        obstacles.push({ x: W, y: groundY, type: type });
+      var latest = obstacles[obstacles.length - 1];
+      if (!latest || canSpawnObstacle(W, latest.x, obstacles.length, nextObstacleGap)) {
+        obstacles.push(createObstacle(W));
+        nextObstacleGap = obstacleGap(Math.random());
       }
       if (frame % GAME_CONFIG.speedEveryFrames === 0 && speed < GAME_CONFIG.maxSpeed) {
         speed = Math.min(GAME_CONFIG.maxSpeed, speed + GAME_CONFIG.speedStep);
@@ -843,7 +864,9 @@
     }
 
     function restart() {
-      started = true; running = true; score = 0; speed = GAME_CONFIG.startSpeed; frame = 0; obstacles = [];
+      started = true; running = true; score = 0; speed = GAME_CONFIG.startSpeed; frame = 0;
+      obstacles = [createObstacle(firstObstacleX(W))];
+      nextObstacleGap = obstacleGap(Math.random());
       monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false;
       update();
     }
