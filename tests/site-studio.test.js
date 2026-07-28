@@ -6,6 +6,8 @@ const api = require('../js/site-studio.js');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '..', 'stylesheet.css'), 'utf8');
+const script = fs.readFileSync(path.join(__dirname, '..', 'js', 'script.js'), 'utf8');
+const studioScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'site-studio.js'), 'utf8');
 
 function createStyle() {
   const values = Object.create(null);
@@ -97,4 +99,59 @@ test('studio styles scope font choices and text scaling without sizing visual as
   assert.match(css, /--studio-text-scale:\s*1/);
   assert.match(css, /--type-body:\s*calc\(var\(--base-type-body\) \* var\(--studio-text-scale, 1\)\)/);
   assert.doesNotMatch(css, /\.project-icon[\s\S]*var\(--studio-text-scale/);
+});
+
+test('inline edits persist plain text without accepting markup', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+
+  controller.setText('hero.title', '<b>岁安</b>');
+
+  assert.equal(harness.heroTitle.textContent, '<b>岁安</b>');
+  assert.equal(JSON.parse(harness.writes.at(-1)[1]).text['hero.title'], '<b>岁安</b>');
+});
+
+test('section controls persist independently and reset only their own defaults', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+
+  controller.setSection('hero', 'code', 125);
+  controller.setSection('about', 'arcade', 90);
+  controller.resetSection('hero');
+
+  assert.equal(controller.getDraft().sections.hero, undefined);
+  assert.deepEqual(controller.getDraft().sections.about, { font: 'arcade', scale: 90 });
+  assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
+  assert.equal(harness.about.getAttribute('data-studio-font'), 'arcade');
+});
+
+test('resetAll clears only the temporary studio draft', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+
+  controller.setText('hero.title', '草稿标题');
+  controller.setSection('hero', 'terminal', 110);
+  controller.resetAll();
+
+  assert.deepEqual(controller.getDraft(), api.createEmptyDraft());
+  assert.equal(harness.heroTitle.textContent, '岁安');
+  assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
+});
+
+test('all site regions expose stable edit keys and the studio uses contenteditable only in edit mode', function () {
+  assert.match(html, /data-edit-key="nav\.brand"/);
+  assert.match(html, /data-edit-key="projects\.subtitle"/);
+  assert.match(html, /data-edit-key="footer\.gameover"/);
+  assert.match(script, /setEditKey\(heroTitle, 'hero\.title'/);
+  assert.match(script, /setEditKey\(titleCn, 'projects\.' \+ proj\.id \+ '\.title'/);
+  assert.match(script, /setEditKey\(field, 'resume\.' \+ index \+ '\.desc'/);
+  assert.match(studioScript, /contenteditable.*plaintext-only/);
+  assert.match(studioScript, /function bindPanel\(/);
+});
+
+test('avatar scroll controls and mini game stay playable by default', function () {
+  assert.match(script, /window\.addEventListener\('scroll', scrollHandler, \{ passive: true \}\)/);
+  assert.match(script, /var score = 0, running = false, speed = 3, started = false/);
+  assert.match(script, /frame % 720 === 0 && speed < 5\) speed \+= 0\.2/);
+  assert.doesNotMatch(html, /id="terminalInput"[^>]*autofocus/);
 });

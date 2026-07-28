@@ -19,7 +19,7 @@
   <!-- 导航栏 -->
   <nav class="nav" data-studio-section="nav">
     <div class="nav-inner">
-      <span class="nav-brand">◈ SUIAN ◈</span>
+      <span class="nav-brand" data-edit-key="nav.brand">◈ SUIAN ◈</span>
       <div class="nav-actions">
         <div class="nav-links" id="navLinks">
           <!-- JS 动态生成 -->
@@ -61,7 +61,7 @@
   <!-- 关于我 -->
   <section class="section" id="about" data-studio-section="about">
     <h2 class="section-title">
-      <span class="icon">📋</span> ABOUT ME
+      <span class="icon">📋</span><span data-edit-key="about.heading"> ABOUT ME</span>
       <span class="bar"></span>
     </h2>
     <p class="section-subtitle" id="aboutIntro"></p>
@@ -82,10 +82,10 @@
   <!-- 项目 -->
   <section class="section" id="projects" data-studio-section="projects">
     <h2 class="section-title">
-      <span class="icon">📦</span> PROJECTS
+      <span class="icon">📦</span><span data-edit-key="projects.heading"> PROJECTS</span>
       <span class="bar"></span>
     </h2>
-    <p class="section-subtitle text-mixed">
+    <p class="section-subtitle text-mixed" data-edit-key="projects.subtitle">
       <span class="text-en-body" lang="en">// QUEST LOG —</span>
       <span class="text-cn" lang="zh-CN">任务日志</span>
     </p>
@@ -95,10 +95,10 @@
   <!-- 简历 -->
   <section class="section" id="resume" data-studio-section="resume">
     <h2 class="section-title">
-      <span class="icon">📜</span> RESUME
+      <span class="icon">📜</span><span data-edit-key="resume.heading"> RESUME</span>
       <span class="bar"></span>
     </h2>
-    <p class="section-subtitle text-mixed">
+    <p class="section-subtitle text-mixed" data-edit-key="resume.subtitle">
       <span class="text-en-body" lang="en">// LEVEL PROGRESS —</span>
       <span class="text-cn" lang="zh-CN">关卡进度</span>
     </p>
@@ -108,10 +108,10 @@
   <!-- 终端 -->
   <section class="section" id="contact" data-studio-section="terminal">
     <h2 class="section-title">
-      <span class="icon">💻</span> TERMINAL
+      <span class="icon">💻</span><span data-edit-key="terminal.heading"> TERMINAL</span>
       <span class="bar"></span>
     </h2>
-    <p class="section-subtitle text-mixed">
+    <p class="section-subtitle text-mixed" data-edit-key="terminal.subtitle">
       <span class="text-en-body" lang="en">// CONTACT —</span>
       <span class="text-cn" lang="zh-CN">建立连接</span>
     </p>
@@ -120,7 +120,7 @@
         <span class="terminal-dot"></span>
         <span class="terminal-dot"></span>
         <span class="terminal-dot"></span>
-        <span class="terminal-title">SuiAn@dev:~</span>
+        <span class="terminal-title" data-edit-key="terminal.title">SuiAn@dev:~</span>
       </div>
       <div class="terminal-body" id="terminalBody">
         <div class="terminal-line"><span class="output" id="terminalIntro"></span></div>
@@ -128,8 +128,8 @@
       </div>
       <div class="terminal-footer">
         <span class="terminal-input-line">
-          <span class="prompt" style="color:var(--green);">SuiAn@dev:~$</span>
-          <input class="terminal-input" id="terminalInput" type="text" autofocus placeholder="输入 help 查看可用命令...">
+          <span class="prompt" style="color:var(--green);" data-edit-key="terminal.prompt">SuiAn@dev:~$</span>
+          <input class="terminal-input" id="terminalInput" type="text" placeholder="输入 help 查看可用命令...">
         </span>
       </div>
     </div>
@@ -137,14 +137,14 @@
 
   <!-- Footer -->
   <footer class="footer" data-studio-section="footer">
-    <div class="footer-gameover">— GAME OVER —</div>
+    <div class="footer-gameover" data-edit-key="footer.gameover">— GAME OVER —</div>
     <div class="footer-colors">
       <span class="footer-color"></span>
       <span class="footer-color"></span>
       <span class="footer-color"></span>
       <span class="footer-color"></span>
     </div>
-    <p class="footer-text text-mixed">
+    <p class="footer-text text-mixed" data-edit-key="footer.text">
       <span class="text-en-body" lang="en">© 2026</span>
       <span class="text-cn" lang="zh-CN">岁安</span>
       <span class="text-en-body" lang="en">· Built with 8-bit love</span>

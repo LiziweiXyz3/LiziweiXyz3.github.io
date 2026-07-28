@@ -13,6 +13,7 @@
     navItems.forEach(function (item) {
       var a = document.createElement('a');
       a.className = 'nav-link';
+      setEditKey(a, 'nav.' + item.id, item.label);
       a.href = '#' + item.id;
       a.lang = 'en';
       a.textContent = item.label;
@@ -58,6 +59,12 @@
 
   function clearElement(element) {
     while (element.firstChild) element.removeChild(element.firstChild);
+  }
+
+  function setEditKey(element, key, sourceText) {
+    if (!element) return;
+    element.setAttribute('data-edit-key', key);
+    if (typeof sourceText === 'string') element.setAttribute('data-edit-source', sourceText);
   }
 
   // 将文字片段转为安全的 DOM 节点，避免把数据拼接进 HTML 字符串。
@@ -123,14 +130,17 @@
     var heroDesc = document.getElementById('heroDesc');
     heroTitle.textContent = user.name;
     heroTitle.setAttribute('lang', 'zh-CN');
+    setEditKey(heroTitle, 'hero.title', user.name);
     renderTextParts(heroDesc, user.bioParts);
-    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en');
+    setEditKey(heroDesc, 'hero.description', partsToText(user.bioParts));
+    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en', 'hero.subtitle');
   }
 
   // 打字机效果
-  function typeWriter(elementId, text, speed, lang) {
+  function typeWriter(elementId, text, speed, lang, editKey) {
     var el = document.getElementById(elementId);
     if (!el) return;
+    if (editKey) setEditKey(el, editKey, text);
     var i = 0;
     renderFrame('');
     function renderFrame(current) {
@@ -147,6 +157,7 @@
       el.appendChild(cursor);
     }
     function tick() {
+      if (el.getAttribute('data-studio-draft-applied') === 'true') return;
       if (i < text.length) {
         var current = text.substring(0, i + 1);
         renderFrame(current);
@@ -160,12 +171,15 @@
   // ========== About 渲染 ==========
   function renderAbout() {
     var aboutIntro = document.getElementById('aboutIntro');
-    if (aboutIntro) renderTextParts(aboutIntro, about.introParts);
+    if (aboutIntro) {
+      renderTextParts(aboutIntro, about.introParts);
+      setEditKey(aboutIntro, 'about.intro', partsToText(about.introParts));
+    }
 
     // 属性条
     var statsContainer = document.getElementById('statsContainer');
     clearElement(statsContainer);
-    about.stats.forEach(function (stat) {
+    about.stats.forEach(function (stat, index) {
       var row = document.createElement('div');
       row.className = 'stat-row';
       var label = document.createElement('div');
@@ -176,9 +190,11 @@
         { lang: 'en', text: '[' + stat.label + '] ' },
         { lang: 'zh-CN', text: stat.name }
       ]);
+      setEditKey(name, 'about.stats.' + index + '.name', '[' + stat.label + '] ' + stat.name);
       var value = document.createElement('span');
       value.className = 'stat-value';
       value.textContent = stat.value + '/100';
+      setEditKey(value, 'about.stats.' + index + '.value', stat.value + '/100');
       label.appendChild(name);
       label.appendChild(value);
       var outer = document.createElement('div');
@@ -197,7 +213,7 @@
     // 技能槽
     var skillsContainer = document.getElementById('skillsContainer');
     clearElement(skillsContainer);
-    about.skills.forEach(function (skill) {
+    about.skills.forEach(function (skill, index) {
       var slot = document.createElement('div');
       slot.className = 'skill-slot slot-cat-' + skill.category;
       var dot = document.createElement('span');
@@ -206,6 +222,7 @@
       var skillText = document.createElement('span');
       skillText.lang = 'en';
       skillText.textContent = skill.name + ' Lv.' + skill.level;
+      setEditKey(skillText, 'about.skills.' + index, skill.name + ' Lv.' + skill.level);
       slot.appendChild(skillText);
       skillsContainer.appendChild(slot);
     });
@@ -262,6 +279,7 @@
       status.className = 'project-status status-' + proj.status;
       status.lang = 'en';
       status.textContent = statusText;
+      setEditKey(status, 'projects.' + proj.id + '.status', statusText);
       var icon = document.createElement(proj.image ? 'img' : 'div');
       icon.className = proj.image ? 'project-image' : 'project-icon';
       if (proj.image) {
@@ -276,24 +294,28 @@
       titleCn.className = 'project-title-cn';
       titleCn.lang = 'zh-CN';
       titleCn.textContent = proj.title;
+      setEditKey(titleCn, 'projects.' + proj.id + '.title', proj.title);
       title.appendChild(titleCn);
       if (proj.titleEn) {
         var titleEn = document.createElement('span');
         titleEn.className = 'project-title-en';
         titleEn.lang = 'en';
         titleEn.textContent = proj.titleEn;
+        setEditKey(titleEn, 'projects.' + proj.id + '.titleEn', proj.titleEn);
         title.appendChild(titleEn);
       }
       var desc = document.createElement('p');
       desc.className = 'project-desc';
       renderTextParts(desc, proj.descParts || proj.desc);
+      setEditKey(desc, 'projects.' + proj.id + '.description', partsToText(proj.descParts || proj.desc));
       var tags = document.createElement('div');
       tags.className = 'project-tags';
-      proj.tags.forEach(function (tag) {
+      proj.tags.forEach(function (tag, index) {
         var tagEl = document.createElement('span');
         tagEl.className = 'project-tag';
         tagEl.lang = 'en';
         tagEl.textContent = '#' + tag;
+        setEditKey(tagEl, 'projects.' + proj.id + '.tag.' + index, '#' + tag);
         tags.appendChild(tagEl);
       });
       card.appendChild(status);
@@ -312,38 +334,43 @@
     if (!timeline) return;
     clearElement(timeline);
 
-    experiences.forEach(function (exp) {
+    experiences.forEach(function (exp, index) {
       var node = document.createElement('div');
       node.className = 'timeline-node node-type-' + exp.type;
 
       var field = document.createElement('div');
       field.className = 'node-period ' + exp.type;
       renderTextParts(field, exp.periodParts || exp.period);
+      setEditKey(field, 'resume.' + index + '.period', partsToText(exp.periodParts || exp.period));
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-title';
       renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
+      setEditKey(field, 'resume.' + index + '.title', partsToText(exp.titleParts || exp.title));
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-company';
       renderTextParts(field, exp.companyParts || exp.company);
+      setEditKey(field, 'resume.' + index + '.company', partsToText(exp.companyParts || exp.company));
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-desc';
       renderTextParts(field, exp.descParts || exp.desc);
+      setEditKey(field, 'resume.' + index + '.desc', partsToText(exp.descParts || exp.desc));
       node.appendChild(field);
 
       var tags = document.createElement('div');
       tags.className = 'node-tags';
-      (exp.highlights || []).forEach(function (highlight) {
+      (exp.highlights || []).forEach(function (highlight, highlightIndex) {
         var tag = document.createElement('span');
         tag.className = 'node-tag';
         renderTextParts(tag, typeof highlight === 'string'
           ? [{ lang: 'zh-CN', text: '▶ ' + highlight }]
           : [{ lang: 'zh-CN', text: '▶ ' }].concat(highlight));
+        setEditKey(tag, 'resume.' + index + '.highlight.' + highlightIndex, '▶ ' + partsToText(highlight));
         tags.appendChild(tag);
       });
       node.appendChild(tags);
@@ -359,7 +386,10 @@
     var introEl = document.getElementById('terminalIntro');
     if (!body || !input) return;
 
-    if (introEl) introEl.textContent = partsToText(contact.introParts);
+    if (introEl) {
+      introEl.textContent = partsToText(contact.introParts);
+      setEditKey(introEl, 'terminal.intro', partsToText(contact.introParts));
+    }
 
     var history = [];
 
@@ -570,7 +600,7 @@
     var W = canvas.width, H = canvas.height;
     var groundY = H - 38;
 
-    var score = 0, running = false, speed = 5, started = false;
+    var score = 0, running = false, speed = 3, started = false;
     var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
     var GRAVITY = 0.6, JUMP_VEL = -11;
     var ANTICIPATION_FRAMES = 6;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
@@ -592,7 +622,7 @@
         var type = Math.random() < 0.35 ? 'cactus-big' : 'cactus-small';
         obstacles.push({ x: W, y: groundY, type: type });
       }
-      if (frame % 400 === 0 && speed < 9) speed += 0.3;
+      if (frame % 720 === 0 && speed < 5) speed += 0.2;
     }
 
     function update() {
@@ -814,7 +844,7 @@
     }
 
     function restart() {
-      started = true; running = true; score = 0; speed = 5; frame = 0; obstacles = [];
+      started = true; running = true; score = 0; speed = 3; frame = 0; obstacles = [];
       monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false;
       update();
     }
