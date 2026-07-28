@@ -8,6 +8,8 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '..', 'stylesheet.css'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '..', 'js', 'script.js'), 'utf8');
 const studioScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'site-studio.js'), 'utf8');
+const editorHtml = fs.readFileSync(path.join(__dirname, '..', 'editor.html'), 'utf8');
+const editorScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'studio-editor.js'), 'utf8');
 
 function createStyle() {
   const values = Object.create(null);
@@ -327,13 +329,14 @@ test('item, section and global resets clear only their intended V2 scope', funct
   assert.deepEqual(controller.getDraft(), api.createEmptyDraft());
 });
 
-test('page provides a generated sidebar mount instead of section-wide controls', function () {
-  assert.match(html, /id="siteStudioSections"/);
-  assert.match(html, /id="siteStudioSave"/);
-  assert.match(html, /id="siteStudioUndo"/);
-  assert.match(html, /id="siteStudioStatus"/);
-  assert.doesNotMatch(html, /id="siteStudioEditMode"/);
-  assert.doesNotMatch(html, /data-studio-font-control/);
+test('public page has no editor chrome while the local editor owns the studio controls', function () {
+  assert.doesNotMatch(html, /id="siteStudioSections"/);
+  assert.doesNotMatch(html, /id="siteStudioToggle"/);
+  assert.doesNotMatch(html, /js\/site-studio\.js/);
+  assert.match(editorHtml, /id="structureTree"/);
+  assert.match(editorHtml, /id="saveButton"/);
+  assert.match(editorHtml, /id="undoButton"/);
+  assert.match(editorHtml, /index\.html\?studio-preview=1/);
 });
 
 test('static and dynamic edit keys expose human-readable sidebar metadata', function () {
@@ -343,7 +346,9 @@ test('static and dynamic edit keys expose human-readable sidebar metadata', func
   assert.match(script, /setEditKey\(heroTitle, 'hero\.title', user\.name, '姓名'/);
   assert.match(script, /setEditKey\(heroDesc, 'hero\.description',[\s\S]*?'个人简介', true\)/);
   assert.match(script, /proj\.title \+ ' · 项目介绍'/);
-  assert.match(script, /'第 ' \+ \(index \+ 1\) \+ ' 段经历 · 描述'/);
+  assert.match(script, /var experienceId = exp\.id \|\| String\(index\)/);
+  assert.match(script, /'resume\.' \+ experienceId \+ '\.desc'/);
+  assert.match(editorScript, /resume\.' \+ experience\.id \+ '\.period'/);
 });
 
 test('sidebar generates all controls and edits copy and typography live', function () {
@@ -604,8 +609,9 @@ test('mobile typography and panel keep each item scale reachable', function () {
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*\.site-studio-panel/);
 });
 
-test('page still loads controller after dynamic rendering and keeps normal regressions', function () {
-  assert.match(html, /<script src="js\/script\.js"><\/script>\s*<script src="js\/site-studio\.js"><\/script>/);
+test('public page loads config runtime after dynamic rendering and keeps normal regressions', function () {
+  assert.match(html, /<script src="js\/site-config\.js"><\/script>/);
+  assert.match(html, /<script src="js\/site-runtime\.js"><\/script>\s*<script src="js\/script\.js"><\/script>/);
   assert.match(script, /window\.addEventListener\('scroll', avatar\.onScroll, \{ passive: true \}\)/);
   assert.match(script, /speed = GAME_CONFIG\.startSpeed/);
   assert.match(script, /speed = Math\.min\(GAME_CONFIG\.maxSpeed, speed \+ GAME_CONFIG\.speedStep\)/);
@@ -622,6 +628,8 @@ test('mini game uses distance-based obstacle pacing instead of fixed-frame spawn
 
 test('mini game reads its slower jump physics from shared configuration', function () {
   assert.match(script, /var RISE_GRAVITY = GAME_CONFIG\.riseGravity, FALL_GRAVITY = GAME_CONFIG\.fallGravity;/);
-  assert.match(script, /monster\.vy \+= monster\.vy < 0 \? RISE_GRAVITY : FALL_GRAVITY;/);
+  assert.match(script, /var nextVelocity = monster\.vy \+ \(monster\.vy < 0 \? RISE_GRAVITY : FALL_GRAVITY\);/);
+  assert.match(script, /var HANG_FRAMES = Number\(GAME_CONFIG\.hangFrames\) \|\| 0;/);
+  assert.match(script, /monster\.hangTimer = HANG_FRAMES;/);
   assert.match(script, /var ANTICIPATION_FRAMES = GAME_CONFIG\.anticipationFrames;/);
 });

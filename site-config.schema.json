@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://liziweixyz3.github.io/site-config.schema.json",
+  "title": "Personal Site Studio Configuration",
+  "type": "object",
+  "required": [
+    "version",
+    "content",
+    "theme",
+    "styles",
+    "cursor",
+    "effects",
+    "assets",
+    "game"
+  ],
+  "properties": {
+    "version": {
+      "const": 3
+    },
+    "content": {
+      "type": "object",
+      "required": [
+        "moduleOrder",
+        "user",
+        "nav",
+        "about",
+        "projects",
+        "experiences",
+        "contact"
+      ],
+      "properties": {
+        "moduleOrder": {
+          "type": "array",
+          "items": {
+            "enum": ["hero", "about", "projects", "resume", "contact"]
+          },
+          "uniqueItems": true
+        },
+        "user": { "type": "object" },
+        "nav": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/idRecord" }
+        },
+        "about": { "type": "object" },
+        "projects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/idRecord" }
+        },
+        "experiences": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/idRecord" }
+        },
+        "contact": { "type": "object" },
+        "static": { "type": "object" },
+        "overrides": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "theme": {
+      "type": "object",
+      "required": ["colors", "scanlineOpacity", "particleCount", "shadowSize", "sectionGap"],
+      "properties": {
+        "colors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$"
+          }
+        },
+        "scanlineOpacity": { "type": "number", "minimum": 0, "maximum": 0.35 },
+        "particleCount": { "type": "integer", "minimum": 0, "maximum": 200 },
+        "shadowSize": { "type": "number", "minimum": 0, "maximum": 12 },
+        "sectionGap": { "type": "number", "minimum": 12, "maximum": 96 }
+      },
+      "additionalProperties": true
+    },
+    "styles": {
+      "type": "object",
+      "required": ["elements"],
+      "properties": {
+        "elements": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/textStyle" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "cursor": {
+      "type": "object",
+      "required": ["preset", "hotspotX", "hotspotY"],
+      "properties": {
+        "preset": {
+          "enum": ["system", "pixel-outline", "crosshair", "pointer", "terminal", "custom"]
+        },
+        "src": { "type": "string" },
+        "hotspotX": { "type": "integer", "minimum": 0, "maximum": 127 },
+        "hotspotY": { "type": "integer", "minimum": 0, "maximum": 127 }
+      },
+      "additionalProperties": true
+    },
+    "effects": {
+      "type": "object",
+      "required": [
+        "typewriterSpeed",
+        "smoothScroll",
+        "avatarScrollThreshold",
+        "particles",
+        "animations"
+      ],
+      "properties": {
+        "typewriterSpeed": { "type": "number", "minimum": 0, "maximum": 200 },
+        "smoothScroll": { "type": "boolean" },
+        "avatarScrollThreshold": { "type": "number", "minimum": 1, "maximum": 100 },
+        "particles": { "type": "boolean" },
+        "animations": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "assets": {
+      "type": "object",
+      "required": ["heroStand", "heroJump"],
+      "properties": {
+        "heroStand": { "type": "string" },
+        "heroJump": { "type": "string" },
+        "projectIcons": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "game": {
+      "type": "object",
+      "required": [
+        "startSpeed",
+        "maxSpeed",
+        "speedStep",
+        "jumpVelocity",
+        "riseGravity",
+        "fallGravity",
+        "hangFrames",
+        "minObstacleGap",
+        "maxObstacleGap",
+        "maxObstacles",
+        "sequences"
+      ],
+      "properties": {
+        "startSpeed": { "type": "number", "minimum": 0.5, "maximum": 2.5 },
+        "maxSpeed": { "type": "number", "minimum": 0.5, "maximum": 2.5 },
+        "speedStep": { "type": "number", "minimum": 0, "maximum": 0.5 },
+        "speedEveryFrames": { "type": "integer", "minimum": 120, "maximum": 1800 },
+        "firstObstacleRatio": { "type": "number", "minimum": 0.45, "maximum": 0.9 },
+        "minObstacleGap": { "type": "number", "minimum": 180, "maximum": 700 },
+        "maxObstacleGap": { "type": "number", "minimum": 220, "maximum": 900 },
+        "maxObstacles": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "jumpVelocity": { "type": "number", "minimum": -10, "maximum": -3 },
+        "riseGravity": { "type": "number", "minimum": 0.05, "maximum": 0.5 },
+        "fallGravity": { "type": "number", "minimum": 0.03, "maximum": 0.35 },
+        "hangFrames": { "type": "integer", "minimum": 0, "maximum": 30 },
+        "anticipationFrames": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "landingFrames": { "type": "integer", "minimum": 0, "maximum": 24 },
+        "sequences": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": { "$ref": "#/$defs/obstacleSequence" }
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "idRecord": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "textStyle": {
+      "type": "object",
+      "properties": {
+        "fontCn": {
+          "enum": ["zpix", "noto-sans-sc", "lxgw-wenkai"]
+        },
+        "fontEn": {
+          "enum": ["press-start-2p", "vt323", "fira-code", "ibm-plex-mono"]
+        },
+        "size": { "type": "number", "minimum": 8, "maximum": 96 },
+        "mobileSize": { "type": "number", "minimum": 8, "maximum": 72 },
+        "lineHeight": { "type": "number", "minimum": 0.8, "maximum": 3 },
+        "weight": { "type": "integer", "minimum": 300, "maximum": 900 },
+        "italic": { "type": "boolean" },
+        "letterSpacing": { "type": "number", "minimum": -2, "maximum": 12 },
+        "align": { "enum": ["left", "center", "right"] },
+        "color": {
+          "type": "string",
+          "pattern": "^(#[0-9A-Fa-f]{6}|rgba?\\(.+\\))$"
+        }
+      },
+      "additionalProperties": true
+    },
+    "obstacleSequence": {
+      "allOf": [
+        { "$ref": "#/$defs/idRecord" },
+        {
+          "type": "object",
+          "required": ["name", "enabled", "weight", "items"],
+          "properties": {
+            "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+            "enabled": { "type": "boolean" },
+            "weight": { "type": "number", "minimum": 1, "maximum": 10 },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 4,
+              "items": {
+                "type": "object",
+                "required": ["type", "gap"],
+                "properties": {
+                  "type": { "enum": ["cactus-small", "cactus-big"] },
+                  "gap": { "type": "number", "minimum": 0, "maximum": 220 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
+    }
+  }
+}

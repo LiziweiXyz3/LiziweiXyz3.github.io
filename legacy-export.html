@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旧版侧栏草稿导出</title>
+  <style>
+    @font-face { font-family: Zpix; src: url('fonts/zpix.ttf') format('truetype'); }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0a0a0a; color: #e0e0e0; font-family: Zpix, monospace; }
+    main { width: min(560px, calc(100vw - 32px)); border: 2px solid #b388ff; background: #111122; padding: 24px; box-shadow: 6px 6px #000; }
+    h1 { margin-top: 0; color: #fbbc05; font-size: 22px; }
+    p { color: #aaa; line-height: 1.8; }
+    button { border: 1px solid #34a853; border-radius: 0; background: #090909; color: #34a853; padding: 10px 14px; font: inherit; cursor: pointer; }
+    output { display: block; margin-top: 16px; color: #b388ff; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>旧版侧栏草稿导出</h1>
+    <p>请使用以前编辑网站时的同一个浏览器，通过这个本地文件页面导出旧版草稿。下载完成后，在 Pixel Studio 左下角选择“导入旧版草稿”。</p>
+    <button id="exportButton" type="button">下载旧版草稿 JSON</button>
+    <output id="status" aria-live="polite"></output>
+  </main>
+  <script>
+    (function () {
+      'use strict';
+      var button = document.getElementById('exportButton');
+      var status = document.getElementById('status');
+      button.addEventListener('click', function () {
+        var raw = localStorage.getItem('personal-site-studio-draft');
+        if (!raw) {
+          status.textContent = '没有找到旧版草稿。请确认使用的是原来编辑网站的浏览器。';
+          return;
+        }
+        try {
+          JSON.parse(raw);
+          var blob = new Blob([raw], { type: 'application/json' });
+          var link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'personal-site-studio-v2-draft.json';
+          link.click();
+          URL.revokeObjectURL(link.href);
+          status.textContent = '导出完成。';
+        } catch (error) {
+          status.textContent = '旧版草稿数据已损坏，无法导出。';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -18,40 +18,50 @@
     jumpVelocity: -6,
     riseGravity: 0.18,
     fallGravity: 0.08,
-    anticipationFrames: 6
+    hangFrames: 8,
+    anticipationFrames: 6,
+    landingFrames: 3,
+    sequences: []
   });
 
-  function firstObstacleX(width) {
-    return Math.round(Number(width) * GAME_CONFIG.firstObstacleRatio);
+  function firstObstacleX(width, config) {
+    var active = config || GAME_CONFIG;
+    return Math.round(Number(width) * Number(active.firstObstacleRatio));
   }
 
-  function obstacleGap(randomValue) {
+  function obstacleGap(randomValue, config) {
+    var active = config || GAME_CONFIG;
     var safe = Math.max(0, Math.min(1, Number(randomValue)));
-    return Math.round(GAME_CONFIG.minObstacleGap +
-      (GAME_CONFIG.maxObstacleGap - GAME_CONFIG.minObstacleGap) * safe);
+    return Math.round(Number(active.minObstacleGap) +
+      (Number(active.maxObstacleGap) - Number(active.minObstacleGap)) * safe);
   }
 
-  function canSpawnObstacle(width, latestX, count, nextGap) {
-    return count < GAME_CONFIG.maxObstacles && Number(width) - Number(latestX) >= Number(nextGap);
+  function canSpawnObstacle(width, latestX, count, nextGap, config) {
+    var active = config || GAME_CONFIG;
+    return count < Number(active.maxObstacles) && Number(width) - Number(latestX) >= Number(nextGap);
   }
 
-  function createAvatarController(image, getScrollY) {
+  function createAvatarController(image, getScrollY, options) {
+    options = options || {};
     var state = 'stand';
     var lastScroll = typeof getScrollY === 'function' ? getScrollY() : 0;
+    var threshold = Math.max(1, Number(options.threshold) || 10);
+    var standSrc = options.standSrc || 'selfie_stand.png';
+    var jumpSrc = options.jumpSrc || 'selfie_jump.png';
 
     function applyState(nextState) {
       state = nextState;
       if (!image) return;
-      image.src = state === 'jump' ? 'selfie_jump.png' : 'selfie_stand.png';
+      image.src = state === 'jump' ? jumpSrc : standSrc;
       image.style.transform = state === 'jump' ? 'scale(0.78)' : '';
     }
 
     function onScroll() {
       var now = typeof getScrollY === 'function' ? getScrollY() : lastScroll;
-      if (now - lastScroll > 10) {
+      if (now - lastScroll > threshold) {
         applyState('jump');
         lastScroll = now;
-      } else if (lastScroll - now > 10) {
+      } else if (lastScroll - now > threshold) {
         applyState('stand');
         lastScroll = now;
       }

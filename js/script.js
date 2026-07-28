@@ -96,15 +96,29 @@
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
     if (!avatarEl) return;
+    if (window.__heroAvatarController) {
+      window.removeEventListener('scroll', window.__heroAvatarController.onScroll);
+      window.__heroAvatarController = null;
+    }
+    clearElement(avatarEl);
 
     var img = document.createElement('img');
-    img.src = 'selfie_stand.png';
+    img.src = window.siteConfig && window.siteConfig.assets && window.siteConfig.assets.heroStand
+      ? window.siteConfig.assets.heroStand : 'selfie_stand.png';
     img.alt = user.name;
     avatarEl.appendChild(img);
     var avatar = window.SiteBehaviors && window.SiteBehaviors.createAvatarController
-      ? window.SiteBehaviors.createAvatarController(img, function () { return window.scrollY; })
+      ? window.SiteBehaviors.createAvatarController(img, function () { return window.scrollY; }, {
+          threshold: window.siteConfig && window.siteConfig.effects
+            ? window.siteConfig.effects.avatarScrollThreshold : 10,
+          standSrc: window.siteConfig && window.siteConfig.assets
+            ? window.siteConfig.assets.heroStand : 'selfie_stand.png',
+          jumpSrc: window.siteConfig && window.siteConfig.assets
+            ? window.siteConfig.assets.heroJump : 'selfie_jump.png'
+        })
       : null;
     if (avatar) {
+      window.__heroAvatarController = avatar;
       img.addEventListener('click', avatar.toggle);
       window.addEventListener('scroll', avatar.onScroll, { passive: true });
     }
@@ -116,7 +130,9 @@
     setEditKey(heroTitle, 'hero.title', user.name, '姓名');
     renderTextParts(heroDesc, user.bioParts);
     setEditKey(heroDesc, 'hero.description', partsToText(user.bioParts), '个人简介', true);
-    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en', 'hero.subtitle', '身份介绍');
+    var typeSpeed = window.siteConfig && window.siteConfig.effects
+      ? window.siteConfig.effects.typewriterSpeed : 60;
+    typeWriter('heroSubtitle', '> ' + user.title, typeSpeed, 'en', 'hero.subtitle', '身份介绍');
   }
 
   // 打字机效果
@@ -149,7 +165,8 @@
         setTimeout(tick, speed);
       }
     }
-    tick();
+    if (window.SiteRuntime && window.SiteRuntime.isPreview) renderFrame(text);
+    else tick();
   }
 
   // ========== About 渲染 ==========
@@ -164,6 +181,7 @@
     var statsContainer = document.getElementById('statsContainer');
     clearElement(statsContainer);
     about.stats.forEach(function (stat, index) {
+      var statId = stat.id || String(index);
       var row = document.createElement('div');
       row.className = 'stat-row';
       var label = document.createElement('div');
@@ -174,11 +192,12 @@
         { lang: 'en', text: '[' + stat.label + '] ' },
         { lang: 'zh-CN', text: stat.name }
       ]);
-      setEditKey(name, 'about.stats.' + index + '.name', '[' + stat.label + '] ' + stat.name, stat.name + ' · 属性名称');
+      setEditKey(name, 'about.stats.' + statId + '.name', '[' + stat.label + '] ' + stat.name, stat.name + ' · 属性名称');
       var value = document.createElement('span');
       value.className = 'stat-value';
       value.textContent = stat.value + '/100';
-      setEditKey(value, 'about.stats.' + index + '.value', stat.value + '/100', stat.name + ' · 属性数值', false, 'text-en-body');
+      value.style.color = stat.valueColor || '';
+      setEditKey(value, 'about.stats.' + statId + '.value', stat.value + '/100', stat.name + ' · 属性数值', false, 'text-en-body');
       label.appendChild(name);
       label.appendChild(value);
       var outer = document.createElement('div');
@@ -198,18 +217,24 @@
     var skillsContainer = document.getElementById('skillsContainer');
     clearElement(skillsContainer);
     about.skills.forEach(function (skill, index) {
+      var skillId = skill.id || String(index);
       var slot = document.createElement('div');
       slot.className = 'skill-slot slot-cat-' + skill.category;
       var dot = document.createElement('span');
       dot.className = 'slot-dot';
+      if (skill.color) {
+        dot.style.background = skill.color;
+        dot.style.borderColor = skill.color;
+      }
       slot.appendChild(dot);
       var skillText = document.createElement('span');
       skillText.lang = 'en';
       skillText.textContent = skill.name + ' Lv.' + skill.level;
-      setEditKey(skillText, 'about.skills.' + index, skill.name + ' Lv.' + skill.level, skill.name + ' · 技能文字', false, 'text-en-display');
+      setEditKey(skillText, 'about.skills.' + skillId, skill.name + ' Lv.' + skill.level, skill.name + ' · 技能文字', false, 'text-en-display');
       slot.appendChild(skillText);
       skillsContainer.appendChild(slot);
     });
+    window.requestAnimationFrame(animateStatBars);
   }
 
   // 属性条动画
@@ -301,11 +326,13 @@
       var tags = document.createElement('div');
       tags.className = 'project-tags';
       proj.tags.forEach(function (tag, index) {
+        var tagItem = proj.tagItems && proj.tagItems[index];
+        var tagId = tagItem && tagItem.id ? tagItem.id : String(index);
         var tagEl = document.createElement('span');
         tagEl.className = 'project-tag';
         tagEl.lang = 'en';
         tagEl.textContent = '#' + tag;
-        setEditKey(tagEl, 'projects.' + proj.id + '.tag.' + index, '#' + tag, proj.title + ' · 标签 ' + (index + 1), false, 'text-en-display');
+        setEditKey(tagEl, 'projects.' + proj.id + '.tag.' + tagId, '#' + tag, proj.title + ' · 标签 ' + (index + 1), false, 'text-en-display');
         tags.appendChild(tagEl);
       });
       card.appendChild(status);
@@ -325,42 +352,45 @@
     clearElement(timeline);
 
     experiences.forEach(function (exp, index) {
+      var experienceId = exp.id || String(index);
       var node = document.createElement('div');
       node.className = 'timeline-node node-type-' + exp.type;
 
       var field = document.createElement('div');
       field.className = 'node-period ' + exp.type;
       renderTextParts(field, exp.periodParts || exp.period);
-      setEditKey(field, 'resume.' + index + '.period', partsToText(exp.periodParts || exp.period), '第 ' + (index + 1) + ' 段经历 · 时间');
+      setEditKey(field, 'resume.' + experienceId + '.period', partsToText(exp.periodParts || exp.period), exp.company + ' · 时间');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-title';
       renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
-      setEditKey(field, 'resume.' + index + '.title', partsToText(exp.titleParts || exp.title), '第 ' + (index + 1) + ' 段经历 · 职位', false, 'text-en-display');
+      setEditKey(field, 'resume.' + experienceId + '.title', partsToText(exp.titleParts || exp.title), exp.company + ' · 职位', false, 'text-en-display');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-company';
       renderTextParts(field, exp.companyParts || exp.company);
-      setEditKey(field, 'resume.' + index + '.company', partsToText(exp.companyParts || exp.company), '第 ' + (index + 1) + ' 段经历 · 公司');
+      setEditKey(field, 'resume.' + experienceId + '.company', partsToText(exp.companyParts || exp.company), exp.company + ' · 公司');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-desc';
       renderTextParts(field, exp.descParts || exp.desc);
-      setEditKey(field, 'resume.' + index + '.desc', partsToText(exp.descParts || exp.desc), '第 ' + (index + 1) + ' 段经历 · 描述', true);
+      setEditKey(field, 'resume.' + experienceId + '.desc', partsToText(exp.descParts || exp.desc), exp.company + ' · 描述', true);
       node.appendChild(field);
 
       var tags = document.createElement('div');
       tags.className = 'node-tags';
       (exp.highlights || []).forEach(function (highlight, highlightIndex) {
+        var highlightItem = exp.highlightItems && exp.highlightItems[highlightIndex];
+        var highlightId = highlightItem && highlightItem.id ? highlightItem.id : String(highlightIndex);
         var tag = document.createElement('span');
         tag.className = 'node-tag';
         renderTextParts(tag, typeof highlight === 'string'
           ? [{ lang: 'zh-CN', text: '▶ ' + highlight }]
           : [{ lang: 'zh-CN', text: '▶ ' }].concat(highlight));
-        setEditKey(tag, 'resume.' + index + '.highlight.' + highlightIndex, '▶ ' + partsToText(highlight), '第 ' + (index + 1) + ' 段经历 · 亮点 ' + (highlightIndex + 1));
+        setEditKey(tag, 'resume.' + experienceId + '.highlight.' + highlightId, '▶ ' + partsToText(highlight), exp.company + ' · 亮点 ' + (highlightIndex + 1));
         tags.appendChild(tag);
       });
       node.appendChild(tags);
@@ -440,7 +470,8 @@
     var w, h;
     var particles = [];
     var mouse = { x: -1000, y: -1000 };
-    var PARTICLE_COUNT = 80;
+    var PARTICLE_COUNT = window.siteConfig && window.siteConfig.theme
+      ? window.siteConfig.theme.particleCount : 80;
 
     function resize() {
       w = canvas.width = window.innerWidth;
@@ -449,16 +480,26 @@
     resize();
     window.addEventListener('resize', resize);
 
-    // 创建粒子
-    for (var i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push({
+    function createParticle() {
+      var colors = window.siteConfig && window.siteConfig.theme && window.siteConfig.theme.colors
+        ? window.siteConfig.theme.colors : {};
+      var palette = [
+        colors.blue || '#4285F4', colors.red || '#EA4335', colors.yellow || '#FBBC05',
+        colors.green || '#34A853', colors.purple || '#b388ff', colors.terminal || '#00ff41'
+      ];
+      return {
         x: Math.random() * w,
         y: Math.random() * h,
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.5,
         size: Math.random() * 2 + 1,
-        color: ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#b388ff', '#00ff41'][Math.floor(Math.random() * 6)]
-      });
+        color: palette[Math.floor(Math.random() * palette.length)]
+      };
+    }
+
+    // 创建粒子
+    for (var i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push(createParticle());
     }
 
     window.addEventListener('mousemove', function (e) {
@@ -468,6 +509,12 @@
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      var particlesEnabled = !window.siteConfig || !window.siteConfig.effects ||
+        window.siteConfig.effects.particles !== false;
+      var targetCount = particlesEnabled && window.siteConfig && window.siteConfig.theme
+        ? Number(window.siteConfig.theme.particleCount) || 0 : (particlesEnabled ? PARTICLE_COUNT : 0);
+      while (particles.length < targetCount) particles.push(createParticle());
+      if (particles.length > targetCount) particles.length = targetCount;
 
       particles.forEach(function (p) {
         // 移向鼠标
@@ -535,6 +582,17 @@
     });
   }
 
+  function renderConfiguredContent() {
+    renderNav();
+    renderHero();
+    renderAbout();
+    renderProjects();
+    renderResume();
+    if (window.SiteRuntime && window.siteConfig) {
+      window.SiteRuntime.applyConfig(window.siteConfig);
+    }
+  }
+
   // ========== 全局初始化 ==========
   function init() {
     if (window.FontScaleControl) {
@@ -547,11 +605,7 @@
     }
     window.scrollTo(0, 0);
 
-    renderNav();
-    renderHero();
-    renderAbout();
-    renderProjects();
-    renderResume();
+    renderConfiguredContent();
     setupTerminal();
     initParticles();
     initScrollReveal();
@@ -571,6 +625,7 @@
         if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });
       }
     });
+    document.dispatchEvent(new CustomEvent('site:ready'));
   }
 
   // ========== 终端内嵌小游戏 ==========
@@ -595,26 +650,43 @@
     var groundY = H - 38;
 
     var gameBehaviors = window.SiteBehaviors || {};
-    var GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
+    var DEFAULT_GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
       startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600,
       firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3,
-      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, anticipationFrames: 6
+      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, hangFrames: 8,
+      anticipationFrames: 6, landingFrames: 3
     };
-    var firstObstacleX = gameBehaviors.firstObstacleX || function (width) {
-      return Math.round(width * GAME_CONFIG.firstObstacleRatio);
+    var GAME_CONFIG = Object.assign({}, DEFAULT_GAME_CONFIG,
+      window.siteConfig && window.siteConfig.game ? window.siteConfig.game : {});
+    GAME_CONFIG.maxSpeed = Math.min(2.5, Number(GAME_CONFIG.maxSpeed) || 2.5);
+    GAME_CONFIG.startSpeed = Math.min(GAME_CONFIG.maxSpeed, Number(GAME_CONFIG.startSpeed) || 1);
+    var firstObstacleXBase = gameBehaviors.firstObstacleX || function (width, config) {
+      config = config || GAME_CONFIG;
+      return Math.round(width * config.firstObstacleRatio);
     };
-    var obstacleGap = gameBehaviors.obstacleGap || function (randomValue) {
-      return Math.round(GAME_CONFIG.minObstacleGap +
-        (GAME_CONFIG.maxObstacleGap - GAME_CONFIG.minObstacleGap) * randomValue);
+    var obstacleGapBase = gameBehaviors.obstacleGap || function (randomValue, config) {
+      config = config || GAME_CONFIG;
+      return Math.round(config.minObstacleGap +
+        (config.maxObstacleGap - config.minObstacleGap) * randomValue);
     };
-    var canSpawnObstacle = gameBehaviors.canSpawnObstacle || function (width, latestX, count, nextGap) {
-      return count < GAME_CONFIG.maxObstacles && width - latestX >= nextGap;
+    var canSpawnObstacleBase = gameBehaviors.canSpawnObstacle || function (width, latestX, count, nextGap, config) {
+      config = config || GAME_CONFIG;
+      return count < config.maxObstacles && width - latestX >= nextGap;
+    };
+    var firstObstacleX = function (width) { return firstObstacleXBase(width, GAME_CONFIG); };
+    var obstacleGap = function (randomValue) { return obstacleGapBase(randomValue, GAME_CONFIG); };
+    var canSpawnObstacle = function (width, latestX, count, nextGap) {
+      return canSpawnObstacleBase(width, latestX, count, nextGap, GAME_CONFIG);
     };
     var score = 0, running = false, speed = GAME_CONFIG.startSpeed, started = false;
-    var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
+    var monster = {
+      x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false,
+      hangTimer: 0, landTimer: 0, anticipationTimer: 0
+    };
     var RISE_GRAVITY = GAME_CONFIG.riseGravity, FALL_GRAVITY = GAME_CONFIG.fallGravity;
     var JUMP_VEL = GAME_CONFIG.jumpVelocity;
     var LANDING_VEL = Math.abs(JUMP_VEL) * Math.sqrt(FALL_GRAVITY / RISE_GRAVITY);
+    var HANG_FRAMES = Number(GAME_CONFIG.hangFrames) || 0;
     var ANTICIPATION_FRAMES = GAME_CONFIG.anticipationFrames;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
     var obstacles = [], frame = 0, nextObstacleGap = obstacleGap(Math.random());
 
@@ -629,18 +701,42 @@
       starSpeeds.push(0.15 + Math.random() * 0.4);
     }
 
-    function createObstacle(x) {
+    function createObstacle(x, forcedType) {
       return {
         x: x,
         y: groundY,
-        type: Math.random() < 0.35 ? 'cactus-big' : 'cactus-small'
+        type: forcedType || (Math.random() < 0.35 ? 'cactus-big' : 'cactus-small')
       };
+    }
+
+    function chooseSequence() {
+      var enabled = (GAME_CONFIG.sequences || []).filter(function (sequence) {
+        return sequence && sequence.enabled !== false && sequence.items && sequence.items.length;
+      });
+      if (!enabled.length) return { items: [{ type: Math.random() < 0.35 ? 'cactus-big' : 'cactus-small', gap: 0 }] };
+      var total = enabled.reduce(function (sum, sequence) { return sum + Math.max(1, Number(sequence.weight) || 1); }, 0);
+      var cursor = Math.random() * total;
+      for (var index = 0; index < enabled.length; index++) {
+        cursor -= Math.max(1, Number(enabled[index].weight) || 1);
+        if (cursor <= 0) return enabled[index];
+      }
+      return enabled[enabled.length - 1];
+    }
+
+    function appendSequence(startX, sequence) {
+      var x = startX;
+      (sequence.items || []).slice(0, GAME_CONFIG.maxObstacles).forEach(function (item, itemIndex) {
+        var obstacle = createObstacle(x, item.type);
+        obstacles.push(obstacle);
+        var width = obstacle.type === 'cactus-big' ? 16 : 10;
+        x += width + (itemIndex < sequence.items.length - 1 ? Math.max(24, Number(item.gap) || 40) : 0);
+      });
     }
 
     function spawnObstacle() {
       var latest = obstacles[obstacles.length - 1];
       if (!latest || canSpawnObstacle(W, latest.x, obstacles.length, nextObstacleGap)) {
-        obstacles.push(createObstacle(W));
+        appendSequence(W, chooseSequence());
         nextObstacleGap = obstacleGap(Math.random());
       }
       if (frame % GAME_CONFIG.speedEveryFrames === 0 && speed < GAME_CONFIG.maxSpeed) {
@@ -662,9 +758,24 @@
         }
       }
       if (monster.jumping) {
-        monster.y += monster.vy;
-        monster.vy += monster.vy < 0 ? RISE_GRAVITY : FALL_GRAVITY;
-        if (monster.y >= groundY - monster.h) { monster.y = groundY - monster.h; monster.jumping = false; monster.vy = 0; monster.landTimer = 3; }
+        if (monster.hangTimer > 0) {
+          monster.hangTimer--;
+        } else {
+          monster.y += monster.vy;
+          var nextVelocity = monster.vy + (monster.vy < 0 ? RISE_GRAVITY : FALL_GRAVITY);
+          if (monster.vy < 0 && nextVelocity >= 0 && HANG_FRAMES > 0) {
+            monster.vy = 0;
+            monster.hangTimer = HANG_FRAMES;
+          } else {
+            monster.vy = nextVelocity;
+          }
+        }
+        if (monster.y >= groundY - monster.h) {
+          monster.y = groundY - monster.h;
+          monster.jumping = false;
+          monster.vy = 0;
+          monster.landTimer = Number(GAME_CONFIG.landingFrames) || 0;
+        }
       }
       spawnObstacle();
       for (var i = obstacles.length - 1; i >= 0; i--) {
@@ -868,9 +979,10 @@
 
     function restart() {
       started = true; running = true; score = 0; speed = GAME_CONFIG.startSpeed; frame = 0;
-      obstacles = [createObstacle(firstObstacleX(W))];
+      obstacles = [];
+      appendSequence(firstObstacleX(W), chooseSequence());
       nextObstacleGap = obstacleGap(Math.random());
-      monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false;
+      monster.y = groundY - monster.h; monster.vy = 0; monster.jumping = false; monster.hangTimer = 0;
       update();
     }
 
@@ -901,10 +1013,34 @@
     draw();
   }
 
-  // DOM 加载完成后启动
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+  window.SiteApp = {
+    applyConfig: function (config) {
+      if (!config) return;
+      if (typeof applySiteConfigGlobals === 'function') applySiteConfigGlobals(config);
+      renderConfiguredContent();
+    },
+    startGame: function () {
+      var terminal = document.getElementById('contact');
+      startDinoGame();
+      if (terminal) {
+        var bounds = terminal.getBoundingClientRect();
+        window.scrollTo({
+          top: Math.max(0, window.scrollY + bounds.top - 24),
+          behavior: window.SiteRuntime && window.SiteRuntime.isPreview ? 'auto' :
+            (window.siteConfig && window.siteConfig.effects && window.siteConfig.effects.smoothScroll ? 'smooth' : 'auto')
+        });
+      }
+    }
+  };
+
+  // 配置加载完成并且 DOM 可用后启动。
+  function boot() {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+    else init();
+  }
+  if (window.SiteConfigReady && typeof window.SiteConfigReady.then === 'function') {
+    window.SiteConfigReady.then(boot);
   } else {
-    init();
+    boot();
   }
 })();

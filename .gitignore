@@ -8,3 +8,6 @@ Thumbs.db
 
 # Env
 .env
+
+# Local Site Studio working state
+.site-studio/

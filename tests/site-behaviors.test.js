@@ -55,7 +55,10 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     jumpVelocity: -6,
     riseGravity: 0.18,
     fallGravity: 0.08,
-    anticipationFrames: 6
+    hangFrames: 8,
+    anticipationFrames: 6,
+    landingFrames: 3,
+    sequences: []
   });
 });
 

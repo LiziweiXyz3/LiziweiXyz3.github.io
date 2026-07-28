@@ -8,7 +8,7 @@
 // ============================================================
 
 // ---------- 个人信息 ----------
-const user = {
+var user = {
   name: "岁安",
   title: "Data Analyst / AI Learner",
   bioParts: [
@@ -25,7 +25,7 @@ const user = {
 };
 
 // ---------- 导航 ----------
-const navItems = [
+var navItems = [
   { id: "hero",     label: "HOME",      color: "#4285F4" },
   { id: "about",    label: "ABOUT",     color: "#EA4335" },
   { id: "projects", label: "PROJECTS",  color: "#FBBC05" },
@@ -34,7 +34,7 @@ const navItems = [
 ];
 
 // ---------- About Me — RPG 属性 ----------
-const about = {
+var about = {
   introParts: [
     { lang: "en", text: "Hey" },
     { lang: "zh-CN", text: "！我是岁安，一个游走在数据与代码之间的探索者。白天和 " },
@@ -63,7 +63,7 @@ const about = {
 // ---------- 项目展示 ----------
 // status: "done"=已完成 | "wip"=进行中 | "planned"=计划中
 // 目前是空占位，后续加了项目会自动渲染
-const projects = [
+var projects = [
   {
     id: 1,
     title: "个人网站",
@@ -88,7 +88,7 @@ const projects = [
 ];
 
 // ---------- 简历 / 经历 ----------
-const experiences = [
+var experiences = [
   {
     periodParts: [
       { lang: "en", text: "2024 -" },
@@ -132,7 +132,7 @@ const experiences = [
 ];
 
 // ---------- 联系方式 ----------
-const contact = {
+var contact = {
   introParts: [
     { lang: "en", text: "> help " },
     { lang: "zh-CN", text: "查看命令 | " },
@@ -166,3 +166,86 @@ const contact = {
     game:   "> 🎮 启动小游戏..."
   }
 };
+
+// ---------- Site Studio V3 配置加载 ----------
+// 公开主页和本地编辑器共用 site-config.json。读取失败时保留上面的安全默认值。
+function applySiteConfigGlobals(config) {
+  if (!config || !config.content) return;
+  var content = config.content;
+  var configuredUser = content.user || {};
+  user = {
+    name: configuredUser.name || user.name,
+    title: configuredUser.title || user.title,
+    bioParts: configuredUser.bio || user.bioParts,
+    avatar: user.avatar,
+    email: configuredUser.email || user.email,
+    github: configuredUser.github || user.github,
+    location: configuredUser.location || user.location
+  };
+
+  if (Array.isArray(content.nav)) navItems = content.nav;
+  if (content.about) {
+    about = {
+      introParts: content.about.intro || about.introParts,
+      stats: Array.isArray(content.about.stats) ? content.about.stats : about.stats,
+      skills: Array.isArray(content.about.skills) ? content.about.skills : about.skills
+    };
+  }
+  if (Array.isArray(content.projects)) {
+    projects = content.projects.map(function (project) {
+      return {
+        id: project.id,
+        title: project.title,
+        desc: project.description,
+        tags: (project.tags || []).map(function (tag) {
+          return typeof tag === 'string' ? tag : tag.text;
+        }),
+        tagItems: project.tags || [],
+        status: project.status,
+        link: project.link,
+        icon: project.icon,
+        image: project.image
+      };
+    });
+  }
+  if (Array.isArray(content.experiences)) {
+    experiences = content.experiences.map(function (experience) {
+      return {
+        id: experience.id,
+        period: experience.period,
+        title: experience.title,
+        company: experience.company,
+        type: experience.type,
+        desc: experience.description,
+        highlights: (experience.highlights || []).map(function (highlight) {
+          return typeof highlight === 'string' ? highlight : highlight.text;
+        }),
+        highlightItems: experience.highlights || []
+      };
+    });
+  }
+  if (content.contact) {
+    contact = {
+      introParts: content.contact.intro || contact.introParts,
+      commands: content.contact.commands || contact.commands
+    };
+  }
+  window.siteConfig = config;
+}
+
+window.SiteConfigReady = fetch('site-config.json', { cache: 'no-store' })
+  .then(function (response) {
+    if (!response.ok) throw new Error('site-config.json 读取失败');
+    return response.json();
+  })
+  .then(function (config) {
+    var normalized = window.SiteConfig
+      ? window.SiteConfig.normalizeConfig(config, config)
+      : config;
+    applySiteConfigGlobals(normalized);
+    return normalized;
+  })
+  .catch(function () {
+    window.siteConfig = null;
+    return null;
+  });

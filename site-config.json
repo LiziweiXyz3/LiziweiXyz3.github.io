@@ -1,0 +1,414 @@
+{
+  "version": 3,
+  "content": {
+    "moduleOrder": [
+      "hero",
+      "about",
+      "projects",
+      "resume",
+      "contact"
+    ],
+    "static": {
+      "nav.brand": "◈ SUIAN ◈",
+      "hero.scrollHint": "▼ 按下 ENTER 键 ▼",
+      "about.heading": " ABOUT ME",
+      "about.statsHeading": "CHARACTER STATS",
+      "about.skillsHeading": "SKILL SLOTS",
+      "projects.heading": " PROJECTS",
+      "projects.subtitle": "// QUEST LOG —任务日志",
+      "resume.heading": " RESUME",
+      "resume.subtitle": "// LEVEL PROGRESS —关卡进度",
+      "terminal.heading": " TERMINAL",
+      "terminal.subtitle": "// CONTACT —建立连接",
+      "terminal.title": "SuiAn@dev:~",
+      "terminal.prompt": "SuiAn@dev:~$",
+      "terminal.inputPlaceholder": "输入 help 查看可用命令...",
+      "footer.gameover": "— GAME OVER —",
+      "footer.text": "© 2026岁安· Built with 8-bit love"
+    },
+    "user": {
+      "name": "岁安",
+      "title": "Data Analyst / AI Learner",
+      "bio": "互联网数据分析师，正在学习 AI。用数据理解世界，用 AI 拓展边界。",
+      "avatarStand": "selfie_stand.png",
+      "avatarJump": "selfie_jump.png",
+      "email": "zhongzhengzhng@gmail.com",
+      "github": "https://github.com/LiziweiXyz3",
+      "location": "中国"
+    },
+    "nav": [
+      {
+        "id": "hero",
+        "label": "HOME",
+        "color": "#4285F4"
+      },
+      {
+        "id": "about",
+        "label": "ABOUT",
+        "color": "#EA4335"
+      },
+      {
+        "id": "projects",
+        "label": "PROJECTS",
+        "color": "#FBBC05"
+      },
+      {
+        "id": "resume",
+        "label": "RESUME",
+        "color": "#34A853"
+      },
+      {
+        "id": "contact",
+        "label": "TERMINAL",
+        "color": "#00ff41"
+      }
+    ],
+    "about": {
+      "intro": "Hey！我是岁安，一个游走在数据与代码之间的探索者。白天和 SQL 打交道，晚上折腾 AI 项目。\n\n这个网站是我在数字世界的「存档点」——记录学到的技能、做过的项目、踩过的坑。",
+      "stats": [
+        {
+          "id": "passion",
+          "label": "HP",
+          "name": "学习热情",
+          "value": 95,
+          "color": "#EA4335",
+          "valueColor": "#e0e0e0"
+        },
+        {
+          "id": "skill-points",
+          "label": "MP",
+          "name": "技能点数",
+          "value": 70,
+          "color": "#4285F4",
+          "valueColor": "#e0e0e0"
+        },
+        {
+          "id": "project-exp",
+          "label": "EXP",
+          "name": "项目经验",
+          "value": 55,
+          "color": "#34A853",
+          "valueColor": "#e0e0e0"
+        }
+      ],
+      "skills": [
+        {
+          "id": "sql",
+          "name": "SQL",
+          "level": 90,
+          "category": "data",
+          "color": "#4285F4"
+        },
+        {
+          "id": "python",
+          "name": "Python",
+          "level": 55,
+          "category": "code",
+          "color": "#34A853"
+        },
+        {
+          "id": "excel",
+          "name": "Excel",
+          "level": 85,
+          "category": "data",
+          "color": "#4285F4"
+        },
+        {
+          "id": "tableau",
+          "name": "Tableau",
+          "level": 60,
+          "category": "data",
+          "color": "#4285F4"
+        },
+        {
+          "id": "html-css",
+          "name": "HTML/CSS",
+          "level": 30,
+          "category": "code",
+          "color": "#34A853"
+        },
+        {
+          "id": "javascript",
+          "name": "JavaScript",
+          "level": 20,
+          "category": "code",
+          "color": "#34A853"
+        },
+        {
+          "id": "ai-llm",
+          "name": "AI/LLM",
+          "level": 25,
+          "category": "ai",
+          "color": "#b388ff"
+        },
+        {
+          "id": "prompt-eng",
+          "name": "Prompt Eng",
+          "level": 40,
+          "category": "ai",
+          "color": "#b388ff"
+        }
+      ]
+    },
+    "projects": [
+      {
+        "id": "personal-site",
+        "title": "个人网站",
+        "description": "极客像素风格个人主页，数据驱动渲染，部署在 GitHub Pages",
+        "tags": [
+          {
+            "id": "html",
+            "text": "HTML"
+          },
+          {
+            "id": "css",
+            "text": "CSS"
+          },
+          {
+            "id": "javascript",
+            "text": "JavaScript"
+          }
+        ],
+        "status": "done",
+        "link": "https://github.com/LiziweiXyz3/LiziweiXyz3.github.io",
+        "icon": "🌐",
+        "image": ""
+      },
+      {
+        "id": "songbang",
+        "title": "松绑",
+        "description": "面向职场青年的心理韧性训练与理想生活探索工具。",
+        "tags": [
+          {
+            "id": "react",
+            "text": "React"
+          },
+          {
+            "id": "vite",
+            "text": "Vite"
+          },
+          {
+            "id": "tailwind",
+            "text": "Tailwind CSS"
+          },
+          {
+            "id": "pwa",
+            "text": "PWA"
+          }
+        ],
+        "status": "wip",
+        "link": "https://github.com/LiziweiXyz3/songbang",
+        "icon": "💼",
+        "image": ""
+      }
+    ],
+    "experiences": [
+      {
+        "id": "huya-2024",
+        "period": "2024 - 至今",
+        "title": "数据分析师",
+        "company": "虎牙",
+        "type": "work",
+        "description": "负责 SDK 及渠道业务线数据分析，搭建指标体系，输出业务洞察与自动化报表",
+        "highlights": [
+          {
+            "id": "dashboard",
+            "text": "日活监控看板搭建"
+          },
+          {
+            "id": "channel",
+            "text": "渠道产能分析"
+          },
+          {
+            "id": "sdk-report",
+            "text": "SDK 周报自动化"
+          },
+          {
+            "id": "ab-test",
+            "text": "AB 测试设计"
+          }
+        ]
+      },
+      {
+        "id": "jingdong-2023",
+        "period": "2023 - 2024",
+        "title": "数据分析师",
+        "company": "京东",
+        "type": "work",
+        "description": "负责供应链/物流相关业务数据分析与运营支持",
+        "highlights": [
+          {
+            "id": "warehouse",
+            "text": "仓储运营分析"
+          },
+          {
+            "id": "logistics",
+            "text": "物流时效监控"
+          },
+          {
+            "id": "dashboard",
+            "text": "业务看板搭建"
+          }
+        ]
+      },
+      {
+        "id": "southampton-2021",
+        "period": "2021 - 2022",
+        "title": "MSc Digital Strategy & Information Systems",
+        "company": "英国南安普顿大学",
+        "type": "edu",
+        "description": "数字战略与信息系统硕士，一等学位 (Distinction)",
+        "highlights": [
+          {
+            "id": "data",
+            "text": "数据分析"
+          },
+          {
+            "id": "is",
+            "text": "信息系统管理"
+          },
+          {
+            "id": "digital",
+            "text": "数字战略"
+          },
+          {
+            "id": "bi",
+            "text": "商业智能"
+          }
+        ]
+      }
+    ],
+    "contact": {
+      "intro": "> help 查看命令 | game 玩小游戏 | contact 联系方式 | clear 清屏",
+      "commands": {
+        "help": "可用命令: home | about | projects | resume | contact | game | clear",
+        "home": "> 跳回首页...",
+        "about": "> 岁安 / Data Analyst / AI Learner\n> 互联网数据分析师，正在学习 AI。用数据理解世界，用 AI 拓展边界。",
+        "projects": "> 跳转到项目展示区...",
+        "resume": "> 跳转到简历区...",
+        "contact": "> Email: zhongzhengzhng@gmail.com\n> GitHub: https://github.com/LiziweiXyz3",
+        "whoami": "> 岁安",
+        "pwd": "> /home/suian",
+        "hello": "> 你好，旅行者！欢迎来到我的个人站点。输入 help 查看可以做什么。",
+        "game": "> 🎮 启动小游戏..."
+      }
+    }
+  },
+  "theme": {
+    "colors": {
+      "bgDeep": "#0a0a0a",
+      "bgSurface": "#111122",
+      "bgCard": "#1a1a2e",
+      "blue": "#4285F4",
+      "red": "#EA4335",
+      "yellow": "#FBBC05",
+      "green": "#34A853",
+      "terminal": "#00ff41",
+      "purple": "#b388ff",
+      "text": "#e0e0e0",
+      "textDim": "#888888",
+      "border": "#333355"
+    },
+    "scanlineOpacity": 0.08,
+    "particleCount": 80,
+    "shadowSize": 4,
+    "sectionGap": 32
+  },
+  "styles": {
+    "elements": {}
+  },
+  "responsive": {
+    "mobile": {}
+  },
+  "cursor": {
+    "preset": "pixel-outline",
+    "src": "",
+    "hotspotX": 8,
+    "hotspotY": 8
+  },
+  "effects": {
+    "typewriterSpeed": 60,
+    "smoothScroll": true,
+    "avatarScrollThreshold": 10,
+    "particles": true,
+    "animations": true
+  },
+  "assets": {
+    "heroStand": "selfie_stand.png",
+    "heroJump": "selfie_jump.png"
+  },
+  "game": {
+    "startSpeed": 1,
+    "maxSpeed": 2.5,
+    "speedStep": 0.15,
+    "speedEveryFrames": 600,
+    "firstObstacleRatio": 0.6,
+    "minObstacleGap": 260,
+    "maxObstacleGap": 360,
+    "maxObstacles": 3,
+    "jumpVelocity": -6,
+    "riseGravity": 0.18,
+    "fallGravity": 0.08,
+    "hangFrames": 8,
+    "anticipationFrames": 6,
+    "landingFrames": 3,
+    "sequences": [
+      {
+        "id": "single-small",
+        "name": "单个小障碍",
+        "enabled": true,
+        "weight": 4,
+        "items": [
+          {
+            "type": "cactus-small",
+            "gap": 0
+          }
+        ]
+      },
+      {
+        "id": "single-big",
+        "name": "单个大障碍",
+        "enabled": true,
+        "weight": 3,
+        "items": [
+          {
+            "type": "cactus-big",
+            "gap": 0
+          }
+        ]
+      },
+      {
+        "id": "double-small",
+        "name": "连续双障碍",
+        "enabled": true,
+        "weight": 2,
+        "items": [
+          {
+            "type": "cactus-small",
+            "gap": 28
+          },
+          {
+            "type": "cactus-small",
+            "gap": 0
+          }
+        ]
+      },
+      {
+        "id": "mixed",
+        "name": "大小组合",
+        "enabled": true,
+        "weight": 1,
+        "items": [
+          {
+            "type": "cactus-small",
+            "gap": 42
+          },
+          {
+            "type": "cactus-big",
+            "gap": 0
+          }
+        ]
+      }
+    ]
+  }
+}

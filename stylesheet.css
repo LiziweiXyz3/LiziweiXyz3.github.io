@@ -12,6 +12,42 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('fonts/noto-sans-sc.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('fonts/lxgw-wenkai.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('fonts/press-start-2p.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'VT323';
+  src: url('fonts/vt323.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  src: url('fonts/fira-code.ttf') format('truetype');
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('fonts/ibm-plex-mono.ttf') format('truetype');
+  font-display: swap;
+}
+
 html { font-size: 16px; }
 html[data-font-scale="90"]  { font-size: 14.4px; }
 html[data-font-scale="95"]  { font-size: 15.2px; }
@@ -1378,4 +1414,59 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
 
 @media (max-width: 768px) {
   .dino-game-wrap canvas { height: auto; }
+}
+
+/* ============================================================
+   Site Studio V3 — public runtime styles
+   ============================================================ */
+[data-edit-key][data-studio-style="true"] {
+  font-size: var(--studio-size, inherit) !important;
+  line-height: var(--studio-line-height, inherit);
+  font-weight: var(--studio-weight, inherit);
+  letter-spacing: var(--studio-letter-spacing, inherit);
+  color: var(--studio-color, inherit) !important;
+  text-align: var(--studio-align, inherit);
+}
+
+[data-edit-key][data-studio-style="true"] .text-cn,
+[data-edit-key][data-studio-style="true"][lang="zh-CN"] {
+  font-family: var(--studio-font-cn, var(--font-cn-pixel)) !important;
+}
+
+[data-edit-key][data-studio-style="true"] [lang="en"],
+[data-edit-key][data-studio-style="true"][lang="en"] {
+  font-family: var(--studio-font-en, var(--font-en-body)) !important;
+}
+
+[data-edit-key][data-studio-style="true"][data-studio-italic="true"] {
+  font-style: italic;
+}
+
+html[data-site-studio-preview="true"] [data-edit-key] {
+  outline: 1px solid transparent;
+  outline-offset: 3px;
+  cursor: pointer;
+}
+
+html[data-site-studio-preview="true"] [data-edit-key]:hover {
+  outline-color: rgba(251, 188, 5, 0.72);
+  outline-style: dashed;
+}
+
+html[data-site-studio-preview="true"] [data-edit-key][data-studio-selected="true"] {
+  outline: 2px solid var(--purple);
+  box-shadow: 0 0 0 2px rgba(179, 136, 255, 0.2), 0 0 12px rgba(179, 136, 255, 0.28);
+}
+
+html[data-site-animations="off"] *,
+html[data-site-animations="off"] *::before,
+html[data-site-animations="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (max-width: 640px) {
+  [data-edit-key][data-studio-style="true"] {
+    font-size: var(--studio-mobile-size, var(--studio-size, inherit)) !important;
+  }
 }

@@ -1,0 +1,10 @@
+{
+  "name": "personal-site-studio",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/studio-server.js",
+    "test": "node --test",
+    "check": "node --check data.js && node --check js/script.js && node --check js/site-runtime.js && node --check js/studio-editor.js && node --check scripts/studio-server.js"
+  }
+}
