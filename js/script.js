@@ -598,7 +598,7 @@
     var GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
       startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600,
       firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3,
-      jumpVelocity: -8, gravity: 0.32, anticipationFrames: 6
+      jumpVelocity: -6, gravity: 0.16, anticipationFrames: 6
     };
     var firstObstacleX = gameBehaviors.firstObstacleX || function (width) {
       return Math.round(width * GAME_CONFIG.firstObstacleRatio);

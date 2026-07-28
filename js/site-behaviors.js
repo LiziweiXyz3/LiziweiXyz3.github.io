@@ -15,8 +15,8 @@
     minObstacleGap: 260,
     maxObstacleGap: 360,
     maxObstacles: 3,
-    jumpVelocity: -8,
-    gravity: 0.32,
+    jumpVelocity: -6,
+    gravity: 0.16,
     anticipationFrames: 6
   });
 

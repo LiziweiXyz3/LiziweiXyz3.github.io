@@ -52,8 +52,8 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     minObstacleGap: 260,
     maxObstacleGap: 360,
     maxObstacles: 3,
-    jumpVelocity: -8,
-    gravity: 0.32,
+    jumpVelocity: -6,
+    gravity: 0.16,
     anticipationFrames: 6
   });
 });
@@ -62,8 +62,8 @@ test('mini game jump stays airborne long enough to read as a natural arc', funct
   const airFrames = 2 * Math.abs(api.GAME_CONFIG.jumpVelocity) / api.GAME_CONFIG.gravity;
   const airSeconds = airFrames / 60;
 
-  assert.ok(airFrames >= 48 && airFrames <= 52);
-  assert.ok(airSeconds >= 0.8 && airSeconds <= 0.9);
+  assert.ok(airFrames >= 73 && airFrames <= 77);
+  assert.ok(airSeconds >= 1.2 && airSeconds <= 1.3);
 });
 
 test('mini game pacing starts nearer and spaces at most three obstacles by distance', function () {
