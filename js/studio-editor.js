@@ -563,7 +563,9 @@
     var ratio = (Math.max(luminance(hex), luminance(background)) + 0.05) /
       (Math.min(luminance(hex), luminance(background)) + 0.05);
     var output = byId('contrastOutput');
-    output.textContent = '与页面背景对比度 ' + ratio.toFixed(1) + ':1 · ' + (ratio >= 4.5 ? '通过 AA' : '建议提高对比度');
+    output.textContent = ratio >= 4.5
+      ? '文字清晰易读 · 对比度 ' + ratio.toFixed(1) + ':1'
+      : '文字不够清晰 · 建议选择与背景差异更大的颜色（对比度 ' + ratio.toFixed(1) + ':1）';
     output.setAttribute('data-pass', ratio >= 4.5 ? 'true' : 'false');
   }
 
@@ -609,7 +611,7 @@
     byId('opacityLabel').textContent = usesDefaultGradient ? '单色透明度' : '透明度';
     byId('restoreGradientButton').hidden = !defaultGradient || !style.color;
     if (usesDefaultGradient) {
-      byId('contrastOutput').textContent = '当前为渐变文字；改成单色后将显示对比度。';
+      byId('contrastOutput').textContent = '当前使用渐变色；改成单色后，这里会提示文字是否容易看清。';
       byId('contrastOutput').removeAttribute('data-pass');
     } else {
       updateContrast(parsed.hex);

@@ -144,7 +144,10 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
   assert.match(editorHtml, /id="restoreGradientButton"/);
   assert.match(editorHtml, /<section class="color-settings"[\s\S]*?>快捷色板<[\s\S]*?<\/section>/);
   assert.doesNotMatch(editorHtml, /精细排版/);
-  assert.match(editorScript, /当前为渐变文字/);
+  assert.match(editorScript, /当前使用渐变色；改成单色后，这里会提示文字是否容易看清/);
+  assert.match(editorScript, /文字清晰易读/);
+  assert.match(editorScript, /文字不够清晰/);
+  assert.doesNotMatch(editorScript, /通过 AA/);
   assert.match(editorScript, /restoreGradientButton'\)\.hidden = !defaultGradient \|\| !style\.color/);
   assert.match(publicCss, /data-studio-color="true"[\s\S]*?-webkit-text-fill-color:\s*var\(--studio-color\)\s*!important/);
 });
