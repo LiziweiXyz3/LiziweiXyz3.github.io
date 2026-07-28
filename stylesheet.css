@@ -337,7 +337,8 @@ a:hover { color: var(--yellow); }
 }
 .site-studio-sections { display: grid; gap: 8px; margin: 12px 0; }
 .site-studio-section-control { display: grid; gap: 7px; padding: 8px; border: 1px solid var(--border); }
-.site-studio-section-control legend { padding: 0 4px; color: var(--yellow); }
+.site-studio-section-control summary { padding: 0 4px; color: var(--yellow); cursor: pointer; }
+.site-studio-section-control[open] summary { margin-bottom: 7px; }
 .site-studio-section-control select,
 .site-studio-section-control input[type="range"] { width: 100%; accent-color: var(--purple); }
 .site-studio-toggle:focus-visible,

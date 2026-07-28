@@ -99,6 +99,7 @@ test('page exposes an initially closed accessible site studio panel', function (
   assert.match(html, /id="siteStudioToggle"[\s\S]*aria-controls="siteStudioPanel"/);
   assert.match(html, /id="siteStudioPanel"[^>]*hidden/);
   assert.match(html, /value="classic"[\s\S]*value="terminal"[\s\S]*value="arcade"[\s\S]*value="code"/);
+  assert.match(html, /<details class="site-studio-section-control" data-studio-control="nav">/);
 });
 
 test('studio styles scope font choices and text scaling without sizing visual assets', function () {
