@@ -657,9 +657,11 @@
       }
       if (open) {
         controller.refreshRegistry();
+        selectedKey = controller.getDraft().ui.selectedKey;
         buildSidebar();
-        var savedSelected = controller.getDraft().ui.selectedKey;
+        var savedSelected = selectedKey;
         if (savedSelected) selectItem(savedSelected, false);
+        else panel.scrollTop = 0;
       } else {
         clearPageSelection();
         if (restoreFocus !== false && typeof toggle.focus === 'function') toggle.focus();

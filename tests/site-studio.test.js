@@ -484,6 +484,23 @@ test('open sidebar rebuilds labels and removes stale controls after same-key DOM
   assert.equal(harness.sections.querySelector('[data-studio-item-control="hero.subtitle"]'), null);
 });
 
+test('reopening returns to the panel top when the previously selected item disappeared', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  harness.doc.fire('click', {
+    target: harness.heroSubtitle,
+    preventDefault: function () {},
+    stopPropagation: function () {}
+  });
+  harness.panel.scrollTop = 240;
+  harness.close.fire('click');
+  const removedIndex = harness.editables.indexOf(harness.heroSubtitle);
+  harness.editables.splice(removedIndex, 1);
+  harness.toggle.fire('click');
+  assert.equal(harness.controller.getDraft().ui.selectedKey, null);
+  assert.equal(harness.panel.scrollTop, 0);
+});
+
 test('terminal placeholder presets keep Zpix before the generic fallback', function () {
   assert.match(css, /\.terminal-input\[data-edit-key\][^{]*\{[^}]*font-family:\s*'VT323',\s*'Zpix',\s*monospace/);
   assert.match(css, /\.terminal-input\[data-edit-key\]\[data-edit-english-class\]\[data-studio-font="arcade"\][^{]*\{[^}]*font-family:\s*'Press Start 2P',\s*'Zpix',\s*monospace/);
