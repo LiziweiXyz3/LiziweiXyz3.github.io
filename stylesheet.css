@@ -633,6 +633,12 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
   animation: bounce 1.5s ease-in-out infinite;
 }
 
+html[data-site-studio-preview="true"] .hero-scroll-hint {
+  position: static;
+  flex: 0 0 auto;
+  margin-top: clamp(24px, 4vh, 40px);
+}
+
 /* ============================================================
    通用 Section
    ============================================================ */

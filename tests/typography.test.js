@@ -49,6 +49,7 @@ test('Chinese content has an explicit Zpix mapping and MSc has English display i
 
 test('hero scroll hint separates its Chinese copy from the ENTER key', () => {
   assert.match(html, /<div class="hero-scroll-hint"[^>]*>\s*<span class="text-cn" lang="zh-CN">▼ 按下 <\/span>\s*<span class="text-en-body" lang="en">ENTER<\/span>\s*<span class="text-cn" lang="zh-CN"> 键 ▼<\/span>\s*<\/div>/);
+  assert.match(css, /html\[data-site-studio-preview="true"\]\s+\.hero-scroll-hint\s*\{[^}]*position:\s*static;[^}]*margin-top:/);
 });
 
 test('public page has no global font scale control', () => {
