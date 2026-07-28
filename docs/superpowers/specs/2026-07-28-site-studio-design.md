@@ -1,50 +1,59 @@
-# PersonalSite Site Studio Design
+# PersonalSite 临时可视化编辑工作台设计说明
 
-## Goal
+## 目标
 
-Provide a temporary, local-only visual editing studio for the portfolio site. The studio lets 岁安 edit every visible static or data-driven text item directly in the page, choose a font treatment and size per section, and preview a more playable terminal mini-game. When the content and typography are approved, a later maintenance pass will write the settled values into the permanent site source and remove the studio.
+为个人网站提供一个临时、本地优先的可视化编辑工作台。岁安可以直接在页面中修改所有静态或数据驱动的可见文案，对每个区域分别选择字体与字号，并预览更容易游玩的终端小游戏。等内容和排版定稿后，再由一次单独的维护工作把定稿值写回永久网站代码，并移除工作台。
 
-## Scope and constraints
+## 范围与约束
 
-- Work only in `D:\PersonalSite`; create local Git commits but do not push to GitHub.
-- The studio opens from a compact, fixed right-side `编辑网站` control and stays closed by default.
-- Editable areas are Navigation, Hero, About, Projects, Resume, Terminal, and Footer. The terminal mini-game canvas and its dynamic runtime output are excluded from direct content editing.
-- Draft text and design selections are stored in browser `localStorage`, not written to `data.js` while experimenting.
-- Existing Chinese/English language-aware rendering remains intact. Chinese uses Zpix; English uses the font selected for the relevant section.
-- Visual-only assets, layout measurements, project external-link behavior, terminal commands, navigation, and the game canvas remain functional.
+- 仅在 `D:\PersonalSite` 中工作；允许创建本地 Git 提交，但不推送 GitHub。
+- 工作台通过固定在右侧的紧凑型 `编辑网站` 按钮打开，默认保持关闭。
+- 可编辑区域包括：导航、Hero、About、Projects、Resume、Terminal、页脚。终端小游戏 Canvas 及其运行过程产生的动态输出不支持直接编辑。
+- 文案与排版草稿仅保存在浏览器 `localStorage` 中；试验期间不写入 `data.js`。
+- 保持现有中英文语言适配：中文使用 Zpix；英文使用当前区域选定的字体。
+- 图片、边距、边框、项目外链行为、导航、终端命令和小游戏 Canvas 必须保持可用。
 
-## User experience
+## 用户体验
 
-Opening the studio shows a right-side panel with one collapsible control group per site section. Each group has a font-style selector and a size slider. Font styles are:
+打开工作台后，右侧出现侧边栏；每个网站区域都有一组可折叠控制项，包含字体方案选择器和字号滑块。提供四种字体方案：
 
-1. `经典像素` — Zpix Chinese, Press Start 2P titles, VT323 body copy.
-2. `清晰终端` — Zpix Chinese, VT323 English text.
-3. `硬核街机` — Zpix Chinese, Press Start 2P English text.
-4. `代码等宽` — Zpix Chinese, Fira Code English text.
+1. `经典像素`：中文 Zpix；英文标题 Press Start 2P；英文正文 VT323。
+2. `清晰终端`：中文 Zpix；英文文字 VT323。
+3. `硬核街机`：中文 Zpix；英文文字 Press Start 2P。
+4. `代码等宽`：中文 Zpix；英文文字 Fira Code。
 
-When edit mode is active, text-bearing elements carry a light visual affordance on hover. Clicking one changes it to an inline plain-text editor. Blur or Escape commits the text to the local draft; no HTML is accepted. A reset action restores either one section or all studio preferences to source defaults.
+编辑模式开启时，包含文案的元素在悬停时显示轻量提示。点击文案后可在原位置直接编辑；失去焦点或按 Escape 后保存为本地草稿，不接受 HTML。侧边栏提供“恢复该区域默认值”和“恢复全部默认值”。
 
-## Data flow and architecture
+## 人物状态交互
 
-`js/site-studio.js` owns temporary draft state. It defines stable edit keys, reads and validates one `localStorage` record, applies section CSS custom properties / data attributes, and serializes text-only edits. `js/script.js` adds stable edit keys whenever it creates data-driven content. Static text in `index.html` receives stable edit keys directly.
+Hero 像素人物必须保留两种状态：`stand` 与 `jump`。
 
-The studio never writes user text with `innerHTML`; it uses `textContent`. Existing language spans stay as the rendering boundary for source content. A draft replacement becomes safe plain text within its editable field. The finalization pass will be a separate requested change: it will transfer approved values into `data.js`, `index.html`, and `stylesheet.css`, then remove `js/site-studio.js`, the panel markup, and its draft storage key.
+- 点击人物可在两种状态间切换。
+- 向下滚动页面时切换到 `jump`；向上滚动时切换到 `stand`。
+- 页面首次打开时 Hero 保持可见，人物从 `stand` 开始；终端输入框不应让页面首次渲染时自动滚离 Hero，也不应干扰滚轮方向切换。
+- 该交互需要加入自动测试和浏览器验收。
 
-## Typography behavior
+## 数据流与结构
 
-Each section exposes `--studio-font-en-display`, `--studio-font-en-body`, and a section scale multiplier. Existing semantic font classes continue to select the Chinese or English family, but use the active section variables when a studio font choice is present. A section slider changes only that section's text scale; images, emoji, Canvas text, borders, spacing, and layout stay fixed. The current top-navigation global size control remains available and composes with a section's temporary multiplier.
+`js/site-studio.js` 负责临时草稿状态：定义稳定的编辑键、读取并校验一条 `localStorage` 记录、应用分区 CSS 自定义属性 / 数据属性，并保存纯文本编辑结果。`js/script.js` 在创建数据驱动内容时补充稳定的编辑键；`index.html` 中的静态文字直接获得稳定编辑键。
 
-## Mini-game difficulty
+工作台不得使用 `innerHTML` 写入用户文案，而是使用 `textContent`。现有语言分片仍是源内容的渲染边界；编辑后的草稿会作为对应字段中的安全纯文本保存。定稿阶段将把确认过的值转写到 `data.js`、`index.html` 与 `stylesheet.css`，然后移除 `js/site-studio.js`、侧边栏结构及其草稿存储键。
 
-The terminal mini-game starts at speed `3` instead of `5`. It increases speed less frequently and in smaller increments, and never exceeds speed `5`. No temporary game-speed control is added.
+## 字体行为
 
-## Error handling and persistence
+每个区域提供 `--studio-font-en-display`、`--studio-font-en-body` 和区域字号倍率。现有语义字体类仍负责区分中文与英文，但在工作台启用时使用当前区域对应的字体变量。区域滑块只改变该区域的文本大小；图片、Emoji、Canvas 文字、边框、间距和布局不缩放。顶部原有的全站字号控制继续保留，并与临时的区域字号倍率叠加。
 
-Invalid or missing draft records fall back to the source page. Storage access failures leave the site usable with the studio changes applied only for the current page session. Reset clears only the studio draft key; it does not affect the existing global font-scale preference.
+## 小游戏难度
 
-## Testing and acceptance
+终端小游戏起始速度由 `5` 降为 `3`；加速频率更低、每次增量更小，且速度永远不超过 `5`。不在工作台中增加临时游戏速度控制。
 
-- Unit tests prove draft validation, section font/size application, safe text-only persistence, reset behavior, and the mini-game speed constants.
-- Existing typography and font-scale tests continue passing.
-- Browser validation covers edit-mode entry/exit, inline editing, draft restoration after reload, four font choices, independent section scaling, keyboard/focus behavior, desktop and mobile overflow, navigation, project links, terminal commands, and one playable mini-game session.
-- The worktree remains local-only; no GitHub push occurs.
+## 异常处理与保存
+
+草稿记录缺失或无效时回退到源页面内容。浏览器存储不可用时，网站仍能使用，只是工作台调整仅在当前页面会话中有效。恢复默认值只清除工作台的草稿键，不影响现有全站字号偏好。
+
+## 测试与验收
+
+- 单元测试覆盖：草稿校验、区域字体与字号应用、安全的纯文本保存、恢复默认值、人物点击/滚动状态切换，以及小游戏速度常量。
+- 现有字体与字号测试必须继续通过。
+- 浏览器验收覆盖：进入/退出编辑模式、原地编辑、刷新后的草稿恢复、四种字体方案、独立区域字号、键盘与焦点行为、人物点击/上下滚动、桌面与手机溢出、导航、项目链接、终端命令和一次可正常游玩的小游戏。
+- 全部工作仅保留在本地；不执行 GitHub 推送。
