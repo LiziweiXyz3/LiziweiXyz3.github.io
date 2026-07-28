@@ -308,7 +308,7 @@
     return button;
   }
 
-  function recordActions(kind, id, list, index, onAddChild) {
+  function recordActions(kind, id, list, index, onAddChild, addChildLabel) {
     var actions = el('div', 'tree-record-actions');
     [
       ['上移', -1],
@@ -328,7 +328,7 @@
       actions.appendChild(button);
     });
     if (onAddChild) {
-      var add = el('button', '', '新增标签');
+      var add = el('button', '', addChildLabel || '新增内容');
       add.type = 'button';
       add.addEventListener('click', function (event) { event.preventDefault(); onAddChild(); });
       actions.appendChild(add);
@@ -352,13 +352,31 @@
     if (items.some(function (item) { return item.key === selectedKey; })) details.open = true;
     details.appendChild(el('summary', '', label));
     var itemBox = el('div', 'tree-items');
-    items.forEach(function (item) { itemBox.appendChild(createTreeItem(item.key, item.label)); });
+    items.forEach(function (item) {
+      if (!item.onRemove) {
+        itemBox.appendChild(createTreeItem(item.key, item.label));
+        return;
+      }
+      var row = el('div', 'tree-item-row');
+      row.appendChild(createTreeItem(item.key, item.label));
+      var remove = el('button', 'tree-item-remove', '删除');
+      remove.type = 'button';
+      remove.setAttribute('aria-label', '删除' + item.label);
+      remove.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!window.confirm('确定删除“' + item.label + '”吗？')) return;
+        item.onRemove();
+      });
+      row.appendChild(remove);
+      itemBox.appendChild(row);
+    });
     details.appendChild(itemBox);
     if (actions) details.appendChild(actions);
     return details;
   }
 
-  function createSection(title, records, items, addLabel, addAction) {
+  function createSection(title, records, items, addActions) {
     var details = el('details', 'tree-section');
     var containsSelection = (items || []).some(function (item) { return item.key === selectedKey; }) ||
       (records || []).some(function (record) {
@@ -373,12 +391,12 @@
       body.appendChild(itemBox);
     }
     (records || []).forEach(function (record) { body.appendChild(record); });
-    if (addAction) {
-      var add = el('button', 'tree-add', addLabel);
+    (addActions || []).forEach(function (action) {
+      var add = el('button', 'tree-add', action.label);
       add.type = 'button';
-      add.addEventListener('click', addAction);
+      add.addEventListener('click', action.onClick);
       body.appendChild(add);
-    }
+    });
     details.appendChild(body);
     return details;
   }
@@ -401,6 +419,16 @@
         description: '请输入经历描述', highlights: [{ id: 'highlight-1', text: '新亮点' }]
       });
       selectedKey = 'resume.' + id + '.title';
+    }, true, true);
+  }
+  function addStat() {
+    mutate('add:stat', function () {
+      var id = window.SiteConfig.uniqueId('new-stat', draft.content.about.stats.map(function (item) { return item.id; }), 'new-stat');
+      draft.content.about.stats.push({
+        id: id, label: 'NEW', name: '新属性', value: 50,
+        color: '#b388ff', valueColor: '#e0e0e0'
+      });
+      selectedKey = 'about.stats.' + id + '.name';
     }, true, true);
   }
   function addSkill() {
@@ -426,30 +454,44 @@
       { key: 'hero.scrollHint', label: '下滑提示' }
     ]));
 
-    var statRecords = draft.content.about.stats.map(function (stat) {
+    var statRecords = draft.content.about.stats.map(function (stat, index, list) {
       return createRecord(stat.name, [
         { key: 'about.stats.' + stat.id + '.name', label: '属性名称' },
         { key: 'about.stats.' + stat.id + '.value', label: '属性数值' }
-      ]);
+      ], recordActions('stat', stat.id, list, index));
     });
     var skillRecords = draft.content.about.skills.map(function (skill, index, list) {
       return createRecord(skill.name, [{ key: 'about.skills.' + skill.id, label: '技能文字' }],
         recordActions('skill', skill.id, list, index));
     });
-    root.appendChild(createSection('About', statRecords.concat(skillRecords), [
+    var aboutRecords = [el('div', 'tree-subheading', '属性条')]
+      .concat(statRecords, [el('div', 'tree-subheading', '技能')], skillRecords);
+    root.appendChild(createSection('About', aboutRecords, [
       { key: 'about.heading', label: '模块标题' },
       { key: 'about.intro', label: '个人介绍' },
       { key: 'about.statsHeading', label: '属性面板标题' },
       { key: 'about.skillsHeading', label: '技能面板标题' }
-    ], '新增技能', addSkill));
+    ], [
+      { label: '新增属性条', onClick: addStat },
+      { label: '新增技能', onClick: addSkill }
+    ]));
 
     var projectRecords = draft.content.projects.map(function (project, index, list) {
       var items = [
         { key: 'projects.' + project.id + '.title', label: '项目标题' },
         { key: 'projects.' + project.id + '.description', label: '项目介绍' },
         { key: 'projects.' + project.id + '.status', label: '状态' }
-      ].concat((project.tags || []).map(function (tag) {
-        return { key: 'projects.' + project.id + '.tag.' + tag.id, label: '标签 · ' + tag.text };
+      ].concat((project.tags || []).map(function (tag, tagIndex) {
+        return {
+          key: 'projects.' + project.id + '.tag.' + tag.id,
+          label: '技术栈 · ' + tag.text,
+          onRemove: function () {
+            mutate('delete:project-tag:' + project.id + ':' + tag.id, function () {
+              project.tags.splice(tagIndex, 1);
+              selectedKey = null;
+            }, true, true);
+          }
+        };
       }));
       return createRecord(project.title, items, recordActions('project', project.id, list, index, function () {
         mutate('add:project-tag:' + project.id, function () {
@@ -458,21 +500,30 @@
           project.tags.push({ id: tagId, text: '新标签' });
           selectedKey = 'projects.' + project.id + '.tag.' + tagId;
         }, true, true);
-      }));
+      }, '新增技术栈'));
     });
     root.appendChild(createSection('Projects', projectRecords, [
       { key: 'projects.heading', label: '模块标题' },
       { key: 'projects.subtitle', label: '模块副标题' }
-    ], '新增项目', addProject));
+    ], [{ label: '新增项目', onClick: addProject }]));
 
     var resumeRecords = draft.content.experiences.map(function (experience, index, list) {
       var items = [
         { key: 'resume.' + experience.id + '.period', label: '时间' },
-        { key: 'resume.' + experience.id + '.title', label: '职位/学位' },
         { key: 'resume.' + experience.id + '.company', label: '公司/学校' },
+        { key: 'resume.' + experience.id + '.title', label: '职位/学位' },
         { key: 'resume.' + experience.id + '.desc', label: '描述' }
-      ].concat((experience.highlights || []).map(function (highlight) {
-        return { key: 'resume.' + experience.id + '.highlight.' + highlight.id, label: '亮点 · ' + highlight.text };
+      ].concat((experience.highlights || []).map(function (highlight, highlightIndex) {
+        return {
+          key: 'resume.' + experience.id + '.highlight.' + highlight.id,
+          label: '亮点 · ' + highlight.text,
+          onRemove: function () {
+            mutate('delete:highlight:' + experience.id + ':' + highlight.id, function () {
+              experience.highlights.splice(highlightIndex, 1);
+              selectedKey = null;
+            }, true, true);
+          }
+        };
       }));
       return createRecord(experience.company + ' · ' + experience.title, items,
         recordActions('experience', experience.id, list, index, function () {
@@ -482,12 +533,12 @@
             experience.highlights.push({ id: highlightId, text: '新亮点' });
             selectedKey = 'resume.' + experience.id + '.highlight.' + highlightId;
           }, true, true);
-        }));
+        }, '新增亮点'));
     });
     root.appendChild(createSection('Resume', resumeRecords, [
       { key: 'resume.heading', label: '模块标题' },
       { key: 'resume.subtitle', label: '模块副标题' }
-    ], '新增经历', addExperience));
+    ], [{ label: '新增经历', onClick: addExperience }]));
 
     root.appendChild(createSection('Terminal', [], [
       { key: 'terminal.heading', label: '模块标题' },
@@ -568,6 +619,17 @@
       : '文字不够清晰 · 建议选择与背景差异更大的颜色（对比度 ' + ratio.toFixed(1) + ':1）';
     output.setAttribute('data-pass', ratio >= 4.5 ? 'true' : 'false');
   }
+  function updateFontVisualHint() {
+    var hint = byId('fontVisualHint');
+    var isPressStart = byId('fontEnControl').value === 'press-start';
+    hint.hidden = !isPressStart;
+    if (!isPressStart) return;
+    var size = Number(byId('sizeControl').value) || 16;
+    var low = Math.max(8, Math.round(size - 3));
+    var high = Math.max(low, Math.round(size - 2));
+    hint.textContent = 'Press Start 2P 的视觉尺寸偏大。当前仍是实际 ' + size +
+      'px；若显得拥挤，可以试试 ' + low + '–' + high + 'px。';
+  }
 
   function renderElementInspector() {
     var empty = byId('emptySelection');
@@ -591,6 +653,7 @@
     byId('fontCnControl').value = style.fontCn || defaults.fontCn || 'zpix';
     byId('fontEnControl').value = style.fontEn || defaults.fontEn || 'vt323';
     byId('sizeControl').value = style.size || defaults.size || 16;
+    updateFontVisualHint();
     byId('lineHeightControl').value = style.lineHeight || defaults.lineHeight || 1.5;
     byId('boldControl').checked = (style.weight || defaults.weight || 400) >= 600;
     byId('italicControl').checked = style.italic !== undefined ? style.italic === true : defaults.italic === true;
@@ -630,7 +693,7 @@
       var stat = findById(draft.content.about.stats, parts[2]);
       if (!stat) return null;
       return {
-        label: '属性进度色块颜色',
+        label: '属性条颜色',
         get: function () { return stat.color || '#4285F4'; },
         set: function (value) { stat.color = value; }
       };
@@ -639,7 +702,7 @@
       var skill = findById(draft.content.about.skills, parts[2]);
       if (!skill) return null;
       return {
-        label: '技能分类色块颜色',
+        label: '技能色块颜色',
         get: function () { return skill.color || '#b388ff'; },
         set: function (value) { skill.color = value; }
       };
@@ -671,11 +734,13 @@
           if (value === '') delete style[entry[1]];
           else style[entry[1]] = value;
         });
+        if (entry[0] === 'fontEnControl') updateFontVisualHint();
       });
       byId(entry[0]).addEventListener('change', endChange);
     });
     byId('sizeControl').addEventListener('input', function () {
       mutate('style:' + selectedKey + ':size', function () { styleForKey(selectedKey).size = Number(byId('sizeControl').value); });
+      updateFontVisualHint();
     });
     byId('sizeControl').addEventListener('change', endChange);
     byId('boldControl').addEventListener('change', function () {

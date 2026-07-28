@@ -387,15 +387,15 @@
       node.appendChild(field);
 
       field = document.createElement('div');
-      field.className = 'node-title';
-      renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
-      setEditKey(field, 'resume.' + experienceId + '.title', partsToText(exp.titleParts || exp.title), exp.company + ' · 职位', false, 'text-en-display');
+      field.className = 'node-company';
+      renderTextParts(field, exp.companyParts || exp.company);
+      setEditKey(field, 'resume.' + experienceId + '.company', partsToText(exp.companyParts || exp.company), exp.company + ' · 公司/学校');
       node.appendChild(field);
 
       field = document.createElement('div');
-      field.className = 'node-company';
-      renderTextParts(field, exp.companyParts || exp.company);
-      setEditKey(field, 'resume.' + experienceId + '.company', partsToText(exp.companyParts || exp.company), exp.company + ' · 公司');
+      field.className = 'node-title';
+      renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
+      setEditKey(field, 'resume.' + experienceId + '.title', partsToText(exp.titleParts || exp.title), exp.company + ' · 职业/专业', false, 'text-en-display');
       node.appendChild(field);
 
       field = document.createElement('div');

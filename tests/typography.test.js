@@ -55,6 +55,18 @@ test('hero scroll hint separates its Chinese copy from the ENTER key', () => {
   assert.match(css, /html\[data-site-studio-preview="true"\]\s+\.hero-scroll-hint\s*\{[^}]*position:\s*static;[^}]*margin-top:/);
 });
 
+test('resume follows the agreed hierarchy and terminal copy uses readable defaults', () => {
+  assert.match(script, /node-period[\s\S]*?node-company[\s\S]*?node-title[\s\S]*?node-desc[\s\S]*?node-tags/);
+  assert.match(css, /--base-type-resume-company:\s*1\.25rem/);
+  assert.match(css, /--base-type-resume-title:\s*1\.0625rem/);
+  assert.match(css, /--base-type-resume-body:\s*1rem/);
+  assert.match(css, /--base-type-resume-highlight:\s*0\.9375rem/);
+  assert.match(css, /\.node-period\.work,[\s\S]*?\.node-period\.edu\s*\{\s*color:\s*var\(--purple\)/);
+  assert.match(css, /\.timeline-node \.node-tag\s*\{[\s\S]*?color:\s*var\(--text\)/);
+  assert.match(css, /--base-type-terminal:\s*1rem/);
+  assert.match(css, /--base-type-terminal-title:\s*0\.8125rem/);
+});
+
 test('public page has no global font scale control', () => {
   assert.doesNotMatch(html, /fontScale|font-scale|调整全站字体大小/);
   assert.doesNotMatch(css, /data-font-scale|font-scale-(?:control|toggle|panel|range)/);

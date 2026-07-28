@@ -103,10 +103,15 @@ html { font-size: 16px; }
   --base-type-caption: 0.875rem;
   --base-type-small: 0.8125rem;
   --base-type-support: 0.9375rem;
-  --base-type-terminal: 0.875rem;
+  --base-type-terminal: 1rem;
+  --base-type-terminal-title: 0.8125rem;
   --base-type-footer: 1.25rem;
   --base-type-footer-title: 0.875rem;
   --base-type-game-score: 0.75rem;
+  --base-type-resume-company: 1.25rem;
+  --base-type-resume-title: 1.0625rem;
+  --base-type-resume-body: 1rem;
+  --base-type-resume-highlight: 0.9375rem;
   --type-body-base: 1.375rem;
   --type-display: 2rem;
   --type-section: 1.25rem;
@@ -976,36 +981,41 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   background: var(--bg-card);
   transform: rotate(45deg);
 }
-.node-type-work::before { border-color: var(--blue);  background: var(--blue);  }
-.node-type-edu::before  { border-color: var(--green); background: var(--green); }
+.node-type-work::before,
+.node-type-edu::before {
+  border-color: var(--purple);
+  background: var(--purple);
+}
 
 .timeline-node .node-period {
   font-family: var(--font-cn);
   font-size: var(--type-caption);
   margin-bottom: 4px;
 }
-.node-period.work { color: var(--blue); }
-.node-period.edu  { color: var(--green); }
+.node-period.work,
+.node-period.edu { color: var(--purple); }
 
 .timeline-node .node-title {
   font-family: var(--font-cn);
-  font-size: var(--type-small);
+  font-size: var(--base-type-resume-title);
   font-weight: normal;
-  margin-bottom: 4px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
 }
 
 .timeline-node .node-company {
   font-family: var(--font-cn-pixel);
-  color: var(--text-dim);
-  margin-bottom: 8px;
-  font-size: var(--type-stat);
+  color: var(--text);
+  margin-bottom: 5px;
+  font-size: var(--base-type-resume-company);
 }
 
 .timeline-node .node-desc {
   font-family: var(--font-cn-pixel);
   color: var(--text-dim);
-  margin-bottom: 8px;
-  font-size: var(--type-support);
+  margin-bottom: 10px;
+  font-size: var(--base-type-resume-body);
+  line-height: 1.55;
 }
 
 .timeline-node .node-tags {
@@ -1015,10 +1025,12 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
 }
 .timeline-node .node-tag {
   font-family: var(--font-cn-pixel);
-  font-size: var(--type-panel-title);
-  padding: 3px 8px;
+  font-size: var(--base-type-resume-highlight);
+  padding: 5px 9px;
   border: 1px solid var(--border);
-  color: var(--yellow);
+  color: var(--text);
+  background: rgba(179, 136, 255, 0.08);
+  box-shadow: inset 2px 0 var(--purple);
 }
 
 /* ============================================================
@@ -1049,7 +1061,7 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
 .terminal-dot:nth-child(3) { border-color: var(--green); }
 .terminal-title {
   font-family: var(--font-pixel);
-  font-size: var(--type-nav);
+  font-size: var(--base-type-terminal-title);
   color: var(--text-dim);
   margin-left: 8px;
 }
@@ -1058,6 +1070,7 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   padding: 20px;
   font-family: var(--font-code);
   font-size: var(--type-terminal);
+  line-height: 1.55;
   min-height: 300px;
   max-height: 400px;
   overflow-y: auto;
@@ -1278,19 +1291,19 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   font-size: calc(var(--base-type-caption) * var(--studio-item-scale, 1));
 }
 .timeline-node .node-title {
-  font-size: calc(var(--base-type-small) * var(--studio-item-scale, 1));
+  font-size: calc(var(--base-type-resume-title) * var(--studio-item-scale, 1));
 }
 .timeline-node .node-company {
-  font-size: calc(var(--base-type-stat) * var(--studio-item-scale, 1));
+  font-size: calc(var(--base-type-resume-company) * var(--studio-item-scale, 1));
 }
 .timeline-node .node-desc {
-  font-size: calc(var(--base-type-support) * var(--studio-item-scale, 1));
+  font-size: calc(var(--base-type-resume-body) * var(--studio-item-scale, 1));
 }
 .timeline-node .node-tag {
-  font-size: calc(var(--base-type-panel-title) * var(--studio-item-scale, 1));
+  font-size: calc(var(--base-type-resume-highlight) * var(--studio-item-scale, 1));
 }
 .terminal-title {
-  font-size: calc(var(--base-type-nav) * var(--studio-item-scale, 1));
+  font-size: calc(var(--base-type-terminal-title) * var(--studio-item-scale, 1));
 }
 #terminalIntro,
 .terminal-input-line > .prompt,

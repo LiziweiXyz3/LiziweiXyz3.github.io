@@ -152,6 +152,19 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
   assert.match(publicCss, /data-studio-color="true"[\s\S]*?-webkit-text-fill-color:\s*var\(--studio-color\)\s*!important/);
 });
 
+test('editor can add and remove About items, project stacks and resume highlights', function () {
+  assert.match(editorScript, /label:\s*'新增属性条'/);
+  assert.match(editorScript, /label:\s*'新增技能'/);
+  assert.match(editorScript, /label:\s*'属性条颜色'/);
+  assert.match(editorScript, /label:\s*'技能色块颜色'/);
+  assert.match(editorScript, /新增技术栈/);
+  assert.match(editorScript, /delete:project-tag:/);
+  assert.match(editorScript, /新增亮点/);
+  assert.match(editorScript, /delete:highlight:/);
+  assert.match(editorHtml, /id="fontVisualHint"/);
+  assert.match(editorScript, /Press Start 2P 的视觉尺寸偏大/);
+});
+
 test('preview stays visible while the editor scrolls and can collapse', function () {
   assert.match(editorCss, /\.inspector-body\s*\{[\s\S]*?grid-template-rows:[\s\S]*?overflow:\s*hidden;/);
   assert.match(editorCss, /\.settings-group\s*\{[\s\S]*?overflow-y:\s*auto;/);
