@@ -74,9 +74,30 @@
     if (englishClass) element.setAttribute('data-edit-english-class', englishClass);
   }
 
-  // 将文字片段转为安全的 DOM 节点，避免把数据拼接进 HTML 字符串。
+  function splitTextByLanguage(value) {
+    var parts = [];
+    var current = '';
+    var language = 'zh-CN';
+    function flush() {
+      if (!current) return;
+      parts.push({ lang: language, text: current });
+      current = '';
+    }
+    String(value || '').split('').forEach(function (character) {
+      var next = language;
+      if (/[A-Za-z0-9_+#@&/.-]/.test(character)) next = 'en';
+      else if (/[\u3400-\u9FFF\uF900-\uFAFF]/.test(character)) next = 'zh-CN';
+      if (current && next !== language) flush();
+      language = next;
+      current += character;
+    });
+    flush();
+    return parts;
+  }
+
+  // 将文字片段转为安全的 DOM 节点，并确保中英文可以分别设置字体。
   function renderTextParts(target, content, englishClass) {
-    var parts = typeof content === 'string' ? [{ text: content }] : content;
+    var parts = typeof content === 'string' ? splitTextByLanguage(content) : content;
     clearElement(target);
     (parts || []).forEach(function (part) {
       var span = document.createElement('span');
@@ -85,6 +106,7 @@
         span.lang = part.lang;
         span.className = part.lang === 'zh-CN' ? 'text-cn' : (englishClass || 'text-en-body');
       }
+      span.setAttribute('data-studio-text-part', 'true');
       target.appendChild(span);
     });
   }
@@ -409,7 +431,7 @@
     if (!body || !input) return;
 
     if (introEl) {
-      introEl.textContent = partsToText(contact.introParts);
+      renderTextParts(introEl, contact.introParts);
       setEditKey(introEl, 'terminal.intro', partsToText(contact.introParts), '开场提示', true);
     }
 

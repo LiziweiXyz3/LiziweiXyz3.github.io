@@ -32,11 +32,14 @@ test('mixed content is explicitly split into language parts in data', () => {
   assert.match(data, /text:\s*["']Distinction["']/);
 });
 
-test('data-driven text is rendered with DOM nodes rather than innerHTML', () => {
+test('data-driven text is rendered with language-aware DOM nodes rather than innerHTML', () => {
+  assert.match(script, /function splitTextByLanguage\(/);
   assert.match(script, /function renderTextParts\([\s\S]*?document\.createElement\(['"]span['"]\)[\s\S]*?span\.textContent\s*=/);
+  assert.match(script, /span\.setAttribute\(['"]data-studio-text-part['"], ['"]true['"]\)/);
   assert.match(script, /function partsToText\(/);
   assert.match(script, /renderTextParts\(heroDesc, user\.bioParts\)/);
   assert.match(script, /renderTextParts\(aboutIntro, about\.introParts\)/);
+  assert.match(script, /renderTextParts\(introEl, contact\.introParts\)/);
   assert.match(script, /renderTextParts\(field, exp\.(?:periodParts|titleParts|companyParts|descParts)/);
   assert.doesNotMatch(script, /(?:heroDesc|aboutIntro|row|node|card)\.innerHTML\s*=/);
 });
