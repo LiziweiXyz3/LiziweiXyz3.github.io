@@ -100,3 +100,19 @@ test('button, outside click and Escape control the panel', function () {
   assert.equal(controller.isOpen(), false);
   assert.equal(harness.toggle.focused, true);
 });
+
+test('toggle keyboard opens the panel for Enter and Space', function () {
+  const harness = createHarness(null);
+  const controller = api.init(harness.doc, harness.storage);
+  let prevented = 0;
+  const preventDefault = function () { prevented++; };
+
+  harness.toggle.dispatch('keydown', { key: 'Enter', preventDefault: preventDefault });
+  assert.equal(controller.isOpen(), true);
+  assert.equal(prevented, 1);
+
+  harness.doc.dispatch('keydown', { key: 'Escape' });
+  harness.toggle.dispatch('keydown', { key: ' ', preventDefault: preventDefault });
+  assert.equal(controller.isOpen(), true);
+  assert.equal(prevented, 2);
+});

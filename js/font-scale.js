@@ -69,6 +69,12 @@
     setOpen(false, false);
 
     toggle.addEventListener('click', function () { setOpen(panel.hidden, false); });
+    toggle.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        setOpen(panel.hidden, false);
+      }
+    });
     range.addEventListener('input', function () { applyScale(range.value, true); });
     doc.addEventListener('click', function (event) {
       if (!panel.hidden && !control.contains(event.target)) setOpen(false, false);
