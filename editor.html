@@ -119,21 +119,38 @@
                     <label><input type="radio" name="alignControl" value="right"><span>右对齐</span></label>
                   </div>
                 </fieldset>
-                <div id="gradientColorNotice" class="gradient-color-notice" hidden>
-                  <span>当前文字效果</span>
-                  <div id="gradientColorPreview" class="gradient-color-preview" aria-label="当前渐变色预览"></div>
-                  <small>当前使用页面默认渐变色。选择下面的颜色后会改为单色。</small>
-                </div>
-                <div class="field-grid color-basic-grid">
-                  <label class="studio-field">
-                    <span id="solidColorLabel">文字颜色</span>
-                    <input id="colorControl" type="color">
-                  </label>
-                  <label class="studio-field">
-                    <span id="solidHexLabel">颜色值（HEX）</span>
-                    <input id="colorHexControl" type="text" maxlength="7">
-                  </label>
-                </div>
+                <section class="color-settings" aria-labelledby="colorSettingsTitle">
+                  <h3 id="colorSettingsTitle">颜色</h3>
+                  <div id="gradientColorNotice" class="gradient-color-notice" hidden>
+                    <span>当前文字效果</span>
+                    <div id="gradientColorPreview" class="gradient-color-preview" aria-label="当前渐变色预览"></div>
+                    <small>当前使用页面默认渐变色。选择下面的颜色后会改为单色。</small>
+                  </div>
+                  <div class="field-grid color-basic-grid">
+                    <label class="studio-field">
+                      <span id="solidColorLabel">文字颜色</span>
+                      <input id="colorControl" type="color">
+                    </label>
+                    <label class="studio-field">
+                      <span id="solidHexLabel">颜色值（HEX）</span>
+                      <input id="colorHexControl" type="text" maxlength="7">
+                    </label>
+                  </div>
+                  <label class="studio-field range-field"><span id="opacityLabel">透明度</span><input id="opacityControl" type="range" min="0" max="100" step="1"><output id="opacityOutput"></output></label>
+                  <div class="swatch-heading">
+                    <span>快捷色板</span>
+                    <small>点击色块即可替换为单色</small>
+                  </div>
+                  <div class="color-swatches" id="elementColorSwatches"></div>
+                  <output id="contrastOutput" class="contrast-output"></output>
+                  <button id="restoreGradientButton" type="button" hidden>恢复默认渐变色</button>
+                  <div id="linkedColorControls" class="linked-color-controls" hidden>
+                    <label class="studio-field">
+                      <span id="linkedColorLabel">关联色块颜色</span>
+                      <input id="linkedColorControl" type="color">
+                    </label>
+                  </div>
+                </section>
                 <details class="advanced-panel">
                   <summary>精细排版</summary>
                   <label class="studio-field range-field">
@@ -141,22 +158,6 @@
                     <input id="letterSpacingControl" type="range" min="-2" max="12" step="0.1">
                     <output id="letterSpacingOutput"></output>
                   </label>
-                  <div class="color-editor">
-                    <label class="studio-field range-field"><span id="opacityLabel">透明度</span><input id="opacityControl" type="range" min="0" max="100" step="1"><output id="opacityOutput"></output></label>
-                    <div class="swatch-heading">
-                      <span>快捷色板</span>
-                      <small>点击色块即可替换为单色</small>
-                    </div>
-                    <div class="color-swatches" id="elementColorSwatches"></div>
-                    <output id="contrastOutput" class="contrast-output"></output>
-                    <button id="restoreGradientButton" type="button" hidden>恢复默认渐变色</button>
-                  </div>
-                  <div id="linkedColorControls" class="color-editor" hidden>
-                    <label class="studio-field">
-                      <span id="linkedColorLabel">关联色块颜色</span>
-                      <input id="linkedColorControl" type="color">
-                    </label>
-                  </div>
                 </details>
                 <div class="inspector-actions">
                   <button id="resetElementButton" type="button">恢复元素默认样式</button>

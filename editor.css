@@ -341,7 +341,23 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 }
 .advanced-panel { margin: 12px 0; border: 1px solid var(--studio-border); padding: 9px; }
 .advanced-panel summary { cursor: pointer; color: var(--studio-yellow); margin-bottom: 9px; }
-.color-editor { border-top: 1px solid var(--studio-border); padding-top: 10px; }
+.color-settings {
+  margin: 12px 0;
+  padding: 10px;
+  border: 1px solid var(--studio-border);
+  background: rgba(0, 0, 0, 0.1);
+}
+.color-settings h3 {
+  margin: 0 0 10px;
+  color: var(--studio-yellow);
+  font-size: 13px;
+  font-family: 'Zpix', monospace;
+}
+.linked-color-controls {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--studio-border);
+}
 .color-basic-grid { align-items: start; }
 .gradient-color-notice {
   display: grid;
