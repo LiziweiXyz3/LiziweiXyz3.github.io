@@ -14,7 +14,10 @@
     firstObstacleRatio: 0.6,
     minObstacleGap: 260,
     maxObstacleGap: 360,
-    maxObstacles: 3
+    maxObstacles: 3,
+    jumpVelocity: -8,
+    gravity: 0.32,
+    anticipationFrames: 6
   });
 
   function firstObstacleX(width) {

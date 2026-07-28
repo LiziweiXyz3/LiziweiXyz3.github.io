@@ -51,8 +51,19 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     firstObstacleRatio: 0.6,
     minObstacleGap: 260,
     maxObstacleGap: 360,
-    maxObstacles: 3
+    maxObstacles: 3,
+    jumpVelocity: -8,
+    gravity: 0.32,
+    anticipationFrames: 6
   });
+});
+
+test('mini game jump stays airborne long enough to read as a natural arc', function () {
+  const airFrames = 2 * Math.abs(api.GAME_CONFIG.jumpVelocity) / api.GAME_CONFIG.gravity;
+  const airSeconds = airFrames / 60;
+
+  assert.ok(airFrames >= 48 && airFrames <= 52);
+  assert.ok(airSeconds >= 0.8 && airSeconds <= 0.9);
 });
 
 test('mini game pacing starts nearer and spaces at most three obstacles by distance', function () {

@@ -597,7 +597,8 @@
     var gameBehaviors = window.SiteBehaviors || {};
     var GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
       startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600,
-      firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3
+      firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3,
+      jumpVelocity: -8, gravity: 0.32, anticipationFrames: 6
     };
     var firstObstacleX = gameBehaviors.firstObstacleX || function (width) {
       return Math.round(width * GAME_CONFIG.firstObstacleRatio);
@@ -611,8 +612,8 @@
     };
     var score = 0, running = false, speed = GAME_CONFIG.startSpeed, started = false;
     var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
-    var GRAVITY = 0.6, JUMP_VEL = -11;
-    var ANTICIPATION_FRAMES = 6;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
+    var GRAVITY = GAME_CONFIG.gravity, JUMP_VEL = GAME_CONFIG.jumpVelocity;
+    var ANTICIPATION_FRAMES = GAME_CONFIG.anticipationFrames;  // 蓄力挤压的帧数（参考源 ANTICIPATION_DURATION_FRAMES=6）
     var obstacles = [], frame = 0, nextObstacleGap = obstacleGap(Math.random());
 
     var stars = [];
@@ -737,7 +738,7 @@
           return (38 + t * -80) * Math.PI / 180;
         } else {
           // 下落：-42°（最高点）→ 30°（落地前一帧）
-          var t = Math.min(monster.vy / 11, 1);
+          var t = Math.min(monster.vy / Math.abs(JUMP_VEL), 1);
           return (-42 + t * 72) * Math.PI / 180;
         }
       }

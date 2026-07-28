@@ -544,3 +544,8 @@ test('mini game uses distance-based obstacle pacing instead of fixed-frame spawn
   assert.match(script, /canSpawnObstacle\(W, latest\.x, obstacles\.length, nextObstacleGap\)/);
   assert.match(script, /obstacleGap\(Math\.random\(\)\)/);
 });
+
+test('mini game reads its slower jump physics from shared configuration', function () {
+  assert.match(script, /var GRAVITY = GAME_CONFIG\.gravity, JUMP_VEL = GAME_CONFIG\.jumpVelocity;/);
+  assert.match(script, /var ANTICIPATION_FRAMES = GAME_CONFIG\.anticipationFrames;/);
+});
