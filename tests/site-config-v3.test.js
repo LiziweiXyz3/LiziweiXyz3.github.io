@@ -112,6 +112,7 @@ test('editor uses a two-column preview and contextual editor without redundant t
   assert.doesNotMatch(editorHtml, /data-tab=/);
   assert.doesNotMatch(editorHtml, /studio-topbar|hidePreviewButton|showPreviewButton|折叠预览|手机字号|data-viewport|typewriterControl|自定义光标|heroStandUpload|projectIconUpload|旧版草稿工具/);
   assert.doesNotMatch(editorHtml, /data-view="theme"|data-view="effects"/);
+  assert.doesNotMatch(editorScript, /模块排序|createModuleOrderSection|move-module|hide-module|show-module/);
   assert.match(editorScript, /personal-site-studio-v3-draft/);
   assert.match(editorScript, /studio:apply-draft/);
 });

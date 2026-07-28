@@ -414,7 +414,6 @@
   function buildTree() {
     var root = byId('structureTree');
     root.textContent = '';
-    root.appendChild(createModuleOrderSection());
     root.appendChild(createSection('导航', [], [
       { key: 'nav.brand', label: '站点名称' }
     ].concat(draft.content.nav.map(function (item) {
@@ -512,58 +511,6 @@
     toolItems.appendChild(createToolItem('history', '保存历史', '恢复已保存版本'));
     tools.appendChild(toolItems);
     root.appendChild(tools);
-  }
-
-  function createModuleOrderSection() {
-    var names = { hero: 'Hero', about: 'About', projects: 'Projects', resume: 'Resume', contact: 'Terminal' };
-    var details = el('details', 'tree-section');
-    details.appendChild(el('summary', '', '模块排序'));
-    var body = el('div', 'tree-items');
-    (draft.content.moduleOrder || []).forEach(function (id, index, list) {
-      var row = el('div', 'tree-record-actions');
-      row.appendChild(el('span', '', names[id] || id));
-      [['上移', -1], ['下移', 1]].forEach(function (entry) {
-        var button = el('button', '', entry[0]);
-        button.type = 'button';
-        button.disabled = index + entry[1] < 0 || index + entry[1] >= list.length;
-        button.addEventListener('click', function () {
-          mutate('move-module:' + id, function () {
-            var target = index + entry[1];
-            var item = draft.content.moduleOrder.splice(index, 1)[0];
-            draft.content.moduleOrder.splice(target, 0, item);
-          }, true);
-        });
-        row.appendChild(button);
-      });
-      var hide = el('button', '', '隐藏');
-      hide.type = 'button';
-      hide.addEventListener('click', function () {
-        mutate('hide-module:' + id, function () {
-          draft.content.moduleOrder.splice(index, 1);
-          var selectedSection = id === 'contact' ? 'terminal' : id;
-          if (selectedKey && sectionForKey(selectedKey) === selectedSection) selectedKey = null;
-        }, true, true);
-      });
-      row.appendChild(hide);
-      body.appendChild(row);
-    });
-    Object.keys(names).filter(function (id) {
-      return draft.content.moduleOrder.indexOf(id) < 0;
-    }).forEach(function (id) {
-      var row = el('div', 'tree-record-actions');
-      row.appendChild(el('span', '', names[id] + '（已隐藏）'));
-      var show = el('button', '', '显示');
-      show.type = 'button';
-      show.addEventListener('click', function () {
-        mutate('show-module:' + id, function () {
-          draft.content.moduleOrder.push(id);
-        }, true, true);
-      });
-      row.appendChild(show);
-      body.appendChild(row);
-    });
-    details.appendChild(body);
-    return details;
   }
 
   function selectKey(key, focusText) {
