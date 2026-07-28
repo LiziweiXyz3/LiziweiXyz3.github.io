@@ -14,6 +14,7 @@
       var a = document.createElement('a');
       a.className = 'nav-link';
       a.href = '#' + item.id;
+      a.lang = 'en';
       a.textContent = item.label;
       a.style.color = item.color;
       a.addEventListener('click', function (e) {
@@ -94,13 +95,13 @@
     };
     window.addEventListener('scroll', scrollHandler, { passive: true });
 
-    document.getElementById('heroTitle').textContent = user.name;
-    document.getElementById('heroDesc').textContent = user.bio;
-    typeWriter('heroSubtitle', '> ' + user.title, 60);
+    document.getElementById('heroTitle').innerHTML = '<span lang="zh-CN">' + user.name + '</span>';
+    document.getElementById('heroDesc').innerHTML = '<span lang="zh-CN">' + user.bio + '</span>';
+    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en');
   }
 
   // 打字机效果
-  function typeWriter(elementId, text, speed) {
+  function typeWriter(elementId, text, speed, lang) {
     var el = document.getElementById(elementId);
     if (!el) return;
     var i = 0;
@@ -109,7 +110,7 @@
       if (i < text.length) {
         // remove cursor, add char, re-add cursor
         var current = text.substring(0, i + 1);
-        el.innerHTML = current + '<span class="cursor"></span>';
+        el.innerHTML = '<span lang="' + lang + '">' + current + '</span><span class="cursor"></span>';
         i++;
         setTimeout(tick, speed);
       }
@@ -188,18 +189,18 @@
       var statusText = { done: 'DONE', wip: 'WIP', planned: 'TODO' }[proj.status] || '???';
 
       var tagsHtml = proj.tags.map(function (t) {
-        return '<span class="project-tag">#' + t + '</span>';
+        return '<span class="project-tag" lang="en">#' + t + '</span>';
       }).join('');
 
       var titleHtml =
-        '<span class="project-title-cn">' + proj.title + '</span>' +
-        (proj.titleEn ? '<span class="project-title-en">' + proj.titleEn + '</span>' : '');
+        '<span class="project-title-cn" lang="zh-CN">' + proj.title + '</span>' +
+        (proj.titleEn ? '<span class="project-title-en" lang="en">' + proj.titleEn + '</span>' : '');
       var iconHtml = proj.image
         ? '<img class="project-image" src="' + proj.image + '" alt="">'
         : '<div class="project-icon">' + (proj.icon || String.fromCodePoint(0x1f4e6)) + '</div>';
 
       card.innerHTML =
-        '<span class="project-status ' + statusClass + '">' + statusText + '</span>' +
+        '<span class="project-status ' + statusClass + '" lang="en">' + statusText + '</span>' +
         '<div class="project-icon">' + (proj.icon || '📦') + '</div>' +
         '<h3 class="project-title">' + proj.title + '</h3>' +
         '<p class="project-desc">' + proj.desc + '</p>' +

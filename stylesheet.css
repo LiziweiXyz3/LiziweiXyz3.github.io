@@ -28,18 +28,44 @@
   --border:     #333355;
   --scanline:   rgba(0, 0, 0, 0.08);
 
-  --font-pixel:  'Press Start 2P', monospace;
-  --font-mono:   'VT323', monospace;
-  --font-cn:     'Zpix', 'Press Start 2P', monospace;  /* 支持中文的像素字体 */
-  --font-code:   'Fira Code', monospace;
-  --font-title-cn: 'Zpix', monospace;
-  --font-title-en: 'Press Start 2P', monospace;
-  --font-title-cn-scale: 1.05;
-  --font-title-en-scale: 0.9;
+  --font-cn-pixel: 'Zpix', monospace;
+  --font-en-display: 'Press Start 2P', monospace;
+  --font-en-body: 'VT323', monospace;
+  --font-code: 'Fira Code', monospace;
+  --font-pixel: var(--font-en-display);
+  --font-mono: var(--font-en-body);
+  --font-cn: var(--font-cn-pixel);
+  --font-title-cn: var(--font-cn-pixel);
+  --font-title-en: var(--font-en-display);
+  --font-cn-scale: 1.05;
+  --font-en-display-scale: 0.9;
+  --font-en-body-scale: 1;
+  --font-title-cn-scale: var(--font-cn-scale);
+  --font-title-en-scale: var(--font-en-display-scale);
   --project-title-leading: 1.25;
   --project-title-gap: 0.45em;
-  --font-size-mono: 22px;
-  --font-size-pixel-sm: 10px;
+
+  --type-body-base: 1.375rem;
+  --type-display: clamp(1.125rem, 5vw, 2rem);
+  --type-section: clamp(0.875rem, 3vw, 1.25rem);
+  --type-section-subtitle: 1.25rem;
+  --type-card-title: 1.125rem;
+  --type-body: 1rem;
+  --type-nav-brand: 0.75rem;
+  --type-nav: 0.5625rem;
+  --type-button: 0.625rem;
+  --type-panel-title: 0.6875rem;
+  --type-stat: 1.125rem;
+  --type-skill: 0.5rem;
+  --type-status: 0.5rem;
+  --type-tag: 0.4375rem;
+  --type-caption: 0.875rem;
+  --type-small: 0.8125rem;
+  --type-support: 0.9375rem;
+  --type-terminal: 0.875rem;
+  --type-footer: 1.25rem;
+  --type-footer-title: 0.875rem;
+  --type-game-score: 0.75rem;
 
   --gap: 2rem;
   --radius: 4px;
@@ -59,7 +85,7 @@ body {
   background: var(--bg-deep);
   color: var(--text);
   font-family: var(--font-mono);
-  font-size: var(--font-size-mono);
+  font-size: var(--type-body-base);
   line-height: 1.6;
   overflow-x: hidden;
   cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'><rect x='0' y='0' width='14' height='14' fill='none' stroke='%23b388ff' stroke-width='2'/></svg>") 8 8, crosshair;
@@ -105,7 +131,7 @@ a:hover { color: var(--yellow); }
 .pixel-btn {
   display: inline-block;
   font-family: var(--font-pixel);
-  font-size: var(--font-size-pixel-sm);
+  font-size: var(--type-button);
   padding: 8px 16px;
   border: 2px solid var(--border);
   background: var(--bg-card);
@@ -164,7 +190,7 @@ a:hover { color: var(--yellow); }
 
 .nav-brand {
   font-family: var(--font-pixel);
-  font-size: 12px;
+  font-size: var(--type-nav-brand);
   color: var(--text);
   background: linear-gradient(90deg, var(--blue), var(--red), var(--yellow), var(--green));
   -webkit-background-clip: text;
@@ -180,7 +206,7 @@ a:hover { color: var(--yellow); }
 
 .nav-link {
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: var(--type-nav);
   padding: 6px 10px;
   border: 2px solid transparent;
   background: transparent;
@@ -236,7 +262,7 @@ a:hover { color: var(--yellow); }
 
 .hero-title {
   font-family: var(--font-pixel);
-  font-size: clamp(18px, 5vw, 32px);
+  font-size: var(--type-display);
   background: linear-gradient(90deg, var(--blue), var(--purple), var(--red));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -247,7 +273,7 @@ a:hover { color: var(--yellow); }
 
 .hero-subtitle {
   font-family: var(--font-cn);
-  font-size: 18px;
+  font-size: var(--type-card-title);
   color: var(--terminal);
   min-height: 24px;
 }
@@ -278,14 +304,14 @@ a:hover { color: var(--yellow); }
   font-family: var(--font-cn);
   color: var(--text-dim);
   max-width: 500px;
-  font-size: 16px;
+  font-size: var(--type-body);
 }
 
 .hero-scroll-hint {
   position: absolute;
   bottom: 30px;
   font-family: var(--font-cn);
-  font-size: 14px;
+  font-size: var(--type-caption);
   color: var(--text-dim);
   animation: bounce 1.5s ease-in-out infinite;
 }
@@ -308,7 +334,7 @@ a:hover { color: var(--yellow); }
 
 .section-title {
   font-family: var(--font-pixel);
-  font-size: clamp(14px, 3vw, 20px);
+  font-size: var(--type-section);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -325,7 +351,7 @@ a:hover { color: var(--yellow); }
 .section-subtitle {
   color: var(--text-dim);
   margin-bottom: var(--gap);
-  font-size: 20px;
+  font-size: var(--type-section-subtitle);
 }
 
 /* ---------- 卡片通用 ---------- */
@@ -359,7 +385,7 @@ a:hover { color: var(--yellow); }
 
 .about-card-title {
   font-family: var(--font-pixel);
-  font-size: 11px;
+  font-size: var(--type-panel-title);
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 2px dashed var(--border);
@@ -376,7 +402,7 @@ a:hover { color: var(--yellow); }
   display: flex;
   justify-content: space-between;
   font-family: var(--font-mono);
-  font-size: 18px;
+  font-size: var(--type-stat);
   margin-bottom: 4px;
 }
 .stat-label .stat-name { color: var(--text-dim); }
@@ -415,7 +441,7 @@ a:hover { color: var(--yellow); }
 }
 .skill-slot {
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: var(--type-skill);
   padding: 6px 10px;
   border: 2px solid var(--border);
   background: #111;
@@ -477,7 +503,7 @@ a:hover { color: var(--yellow); }
   position: absolute;
   top: 10px; right: 10px;
   font-family: var(--font-pixel);
-  font-size: 8px;
+  font-size: var(--type-status);
   padding: 4px 8px;
   border: 1px solid;
 }
@@ -500,7 +526,7 @@ a:hover { color: var(--yellow); }
 }
 
 .project-title {
-  font-size: 18px;
+  font-size: var(--type-card-title);
   display: inline-flex;
   align-items: baseline;
   gap: var(--project-title-gap);
@@ -508,20 +534,31 @@ a:hover { color: var(--yellow); }
   margin-bottom: 8px;
 }
 
-.project-title-cn {
-  font-family: var(--font-title-cn);
-  font-size: calc(1em * var(--font-title-cn-scale));
+.text-mixed {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--project-title-gap);
 }
-
+.text-cn,
+.project-title-cn {
+  font-family: var(--font-cn-pixel);
+  font-size: calc(1em * var(--font-cn-scale));
+}
+.text-en-display,
 .project-title-en {
-  font-family: var(--font-title-en);
-  font-size: calc(1em * var(--font-title-en-scale));
+  font-family: var(--font-en-display);
+  font-size: calc(1em * var(--font-en-display-scale));
+}
+.text-en-body {
+  font-family: var(--font-en-body);
+  font-size: calc(1em * var(--font-en-body-scale));
 }
 
 .project-desc {
   font-family: var(--font-cn);
   color: var(--text-dim);
-  font-size: 16px;
+  font-size: var(--type-body);
   line-height: 1.6;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -538,7 +575,7 @@ a:hover { color: var(--yellow); }
 }
 .project-tag {
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: var(--type-tag);
   padding: 4px 8px;
   border: 1px solid var(--border);
   background: #111;
@@ -552,7 +589,7 @@ a:hover { color: var(--yellow); }
   color: var(--text-dim);
   border: 2px dashed var(--border);
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: var(--type-section-subtitle);
 }
 .project-empty .lock-icon {
   font-size: 48px;
@@ -603,7 +640,7 @@ a:hover { color: var(--yellow); }
 
 .timeline-node .node-period {
   font-family: var(--font-cn);
-  font-size: 14px;
+  font-size: var(--type-caption);
   margin-bottom: 4px;
 }
 .node-period.work { color: var(--blue); }
@@ -611,7 +648,7 @@ a:hover { color: var(--yellow); }
 
 .timeline-node .node-title {
   font-family: var(--font-cn);
-  font-size: 13px;
+  font-size: var(--type-small);
   font-weight: normal;
   margin-bottom: 4px;
 }
@@ -619,13 +656,13 @@ a:hover { color: var(--yellow); }
 .timeline-node .node-company {
   color: var(--text-dim);
   margin-bottom: 8px;
-  font-size: 18px;
+  font-size: var(--type-stat);
 }
 
 .timeline-node .node-desc {
   color: var(--text-dim);
   margin-bottom: 8px;
-  font-size: 15px;
+  font-size: var(--type-support);
 }
 
 .timeline-node .node-tags {
@@ -635,7 +672,7 @@ a:hover { color: var(--yellow); }
 }
 .timeline-node .node-tag {
   font-family: var(--font-pixel);
-  font-size: 11px;
+  font-size: var(--type-panel-title);
   padding: 3px 8px;
   border: 1px solid var(--border);
   color: var(--yellow);
@@ -669,7 +706,7 @@ a:hover { color: var(--yellow); }
 .terminal-dot:nth-child(3) { border-color: var(--green); }
 .terminal-title {
   font-family: var(--font-pixel);
-  font-size: 9px;
+  font-size: var(--type-nav);
   color: var(--text-dim);
   margin-left: 8px;
 }
@@ -677,7 +714,7 @@ a:hover { color: var(--yellow); }
 .terminal-body {
   padding: 20px;
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: var(--type-terminal);
   min-height: 300px;
   max-height: 400px;
   overflow-y: auto;
@@ -704,7 +741,7 @@ a:hover { color: var(--yellow); }
   border: none;
   color: #fff;
   font-family: var(--font-code);
-  font-size: 14px;
+  font-size: var(--type-terminal);
   outline: none;
   caret-color: var(--terminal);
 }
@@ -725,7 +762,7 @@ a:hover { color: var(--yellow); }
   padding: 40px var(--gap);
   border-top: 2px solid var(--border);
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: var(--type-footer);
   color: var(--text-dim);
   position: relative;
 }
@@ -736,7 +773,7 @@ a:hover { color: var(--yellow); }
 
 .footer-gameover {
   font-family: var(--font-pixel);
-  font-size: 14px;
+  font-size: var(--type-footer-title);
   animation: blink 1.5s step-end infinite;
   margin-bottom: 12px;
 }
@@ -808,7 +845,7 @@ a:hover { color: var(--yellow); }
     justify-content: center;
   }
   .nav-link {
-    font-size: 7px;
+    font-size: 0.4375rem;
     padding: 4px 7px;
   }
   .hero { padding-top: 140px; }
@@ -817,9 +854,9 @@ a:hover { color: var(--yellow); }
 }
 
 @media (max-width: 480px) {
-  .hero-title { font-size: 14px; }
-  .section-title { font-size: 12px; }
-  .nav-link { font-size: 6px; }
+  .hero-title { font-size: 0.875rem; }
+  .section-title { font-size: 0.75rem; }
+  .nav-link { font-size: 0.375rem; }
 }
 
 /* ======== 终端内嵌小恐龙游戏 ======== */
@@ -838,7 +875,7 @@ a:hover { color: var(--yellow); }
 }
 .dino-game-score {
   font-family: var(--font-pixel);
-  font-size: 12px;
+  font-size: var(--type-game-score);
   color: #8898cc;
   margin-top: 6px;
   letter-spacing: 3px;
