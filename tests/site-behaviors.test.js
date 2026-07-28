@@ -44,8 +44,8 @@ test('avatar accumulates smooth-scroll movement before changing state', function
 
 test('mini game difficulty uses the agreed capped speed constants', function () {
   assert.deepEqual(api.GAME_CONFIG, {
-    startSpeed: 3,
-    maxSpeed: 5,
+    startSpeed: 1,
+    maxSpeed: 2.5,
     speedStep: 0.15,
     speedEveryFrames: 600
   });

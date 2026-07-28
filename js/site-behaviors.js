@@ -7,8 +7,8 @@
   'use strict';
 
   var GAME_CONFIG = Object.freeze({
-    startSpeed: 3,
-    maxSpeed: 5,
+    startSpeed: 1,
+    maxSpeed: 2.5,
     speedStep: 0.15,
     speedEveryFrames: 600
   });

@@ -582,7 +582,7 @@
     var groundY = H - 38;
 
     var GAME_CONFIG = window.SiteBehaviors && window.SiteBehaviors.GAME_CONFIG || {
-      startSpeed: 3, maxSpeed: 5, speedStep: 0.15, speedEveryFrames: 600
+      startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600
     };
     var score = 0, running = false, speed = GAME_CONFIG.startSpeed, started = false;
     var monster = { x: 50, y: groundY - 32, w: 50, h: 32, vy: 0, jumping: false, landTimer: 0, anticipationTimer: 0 };
