@@ -409,6 +409,10 @@
 
   // ========== 全局初始化 ==========
   function init() {
+    if (window.FontScaleControl) {
+      window.FontScaleControl.init(document, window.localStorage);
+    }
+
     // 禁止浏览器恢复上次滚动位置，每次打开都从顶部开始
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';

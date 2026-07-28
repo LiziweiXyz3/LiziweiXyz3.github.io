@@ -12,6 +12,17 @@
   font-display: swap;
 }
 
+html { font-size: 16px; }
+html[data-font-scale="90"]  { font-size: 14.4px; }
+html[data-font-scale="95"]  { font-size: 15.2px; }
+html[data-font-scale="100"] { font-size: 16px; }
+html[data-font-scale="105"] { font-size: 16.8px; }
+html[data-font-scale="110"] { font-size: 17.6px; }
+html[data-font-scale="115"] { font-size: 18.4px; }
+html[data-font-scale="120"] { font-size: 19.2px; }
+html[data-font-scale="125"] { font-size: 20px; }
+html[data-font-scale="130"] { font-size: 20.8px; }
+
 /* ---------- CSS 变量 ---------- */
 :root {
   --bg-deep:    #0a0a0a;
@@ -202,6 +213,74 @@ a:hover { color: var(--yellow); }
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.font-scale-control {
+  position: relative;
+}
+
+.font-scale-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 2px solid var(--purple);
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--font-pixel);
+  font-size: var(--type-nav);
+  cursor: pointer;
+}
+
+.font-scale-toggle:hover {
+  background: var(--bg-surface);
+  color: #fff;
+}
+
+.font-scale-toggle:focus-visible,
+.font-scale-range:focus-visible {
+  outline: 2px solid var(--yellow);
+  outline-offset: 3px;
+}
+
+.font-scale-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  padding: 12px;
+  border: 2px solid var(--purple);
+  background: var(--bg-card);
+  box-shadow: 4px 4px 0 var(--bg-deep);
+}
+
+.font-scale-panel[hidden] {
+  display: none;
+}
+
+.font-scale-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text);
+  font-family: var(--font-pixel);
+  font-size: var(--type-nav);
+}
+
+.font-scale-range {
+  width: 100%;
+  margin: 12px 0 0;
+  accent-color: var(--purple);
 }
 
 .nav-link {
@@ -844,6 +923,15 @@ a:hover { color: var(--yellow); }
   .nav-links {
     justify-content: center;
   }
+  .nav-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  .font-scale-panel {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
   .nav-link {
     font-size: 0.4375rem;
     padding: 4px 7px;
@@ -868,6 +956,7 @@ a:hover { color: var(--yellow); }
 }
 .dino-game-wrap canvas {
   display: block;
+  width: min(800px, calc(100vw - 104px));
   background: #08081a;
   border: 1px solid rgba(180,160,220,0.15);
   image-rendering: pixelated;
