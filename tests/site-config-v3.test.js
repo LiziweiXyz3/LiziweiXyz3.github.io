@@ -11,6 +11,7 @@ const editorHtml = fs.readFileSync(path.join(root, 'editor.html'), 'utf8');
 const editorScript = fs.readFileSync(path.join(root, 'js', 'studio-editor.js'), 'utf8');
 const runtimeScript = fs.readFileSync(path.join(root, 'js', 'site-runtime.js'), 'utf8');
 const serverScript = fs.readFileSync(path.join(root, 'scripts', 'studio-server.js'), 'utf8');
+const startEditorScript = fs.readFileSync(path.join(root, 'start-editor.cmd'), 'utf8');
 
 test('V3 config uses stable ids for reorderable content', function () {
   assert.equal(config.version, 3);
@@ -123,6 +124,12 @@ test('local server uses atomic saves, restricted assets and a 20 version history
   assert.match(serverScript, /target\.startsWith\(ROOT \+ path\.sep\)/);
   assert.match(serverScript, /光标尺寸不能超过 128 × 128/);
   assert.match(serverScript, /素材文件内容与格式不匹配/);
+});
+
+test('editor starter reuses an existing local service and opens the editor directly', function () {
+  assert.match(startEditorScript, /api\/health/);
+  assert.match(startEditorScript, /start "" "%EDITOR_URL%"/);
+  assert.doesNotMatch(startEditorScript, /studio-server\.js --open/);
 });
 
 test('public index remains editor-free', function () {
