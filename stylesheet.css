@@ -813,9 +813,12 @@ a:hover { color: var(--yellow); }
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 .terminal-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   color: #fff;
