@@ -410,7 +410,7 @@
   // ========== 全局初始化 ==========
   function init() {
     if (window.FontScaleControl) {
-      window.FontScaleControl.init(document, window.localStorage);
+      window.FontScaleControl.init(document);
     }
 
     // 禁止浏览器恢复上次滚动位置，每次打开都从顶部开始
@@ -433,7 +433,9 @@
 
     // 按下 Enter 键跳转到 About 区
     window.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && document.activeElement !== document.getElementById('terminalInput')) {
+      var activeElement = document.activeElement;
+      var isInteractive = activeElement && activeElement.matches('button, a, input, select, textarea, [contenteditable="true"]');
+      if (e.key === 'Enter' && !isInteractive) {
         e.preventDefault();
         var aboutSection = document.getElementById('about');
         if (aboutSection) aboutSection.scrollIntoView({ behavior: 'smooth' });

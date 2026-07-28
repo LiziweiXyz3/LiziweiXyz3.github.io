@@ -78,7 +78,7 @@ html[data-font-scale="130"] { font-size: 20.8px; }
   --type-footer-title: 0.875rem;
   --type-game-score: 0.75rem;
 
-  --gap: 2rem;
+  --gap: 32px;
   --radius: 4px;
   --pixel-shadow: 4px 4px 0px #000;
 }
