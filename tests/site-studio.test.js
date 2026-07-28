@@ -546,6 +546,7 @@ test('mini game uses distance-based obstacle pacing instead of fixed-frame spawn
 });
 
 test('mini game reads its slower jump physics from shared configuration', function () {
-  assert.match(script, /var GRAVITY = GAME_CONFIG\.gravity, JUMP_VEL = GAME_CONFIG\.jumpVelocity;/);
+  assert.match(script, /var RISE_GRAVITY = GAME_CONFIG\.riseGravity, FALL_GRAVITY = GAME_CONFIG\.fallGravity;/);
+  assert.match(script, /monster\.vy \+= monster\.vy < 0 \? RISE_GRAVITY : FALL_GRAVITY;/);
   assert.match(script, /var ANTICIPATION_FRAMES = GAME_CONFIG\.anticipationFrames;/);
 });

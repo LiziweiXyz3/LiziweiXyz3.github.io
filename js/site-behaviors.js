@@ -16,7 +16,8 @@
     maxObstacleGap: 360,
     maxObstacles: 3,
     jumpVelocity: -6,
-    gravity: 0.16,
+    riseGravity: 0.18,
+    fallGravity: 0.08,
     anticipationFrames: 6
   });
 

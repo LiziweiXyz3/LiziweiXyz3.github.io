@@ -53,17 +53,33 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     maxObstacleGap: 360,
     maxObstacles: 3,
     jumpVelocity: -6,
-    gravity: 0.16,
+    riseGravity: 0.18,
+    fallGravity: 0.08,
     anticipationFrames: 6
   });
 });
 
-test('mini game jump stays airborne long enough to read as a natural arc', function () {
-  const airFrames = 2 * Math.abs(api.GAME_CONFIG.jumpVelocity) / api.GAME_CONFIG.gravity;
-  const airSeconds = airFrames / 60;
+test('mini game descends more slowly than it rises', function () {
+  let y = 0;
+  let velocity = api.GAME_CONFIG.jumpVelocity;
+  let riseFrames = 0;
+  let fallFrames = 0;
 
-  assert.ok(airFrames >= 73 && airFrames <= 77);
-  assert.ok(airSeconds >= 1.2 && airSeconds <= 1.3);
+  do {
+    y += velocity;
+    if (velocity < 0) {
+      velocity += api.GAME_CONFIG.riseGravity;
+      riseFrames++;
+    } else {
+      velocity += api.GAME_CONFIG.fallGravity;
+      fallFrames++;
+    }
+  } while (y < 0 && riseFrames + fallFrames < 180);
+
+  assert.ok(riseFrames >= 33 && riseFrames <= 35);
+  assert.ok(fallFrames >= 49 && fallFrames <= 51);
+  assert.ok(fallFrames >= riseFrames * 1.4);
+  assert.ok(velocity <= 4.2);
 });
 
 test('mini game pacing starts nearer and spaces at most three obstacles by distance', function () {
