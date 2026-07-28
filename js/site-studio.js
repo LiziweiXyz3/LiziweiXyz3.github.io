@@ -140,7 +140,22 @@
     });
   }
 
-  function applyDraft(doc, draft, sourceText, restoreSourceText) {
+  function getEditableText(element) {
+    if (element.getAttribute('data-edit-attribute') === 'placeholder') {
+      return element.getAttribute('placeholder') || '';
+    }
+    return element.textContent;
+  }
+
+  function applyEditableText(doc, element, text) {
+    if (element.getAttribute('data-edit-attribute') === 'placeholder') {
+      element.setAttribute('placeholder', text);
+      return;
+    }
+    setPlainText(doc, element, text);
+  }
+
+  function applyDraft(doc, draft, sourceText, restoreSourceText, restoreSection) {
     if (!doc || !doc.querySelectorAll) return;
     var sections = doc.querySelectorAll('[data-studio-section]');
     sections.forEach(function (element) {
@@ -150,10 +165,10 @@
     getTextElements(doc).forEach(function (element) {
       var key = element.getAttribute('data-edit-key');
       if (Object.prototype.hasOwnProperty.call(draft.text, key)) {
-        setPlainText(doc, element, draft.text[key]);
+        applyEditableText(doc, element, draft.text[key]);
         element.setAttribute('data-studio-draft-applied', 'true');
-      } else if (restoreSourceText) {
-        if (typeof sourceText[key] === 'string') setPlainText(doc, element, sourceText[key]);
+      } else if (restoreSourceText && (!restoreSection || key.indexOf(restoreSection + '.') === 0)) {
+        if (typeof sourceText[key] === 'string') applyEditableText(doc, element, sourceText[key]);
         element.removeAttribute('data-studio-draft-applied');
       }
     });
@@ -174,7 +189,7 @@
     var sourceText = {};
     getTextElements(doc).forEach(function (element) {
       var key = element.getAttribute('data-edit-key');
-      sourceText[key] = element.getAttribute('data-edit-source') || element.textContent;
+      sourceText[key] = element.getAttribute('data-edit-source') || getEditableText(element);
     });
 
     function persist() {
@@ -182,8 +197,8 @@
       try { storage.setItem(CONFIG.storageKey, JSON.stringify(draft)); } catch (error) { /* storage is optional */ }
     }
 
-    function apply(restoreSourceText) {
-      applyDraft(doc, draft, sourceText, restoreSourceText);
+    function apply(restoreSourceText, restoreSection) {
+      applyDraft(doc, draft, sourceText, restoreSourceText, restoreSection);
     }
 
     function findTextElement(key) {
@@ -214,7 +229,10 @@
       resetSection: function (name) {
         if (!has(CONFIG.sections, name)) return false;
         delete draft.sections[name];
-        apply(false);
+        Object.keys(draft.text).forEach(function (key) {
+          if (key.indexOf(name + '.') === 0) delete draft.text[key];
+        });
+        apply(true, name);
         persist();
         return true;
       },
@@ -262,19 +280,41 @@
       });
     }
 
+    function isPlaceholderEditor(element) {
+      return element.getAttribute('data-edit-attribute') === 'placeholder';
+    }
+
+    function finishPlaceholderEdit(element, save) {
+      if (element.getAttribute('data-studio-placeholder-active') !== 'true') return;
+      var key = element.getAttribute('data-edit-key');
+      var original = element.getAttribute('data-studio-original');
+      if (save) controller.setText(key, element.value.slice(0, CONFIG.maxTextLength));
+      else if (original !== null) controller.setText(key, original);
+      element.value = '';
+      element.removeAttribute('data-studio-placeholder-active');
+      element.removeAttribute('data-studio-original');
+    }
+
     function setEditMode(enabled) {
       if (doc.documentElement) doc.documentElement.setAttribute('data-site-studio-editing', String(enabled));
       getTextElements(doc).forEach(function (element) {
         if (enabled) {
-          element.setAttribute('contenteditable', 'plaintext-only');
-          if ('contentEditable' in element && element.contentEditable !== 'plaintext-only') {
-            element.setAttribute('contenteditable', 'true');
+          if (!isPlaceholderEditor(element)) {
+            element.setAttribute('contenteditable', 'plaintext-only');
+            if ('contentEditable' in element && element.contentEditable !== 'plaintext-only') {
+              element.setAttribute('contenteditable', 'true');
+            }
           }
           element.setAttribute('spellcheck', 'false');
         } else {
+          if (isPlaceholderEditor(element) && element.getAttribute('data-studio-placeholder-active') === 'true') {
+            finishPlaceholderEdit(element, true);
+          }
           element.removeAttribute('contenteditable');
           element.removeAttribute('spellcheck');
           element.removeAttribute('data-studio-original');
+          element.removeAttribute('data-studio-placeholder-active');
+          if (isPlaceholderEditor(element)) element.value = '';
         }
       });
       editMode.checked = enabled;
@@ -286,19 +326,37 @@
 
     getTextElements(doc).forEach(function (element) {
       element.addEventListener('click', function (event) {
-        if (editMode.checked) event.preventDefault();
+        if (editMode.checked && !isPlaceholderEditor(element)) event.preventDefault();
       });
       element.addEventListener('focus', function () {
-        if (editMode.checked) element.setAttribute('data-studio-original', element.textContent);
-      });
-      element.addEventListener('blur', function () {
-        if (editMode.checked) {
-          controller.setText(element.getAttribute('data-edit-key'), element.textContent);
-          syncControls();
+        if (!editMode.checked) return;
+        element.setAttribute('data-studio-original', getEditableText(element));
+        if (isPlaceholderEditor(element)) {
+          element.setAttribute('data-studio-placeholder-active', 'true');
+          element.value = getEditableText(element);
         }
       });
+      element.addEventListener('blur', function () {
+        if (!editMode.checked) return;
+        if (isPlaceholderEditor(element)) finishPlaceholderEdit(element, true);
+        else controller.setText(element.getAttribute('data-edit-key'), element.textContent);
+        syncControls();
+      });
       element.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape' && editMode.checked) {
+        if (!editMode.checked) return;
+        if (isPlaceholderEditor(element)) {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            event.stopPropagation();
+            element.blur();
+          } else if (event.key === 'Escape') {
+            event.preventDefault();
+            finishPlaceholderEdit(element, false);
+            element.blur();
+          }
+          return;
+        }
+        if (event.key === 'Escape') {
           event.preventDefault();
           var original = element.getAttribute('data-studio-original');
           if (original !== null) controller.setText(element.getAttribute('data-edit-key'), original);

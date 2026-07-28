@@ -385,6 +385,7 @@
 
     input.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
+      if (document.documentElement.getAttribute('data-site-studio-editing') === 'true') return;
       var cmd = input.value.trim().toLowerCase();
       if (!cmd) return;
 

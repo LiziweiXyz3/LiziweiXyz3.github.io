@@ -32,7 +32,13 @@ function createElement(attributes, text) {
     addEventListener: function (name, listener) { listeners[name] = listener; },
     fire: function (name, event) { if (listeners[name]) listeners[name](event || { target: this, preventDefault: function () {} }); },
     contains: function (target) { return target === this; },
-    focus: function () { this.focused = true; }
+    focus: function () { this.focused = true; },
+    blur: function () {
+      if (listeners.blur) listeners.blur({
+        target: this,
+        preventDefault: function () {}
+      });
+    }
   };
 }
 
@@ -41,11 +47,16 @@ function createStudioHarness(savedValue) {
   const about = createElement({ 'data-studio-section': 'about' });
   const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
   const aboutIntro = createElement({ 'data-edit-key': 'about.intro' }, '原始介绍');
+  const terminalInput = createElement({
+    'data-edit-key': 'terminal.inputPlaceholder',
+    'data-edit-attribute': 'placeholder',
+    placeholder: '输入 help 查看可用命令...'
+  });
   const writes = [];
   const doc = {
     querySelectorAll: function (selector) {
       if (selector === '[data-studio-section]') return [hero, about];
-      if (selector === '[data-edit-key]') return [heroTitle, aboutIntro];
+      if (selector === '[data-edit-key]') return [heroTitle, aboutIntro, terminalInput];
       return [];
     }
   };
@@ -53,7 +64,71 @@ function createStudioHarness(savedValue) {
     getItem: function () { return savedValue == null ? null : String(savedValue); },
     setItem: function (key, value) { writes.push([key, value]); }
   };
-  return { doc, storage, hero, about, heroTitle, aboutIntro, writes };
+  return { doc, storage, hero, about, heroTitle, aboutIntro, terminalInput, writes };
+}
+
+function createPanelHarness() {
+  const hero = createElement({ 'data-studio-section': 'hero' });
+  const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
+  const terminalInput = createElement({
+    'data-edit-key': 'terminal.inputPlaceholder',
+    'data-edit-attribute': 'placeholder',
+    placeholder: '输入 help 查看可用命令...'
+  });
+  terminalInput.value = '';
+
+  const toggle = createElement();
+  const panel = createElement();
+  panel.hidden = true;
+  const close = createElement();
+  const editMode = createElement();
+  const resetAll = createElement();
+  const font = createElement();
+  font.value = 'classic';
+  const scale = createElement();
+  scale.value = '100';
+  const output = createElement();
+  const resetSection = createElement();
+  const group = createElement({ 'data-studio-control': 'hero' });
+  group.querySelector = function (selector) {
+    return {
+      '[data-studio-font-control]': font,
+      '[data-studio-scale-control]': scale,
+      '[data-studio-scale-value]': output,
+      '[data-studio-reset-section]': resetSection
+    }[selector] || null;
+  };
+
+  const listeners = Object.create(null);
+  const root = createElement();
+  const doc = {
+    documentElement: root,
+    getElementById: function (id) {
+      return {
+        siteStudioToggle: toggle,
+        siteStudioPanel: panel,
+        siteStudioClose: close,
+        siteStudioEditMode: editMode,
+        siteStudioResetAll: resetAll
+      }[id] || null;
+    },
+    querySelectorAll: function (selector) {
+      if (selector === '[data-studio-section]') return [hero];
+      if (selector === '[data-edit-key]') return [heroTitle, terminalInput];
+      if (selector === '[data-studio-control]') return [group];
+      return [];
+    },
+    addEventListener: function (name, listener) { listeners[name] = listener; }
+  };
+  const storage = {
+    getItem: function () { return null; },
+    setItem: function () {},
+    removeItem: function () {}
+  };
+  const controller = api.createController(doc, storage);
+  api.bindPanel(doc, controller);
+
+  return { controller, editMode, terminalInput };
 }
 
 test('normalizeDraft rejects malformed data and keeps valid scoped values', function () {
@@ -119,6 +194,22 @@ test('inline edits persist plain text without accepting markup', function () {
   assert.equal(JSON.parse(harness.writes.at(-1)[1]).text['hero.title'], '<b>岁安</b>');
 });
 
+test('placeholder copy persists as an attribute and reset restores its source', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+
+  controller.setText('terminal.inputPlaceholder', '输入 game 开始挑战');
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
+  assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], '输入 game 开始挑战');
+
+  controller.setText('terminal.inputPlaceholder', '');
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '');
+  assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], '');
+
+  controller.resetAll();
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 help 查看可用命令...');
+});
+
 test('edited English followed by Chinese keeps the Chinese Zpix language boundary', function () {
   const children = [];
   const title = createElement({ 'data-edit-key': 'hero.title' }, '原始标题');
@@ -164,6 +255,22 @@ test('section controls persist independently and reset only their own defaults',
   assert.deepEqual(controller.getDraft().sections.about, { font: 'arcade', scale: 90 });
   assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
   assert.equal(harness.about.getAttribute('data-studio-font'), 'arcade');
+});
+
+test('section reset restores only text that belongs to that section', function () {
+  const harness = createStudioHarness(null);
+  const controller = api.createController(harness.doc, harness.storage);
+
+  controller.setText('hero.title', '新的 Hero 标题');
+  controller.setText('terminal.inputPlaceholder', '输入 game 开始挑战');
+  harness.aboutIntro.textContent = '运行时呈现内容';
+  controller.resetSection('terminal');
+
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 help 查看可用命令...');
+  assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], undefined);
+  assert.equal(harness.heroTitle.textContent, '新的 Hero 标题');
+  assert.equal(controller.getDraft().text['hero.title'], '新的 Hero 标题');
+  assert.equal(harness.aboutIntro.textContent, '运行时呈现内容');
 });
 
 test('resetAll clears only the temporary studio draft', function () {
@@ -253,6 +360,37 @@ test('panel controls open, edit, close outside and restore focus to the trigger'
   toggle.fire('click');
   doc.fire('keydown', { key: 'Escape' });
   assert.equal(panel.hidden, true);
+});
+
+test('placeholder editing saves on Enter and cancels on Escape without becoming contenteditable', function () {
+  const harness = createPanelHarness();
+  harness.editMode.checked = true;
+  harness.editMode.fire('change');
+
+  assert.equal(harness.terminalInput.getAttribute('contenteditable'), null);
+  harness.terminalInput.fire('focus');
+  assert.equal(harness.terminalInput.value, '输入 help 查看可用命令...');
+
+  let stopped = false;
+  harness.terminalInput.value = '输入 game 开始挑战';
+  harness.terminalInput.fire('keydown', {
+    key: 'Enter',
+    preventDefault: function () {},
+    stopPropagation: function () { stopped = true; }
+  });
+  assert.equal(stopped, true);
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
+  assert.equal(harness.terminalInput.value, '');
+
+  harness.terminalInput.fire('focus');
+  harness.terminalInput.value = '不保存这句';
+  harness.terminalInput.fire('keydown', { key: 'Escape', preventDefault: function () {} });
+  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
+  assert.equal(harness.terminalInput.value, '');
+});
+
+test('terminal command handler yields to placeholder editing mode', function () {
+  assert.match(script, /input\.addEventListener\('keydown'[\s\S]*?if \(e\.key !== 'Enter'\) return;\s*if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;/);
 });
 
 test('all site regions expose stable edit keys and the studio uses contenteditable only in edit mode', function () {
