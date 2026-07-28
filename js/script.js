@@ -137,6 +137,7 @@
       }
       var cursor = document.createElement('span');
       cursor.className = 'cursor';
+      cursor.setAttribute('data-edit-preserve', 'true');
       el.appendChild(cursor);
     }
     function tick() {
@@ -256,6 +257,12 @@
         card.target = '_blank';
         card.rel = 'noopener';
       }
+
+      card.addEventListener('click', function (event) {
+        if (document.documentElement.getAttribute('data-site-studio-editing') === 'true') {
+          event.preventDefault();
+        }
+      });
 
       var statusText = { done: 'DONE', wip: 'WIP', planned: 'TODO' }[proj.status] || '???';
       var status = document.createElement('span');
@@ -419,7 +426,7 @@
     // 点击终端区域聚焦输入框
     body.addEventListener('click', function (e) {
       if (e.target.closest('.dino-game-wrap')) return;
-      if (document.documentElement.getAttribute('data-site-studio-editing') === 'true' && e.target.closest('[data-edit-key]')) return;
+      if (document.documentElement.getAttribute('data-site-studio-editing') === 'true') return;
       input.focus();
     });
   }
@@ -555,7 +562,9 @@
     // 按下 Enter 键跳转到 About 区
     window.addEventListener('keydown', function (e) {
       var activeElement = document.activeElement;
-      var isInteractive = activeElement && activeElement.matches('button, a, input, select, textarea, [contenteditable]');
+      var siteStudioPanel = document.getElementById('siteStudioPanel');
+      if (siteStudioPanel && (siteStudioPanel.contains(e.target) || siteStudioPanel.contains(activeElement))) return;
+      var isInteractive = activeElement && activeElement.matches('button, a, input, select, textarea, summary, [contenteditable]');
       if (e.key === 'Enter' && !isInteractive) {
         e.preventDefault();
         var aboutSection = document.getElementById('about');

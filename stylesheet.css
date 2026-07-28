@@ -850,6 +850,11 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
   font-size: calc(1em * var(--font-en-body-scale));
 }
 
+/* 工作台生成的语言片段继承条目字号，避免编辑前后产生二次倍率。 */
+[data-edit-key] [data-studio-text-part] {
+  font-size: inherit;
+}
+
 #aboutIntro .text-cn,
 .stat-name .text-cn,
 .timeline-node .node-company .text-cn,
@@ -1052,6 +1057,21 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
   font-size: var(--type-terminal);
   outline: none;
   caret-color: var(--terminal);
+}
+
+/* placeholder 无法拆成语言 span，因此每个英文预设都把 Zpix 放在通用回退之前。 */
+.terminal-input[data-edit-key] {
+  font-family: 'VT323', 'Zpix', monospace;
+}
+.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="classic"],
+.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="terminal"] {
+  font-family: 'VT323', 'Zpix', monospace;
+}
+.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="arcade"] {
+  font-family: 'Press Start 2P', 'Zpix', monospace;
+}
+.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="code"] {
+  font-family: 'Fira Code', 'Zpix', monospace;
 }
 
 .terminal-footer {

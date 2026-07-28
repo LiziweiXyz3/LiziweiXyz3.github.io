@@ -183,15 +183,40 @@
       element.textContent = text;
       return;
     }
+    var preserved = Array.prototype.slice.call(element.children || []).filter(function (child) {
+      return child.getAttribute && child.getAttribute('data-edit-preserve') === 'true';
+    });
     clearElement(element);
     var englishClass = element.getAttribute('data-edit-english-class') || 'text-en-body';
     splitTextByLanguage(text).forEach(function (part) {
       var span = doc.createElement('span');
       span.lang = part.lang;
       span.className = part.lang === 'zh-CN' ? 'text-cn' : englishClass;
+      span.setAttribute('data-studio-text-part', 'true');
       span.textContent = part.text;
       element.appendChild(span);
     });
+    preserved.forEach(function (child) { element.appendChild(child); });
+  }
+
+  function captureSourceTemplate(element, source) {
+    if (!element || element.getAttribute('data-edit-attribute') === 'placeholder') return null;
+    if (getEditableText(element) !== source) return null;
+    var nodes = element.childNodes || element.children;
+    if (!nodes) return null;
+    var clones = [];
+    for (var index = 0; index < nodes.length; index += 1) {
+      if (!nodes[index].cloneNode) return null;
+      clones.push(nodes[index].cloneNode(true));
+    }
+    return clones;
+  }
+
+  function restoreSourceTemplate(element, template) {
+    if (!template || !element || !element.appendChild) return false;
+    clearElement(element);
+    template.forEach(function (node) { element.appendChild(node.cloneNode(true)); });
+    return true;
   }
 
   function applyEditableText(doc, element, text) {
@@ -223,14 +248,19 @@
       doc = document;
     }
     var elements = getTextElements(doc);
-    var knownKeys = elements.map(function (element) { return element.getAttribute('data-edit-key'); });
+    var knownKeys = uniqueKnownKeys(elements.map(function (element) { return element.getAttribute('data-edit-key'); }));
+    var currentKeys = knownKeys.slice();
     var elementByKey = {};
     var sourceText = {};
+    var sourceTemplates = {};
+    var templateElementByKey = {};
     elements.forEach(function (element) {
       var key = element.getAttribute('data-edit-key');
       elementByKey[key] = element;
       var source = element.getAttribute('data-edit-source');
       sourceText[key] = source !== null ? source : getEditableText(element);
+      sourceTemplates[key] = captureSourceTemplate(element, sourceText[key]);
+      templateElementByKey[key] = element;
     });
 
     storage = getStorage(storage);
@@ -240,6 +270,8 @@
     }
     var parsedSaved = parseDraft(saved);
     var draft = normalizeDraft(parsedSaved, knownKeys);
+    var legacySections = parsedSaved && parsedSaved.version === 1 && parsedSaved.sections &&
+      typeof parsedSaved.sections === 'object' ? parsedSaved.sections : null;
 
     function persist() {
       if (!storage) return;
@@ -253,7 +285,9 @@
         applyEditableText(doc, element, draft.text[key]);
         element.setAttribute('data-studio-draft-applied', 'true');
       } else if (restoreSourceText) {
-        applyEditableText(doc, element, sourceText[key]);
+        if (!restoreSourceTemplate(element, sourceTemplates[key])) {
+          applyEditableText(doc, element, sourceText[key]);
+        }
         element.removeAttribute('data-studio-draft-applied');
       }
       if (hasOwn(draft.textStyles, key)) applyTextStyle(element, draft.textStyles[key]);
@@ -261,7 +295,43 @@
     }
 
     function applyAll(restoreSourceText) {
-      knownKeys.forEach(function (key) { applyItem(key, restoreSourceText); });
+      currentKeys.forEach(function (key) { applyItem(key, restoreSourceText); });
+    }
+
+    function refreshRegistry() {
+      var nextElements = getTextElements(doc);
+      var nextKeys = [];
+      var nextElementByKey = {};
+      nextElements.forEach(function (element) {
+        var key = element.getAttribute('data-edit-key');
+        if (!key || has(nextKeys, key)) return;
+        nextKeys.push(key);
+        nextElementByKey[key] = element;
+        if (!has(knownKeys, key)) {
+          knownKeys.push(key);
+          if (legacySections) {
+            var section = sectionFromKey(key);
+            if (section && hasOwn(legacySections, section)) {
+              draft.textStyles[key] = normalizeTextStyle(legacySections[section]);
+            }
+          }
+        }
+        var source = element.getAttribute('data-edit-source');
+        sourceText[key] = source !== null ? source : getEditableText(element);
+        var capturedTemplate = captureSourceTemplate(element, sourceText[key]);
+        if (templateElementByKey[key] !== element || capturedTemplate) {
+          sourceTemplates[key] = capturedTemplate;
+          templateElementByKey[key] = element;
+        }
+      });
+      currentKeys = nextKeys;
+      elementByKey = nextElementByKey;
+      if (draft.ui.selectedKey && !has(currentKeys, draft.ui.selectedKey)) {
+        draft.ui.selectedKey = null;
+      }
+      applyAll(false);
+      persist();
+      return currentKeys.slice();
     }
 
     function getItemState(key) {
@@ -286,10 +356,11 @@
     return {
       getDraft: function () { return cloneDraft(draft, knownKeys); },
       getItems: function () {
-        return knownKeys.map(getItemState).filter(function (item) { return !!item; });
+        return currentKeys.map(getItemState).filter(function (item) { return !!item; });
       },
       getElement: function (key) { return elementByKey[key] || null; },
       getItemState: getItemState,
+      refreshRegistry: refreshRegistry,
       setText: function (key, text) {
         if (!elementByKey[key] || typeof text !== 'string') return false;
         var safeText = text.slice(0, CONFIG.maxTextLength);
@@ -312,7 +383,7 @@
         return true;
       },
       setUi: function (selectedKey, openSections) {
-        draft.ui.selectedKey = has(knownKeys, selectedKey) ? selectedKey : null;
+        draft.ui.selectedKey = has(currentKeys, selectedKey) ? selectedKey : null;
         draft.ui.openSections = [];
         (openSections || []).forEach(function (section) {
           if (has(CONFIG.sections, section) && !has(draft.ui.openSections, section)) {
@@ -398,6 +469,9 @@
         var element = controller.getElement(item.key);
         if (element) element.removeAttribute('data-studio-selected');
       });
+      Object.keys(itemControls).forEach(function (key) {
+        itemControls[key].summary.removeAttribute('aria-current');
+      });
     }
 
     function syncItem(key) {
@@ -418,6 +492,7 @@
       selectedKey = key;
       clearPageSelection();
       element.setAttribute('data-studio-selected', 'true');
+      controls.summary.setAttribute('aria-current', 'true');
       Object.keys(itemControls).forEach(function (itemKey) {
         itemControls[itemKey].details.open = itemKey === key;
       });
@@ -425,7 +500,9 @@
       saveUi();
       if (focusEditor) {
         if (typeof controls.details.scrollIntoView === 'function') {
-          controls.details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          var reduceMotion = typeof window !== 'undefined' && window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          controls.details.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
         }
         if (typeof controls.text.focus === 'function') controls.text.focus();
       }
@@ -499,6 +576,7 @@
 
       itemControls[item.key] = {
         details: details,
+        summary: summary,
         section: sectionDetails,
         preview: preview,
         text: textInput,
@@ -578,6 +656,7 @@
         doc.documentElement.setAttribute('data-site-studio-editing', String(open));
       }
       if (open) {
+        controller.refreshRegistry();
         buildSidebar();
         var savedSelected = controller.getDraft().ui.selectedKey;
         if (savedSelected) selectItem(savedSelected, false);
@@ -587,15 +666,17 @@
       }
     }
 
-    controller.getItems().forEach(function (item) {
-      var element = controller.getElement(item.key);
-      if (!element) return;
-      element.addEventListener('click', function (event) {
-        if (!editingIsOpen()) return;
-        event.preventDefault();
-        event.stopPropagation();
-        selectItem(item.key, true);
-      });
+    doc.addEventListener('click', function (event) {
+      if (!editingIsOpen() || !event.target || !event.target.closest) return;
+      var pageElement = event.target.closest('[data-edit-key]');
+      if (!pageElement || (panel.contains && panel.contains(pageElement))) return;
+      var key = pageElement.getAttribute('data-edit-key');
+      controller.refreshRegistry();
+      buildSidebar();
+      if (!controller.getElement(key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectItem(key, true);
     });
 
     toggle.addEventListener('click', function () {

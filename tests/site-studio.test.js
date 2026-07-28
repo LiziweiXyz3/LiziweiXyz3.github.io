@@ -107,9 +107,20 @@ function createElement(tagName, attributes, text) {
     blur: function () { element.fire('blur'); },
     scrollIntoView: function () { element.scrolled = true; }
   };
+  element.cloneNode = function (deep) {
+    const clone = createElement(element.tagName, Object.assign({}, attrs), textValue);
+    clone.className = element.className;
+    clone.lang = element.lang;
+    if (deep) children.forEach(function (child) { clone.appendChild(child.cloneNode(true)); });
+    return clone;
+  };
   Object.defineProperty(element, 'firstChild', {
     configurable: true,
     get: function () { return children[0] || null; }
+  });
+  Object.defineProperty(element, 'childNodes', {
+    configurable: true,
+    get: function () { return children; }
   });
   Object.defineProperty(element, 'textContent', {
     configurable: true,
@@ -361,7 +372,7 @@ test('page text selects, scrolls and focuses its sidebar editor and restores on 
   const harness = createPanelHarness(null);
   harness.toggle.fire('click');
   let prevented = false;
-  harness.heroSubtitle.fire('click', {
+  harness.doc.fire('click', {
     target: harness.heroSubtitle,
     preventDefault: function () { prevented = true; },
     stopPropagation: function () {}
@@ -392,6 +403,91 @@ test('terminal placeholder is edited from the sidebar and never becomes contente
   assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
   assert.equal(harness.terminalInput.getAttribute('contenteditable'), null);
   assert.match(script, /if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;/);
+});
+
+test('editing mode suppresses project-card navigation and terminal command focus', function () {
+  assert.match(script, /card\.addEventListener\('click',[\s\S]*?data-site-studio-editing'[\s\S]*?preventDefault/);
+  assert.match(script, /body\.addEventListener\('click',[\s\S]*?if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;[\s\S]*?input\.focus\(\)/);
+});
+
+test('global Enter shortcut leaves studio summaries and controls to their native keyboard behavior', function () {
+  assert.match(script, /siteStudioPanel[\s\S]*?contains\(e\.target\)[\s\S]*?return/);
+  assert.match(script, /matches\('button, a, input, select, textarea, summary, \[contenteditable\]'\)/);
+});
+
+test('editing text preserves decorative nodes and marks generated language parts as size-neutral', function () {
+  const title = editable('hero.subtitle', '身份介绍', '> Data Analyst');
+  const cursor = createElement('span', { 'data-edit-preserve': 'true' });
+  cursor.className = 'cursor';
+  title.appendChild(cursor);
+  const doc = createDocument([title]);
+  const controller = api.createController(doc, null);
+  controller.setText('hero.subtitle', '> AI 产品经理');
+  assert.equal(title.children.includes(cursor), true);
+  assert.equal(title.children.filter(function (child) {
+    return child.getAttribute && child.getAttribute('data-studio-text-part') === 'true';
+  }).length > 0, true);
+  controller.resetItem('hero.subtitle');
+  assert.equal(title.children.some(function (child) { return child.className === 'cursor'; }), true);
+  assert.match(css, /\[data-edit-key\] \[data-studio-text-part\][^{]*\{[^}]*font-size:\s*inherit/);
+});
+
+test('registry refresh keeps the original source template for an already edited element', function () {
+  const title = editable('hero.subtitle', '身份介绍', '> Data Analyst');
+  title.textContent = '';
+  const originalText = createElement('span', {}, '> Data Analyst');
+  originalText.className = 'original-text';
+  const cursor = createElement('span', { 'data-edit-preserve': 'true' });
+  cursor.className = 'cursor';
+  title.appendChild(originalText);
+  title.appendChild(cursor);
+  const doc = createDocument([title]);
+  const controller = api.createController(doc, null);
+  controller.setText('hero.subtitle', '> AI 产品经理');
+  controller.refreshRegistry();
+  controller.resetItem('hero.subtitle');
+  assert.equal(title.children[0].className, 'original-text');
+  assert.equal(title.children[1].className, 'cursor');
+});
+
+test('controller refreshes replaced dynamic elements without dropping existing drafts', function () {
+  const first = editable('hero.title', '姓名', '岁安');
+  const editables = [first];
+  const doc = createDocument(editables);
+  const controller = api.createController(doc, null);
+  controller.setText('hero.title', '新名字');
+
+  const replacement = editable('hero.title', '姓名', '岁安');
+  const dynamic = editable('projects.dynamic.title', '动态项目标题', '新项目');
+  editables.splice(0, editables.length, replacement, dynamic);
+  controller.refreshRegistry();
+
+  assert.equal(controller.getElement('hero.title'), replacement);
+  assert.equal(replacement.textContent, '新名字');
+  assert.equal(controller.setText('projects.dynamic.title', '动态项目'), true);
+  assert.equal(controller.getDraft().text['hero.title'], '新名字');
+  assert.equal(controller.getDraft().text['projects.dynamic.title'], '动态项目');
+});
+
+test('open sidebar rebuilds labels and removes stale controls after same-key DOM replacement', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  const replacement = editable('hero.title', '更新后的姓名标签', '岁安');
+  harness.editables.splice(0, harness.editables.length, replacement, harness.aboutIntro, harness.terminalInput);
+  harness.doc.fire('click', {
+    target: replacement,
+    preventDefault: function () {},
+    stopPropagation: function () {}
+  });
+  const titleControl = harness.sections.querySelector('[data-studio-item-control="hero.title"]');
+  assert.equal(titleControl.querySelector('.site-studio-item-label').textContent, '更新后的姓名标签');
+  assert.equal(harness.sections.querySelector('[data-studio-item-control="hero.subtitle"]'), null);
+});
+
+test('terminal placeholder presets keep Zpix before the generic fallback', function () {
+  assert.match(css, /\.terminal-input\[data-edit-key\][^{]*\{[^}]*font-family:\s*'VT323',\s*'Zpix',\s*monospace/);
+  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-edit-english-class\]\[data-studio-font="arcade"\][^{]*\{[^}]*font-family:\s*'Press Start 2P',\s*'Zpix',\s*monospace/);
+  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-edit-english-class\]\[data-studio-font="code"\][^{]*\{[^}]*font-family:\s*'Fira Code',\s*'Zpix',\s*monospace/);
 });
 
 test('studio CSS applies per-item scaling, font presets and selected states', function () {
