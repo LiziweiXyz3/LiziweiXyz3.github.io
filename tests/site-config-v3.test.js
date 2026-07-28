@@ -141,8 +141,8 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
   assert.match(editorHtml, /id="gradientColorPreview"/);
   assert.match(editorHtml, />快捷色板</);
   assert.match(editorHtml, /id="restoreGradientButton"/);
-  assert.match(editorHtml, /<section class="color-settings"[\s\S]*?>快捷色板<[\s\S]*?<\/section>\s*<details class="advanced-panel">/);
-  assert.doesNotMatch(editorHtml, /<details class="advanced-panel">[\s\S]*?>快捷色板</);
+  assert.match(editorHtml, /<section class="color-settings"[\s\S]*?>快捷色板<[\s\S]*?<\/section>/);
+  assert.doesNotMatch(editorHtml, /精细排版/);
   assert.match(editorScript, /当前为渐变文字/);
   assert.match(editorScript, /restoreGradientButton'\)\.hidden = !defaultGradient \|\| !style\.color/);
   assert.match(publicCss, /data-studio-color="true"[\s\S]*?-webkit-text-fill-color:\s*var\(--studio-color\)\s*!important/);
