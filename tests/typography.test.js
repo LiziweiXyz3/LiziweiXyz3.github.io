@@ -17,8 +17,8 @@ test('display and section type tokens are fixed rem values', () => {
 });
 
 test('about card emoji is isolated from the scalable English title', () => {
-  assert.match(html, /<span class="about-card-icon" aria-hidden="true">⚔️<\/span>\s*<span lang="en">CHARACTER STATS<\/span>/);
-  assert.match(html, /<span class="about-card-icon" aria-hidden="true">🎒<\/span>\s*<span lang="en">SKILL SLOTS<\/span>/);
+  assert.match(html, /<span class="about-card-icon" aria-hidden="true">⚔️<\/span>\s*<span lang="en"[^>]*>CHARACTER STATS<\/span>/);
+  assert.match(html, /<span class="about-card-icon" aria-hidden="true">🎒<\/span>\s*<span lang="en"[^>]*>SKILL SLOTS<\/span>/);
   assert.match(css, /\.about-card-icon\s*\{[^}]*font-size:\s*11px;/s);
 });
 
@@ -48,7 +48,7 @@ test('Chinese content has an explicit Zpix mapping and MSc has English display i
 });
 
 test('hero scroll hint separates its Chinese copy from the ENTER key', () => {
-  assert.match(html, /<div class="hero-scroll-hint">\s*<span class="text-cn" lang="zh-CN">▼ 按下 <\/span>\s*<span class="text-en-body" lang="en">ENTER<\/span>\s*<span class="text-cn" lang="zh-CN"> 键 ▼<\/span>\s*<\/div>/);
+  assert.match(html, /<div class="hero-scroll-hint"[^>]*>\s*<span class="text-cn" lang="zh-CN">▼ 按下 <\/span>\s*<span class="text-en-body" lang="en">ENTER<\/span>\s*<span class="text-cn" lang="zh-CN"> 键 ▼<\/span>\s*<\/div>/);
 });
 
 test('font scale panel marks the Chinese label as Zpix text', () => {

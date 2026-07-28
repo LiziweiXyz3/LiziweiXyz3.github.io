@@ -13,7 +13,7 @@
     navItems.forEach(function (item) {
       var a = document.createElement('a');
       a.className = 'nav-link';
-      setEditKey(a, 'nav.' + item.id, item.label);
+      setEditKey(a, 'nav.' + item.id, item.label, item.label + ' 导航', false, 'text-en-display');
       a.href = '#' + item.id;
       a.lang = 'en';
       a.textContent = item.label;
@@ -62,10 +62,14 @@
     while (element.firstChild) element.removeChild(element.firstChild);
   }
 
-  function setEditKey(element, key, sourceText) {
+  function setEditKey(element, key, sourceText, label, multiline, englishClass) {
     if (!element) return;
     element.setAttribute('data-edit-key', key);
+    element.setAttribute('data-edit-section', key.split('.')[0]);
+    element.setAttribute('data-edit-label', label || key);
     if (typeof sourceText === 'string') element.setAttribute('data-edit-source', sourceText);
+    if (multiline) element.setAttribute('data-edit-multiline', 'true');
+    if (englishClass) element.setAttribute('data-edit-english-class', englishClass);
   }
 
   // 将文字片段转为安全的 DOM 节点，避免把数据拼接进 HTML 字符串。
@@ -109,17 +113,17 @@
     var heroDesc = document.getElementById('heroDesc');
     heroTitle.textContent = user.name;
     heroTitle.setAttribute('lang', 'zh-CN');
-    setEditKey(heroTitle, 'hero.title', user.name);
+    setEditKey(heroTitle, 'hero.title', user.name, '姓名');
     renderTextParts(heroDesc, user.bioParts);
-    setEditKey(heroDesc, 'hero.description', partsToText(user.bioParts));
-    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en', 'hero.subtitle');
+    setEditKey(heroDesc, 'hero.description', partsToText(user.bioParts), '个人简介', true);
+    typeWriter('heroSubtitle', '> ' + user.title, 60, 'en', 'hero.subtitle', '身份介绍');
   }
 
   // 打字机效果
-  function typeWriter(elementId, text, speed, lang, editKey) {
+  function typeWriter(elementId, text, speed, lang, editKey, editLabel) {
     var el = document.getElementById(elementId);
     if (!el) return;
-    if (editKey) setEditKey(el, editKey, text);
+    if (editKey) setEditKey(el, editKey, text, editLabel || editKey, false, 'text-en-body');
     var i = 0;
     renderFrame('');
     function renderFrame(current) {
@@ -152,7 +156,7 @@
     var aboutIntro = document.getElementById('aboutIntro');
     if (aboutIntro) {
       renderTextParts(aboutIntro, about.introParts);
-      setEditKey(aboutIntro, 'about.intro', partsToText(about.introParts));
+      setEditKey(aboutIntro, 'about.intro', partsToText(about.introParts), '个人介绍', true);
     }
 
     // 属性条
@@ -169,11 +173,11 @@
         { lang: 'en', text: '[' + stat.label + '] ' },
         { lang: 'zh-CN', text: stat.name }
       ]);
-      setEditKey(name, 'about.stats.' + index + '.name', '[' + stat.label + '] ' + stat.name);
+      setEditKey(name, 'about.stats.' + index + '.name', '[' + stat.label + '] ' + stat.name, stat.name + ' · 属性名称');
       var value = document.createElement('span');
       value.className = 'stat-value';
       value.textContent = stat.value + '/100';
-      setEditKey(value, 'about.stats.' + index + '.value', stat.value + '/100');
+      setEditKey(value, 'about.stats.' + index + '.value', stat.value + '/100', stat.name + ' · 属性数值', false, 'text-en-body');
       label.appendChild(name);
       label.appendChild(value);
       var outer = document.createElement('div');
@@ -201,7 +205,7 @@
       var skillText = document.createElement('span');
       skillText.lang = 'en';
       skillText.textContent = skill.name + ' Lv.' + skill.level;
-      setEditKey(skillText, 'about.skills.' + index, skill.name + ' Lv.' + skill.level);
+      setEditKey(skillText, 'about.skills.' + index, skill.name + ' Lv.' + skill.level, skill.name + ' · 技能文字', false, 'text-en-display');
       slot.appendChild(skillText);
       skillsContainer.appendChild(slot);
     });
@@ -258,7 +262,7 @@
       status.className = 'project-status status-' + proj.status;
       status.lang = 'en';
       status.textContent = statusText;
-      setEditKey(status, 'projects.' + proj.id + '.status', statusText);
+      setEditKey(status, 'projects.' + proj.id + '.status', statusText, proj.title + ' · 状态', false, 'text-en-display');
       var icon = document.createElement(proj.image ? 'img' : 'div');
       icon.className = proj.image ? 'project-image' : 'project-icon';
       if (proj.image) {
@@ -273,20 +277,20 @@
       titleCn.className = 'project-title-cn';
       titleCn.lang = 'zh-CN';
       titleCn.textContent = proj.title;
-      setEditKey(titleCn, 'projects.' + proj.id + '.title', proj.title);
+      setEditKey(titleCn, 'projects.' + proj.id + '.title', proj.title, proj.title + ' · 项目标题');
       title.appendChild(titleCn);
       if (proj.titleEn) {
         var titleEn = document.createElement('span');
         titleEn.className = 'project-title-en';
         titleEn.lang = 'en';
         titleEn.textContent = proj.titleEn;
-        setEditKey(titleEn, 'projects.' + proj.id + '.titleEn', proj.titleEn);
+        setEditKey(titleEn, 'projects.' + proj.id + '.titleEn', proj.titleEn, proj.title + ' · 英文标题', false, 'text-en-display');
         title.appendChild(titleEn);
       }
       var desc = document.createElement('p');
       desc.className = 'project-desc';
       renderTextParts(desc, proj.descParts || proj.desc);
-      setEditKey(desc, 'projects.' + proj.id + '.description', partsToText(proj.descParts || proj.desc));
+      setEditKey(desc, 'projects.' + proj.id + '.description', partsToText(proj.descParts || proj.desc), proj.title + ' · 项目介绍', true);
       var tags = document.createElement('div');
       tags.className = 'project-tags';
       proj.tags.forEach(function (tag, index) {
@@ -294,7 +298,7 @@
         tagEl.className = 'project-tag';
         tagEl.lang = 'en';
         tagEl.textContent = '#' + tag;
-        setEditKey(tagEl, 'projects.' + proj.id + '.tag.' + index, '#' + tag);
+        setEditKey(tagEl, 'projects.' + proj.id + '.tag.' + index, '#' + tag, proj.title + ' · 标签 ' + (index + 1), false, 'text-en-display');
         tags.appendChild(tagEl);
       });
       card.appendChild(status);
@@ -320,25 +324,25 @@
       var field = document.createElement('div');
       field.className = 'node-period ' + exp.type;
       renderTextParts(field, exp.periodParts || exp.period);
-      setEditKey(field, 'resume.' + index + '.period', partsToText(exp.periodParts || exp.period));
+      setEditKey(field, 'resume.' + index + '.period', partsToText(exp.periodParts || exp.period), '第 ' + (index + 1) + ' 段经历 · 时间');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-title';
       renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
-      setEditKey(field, 'resume.' + index + '.title', partsToText(exp.titleParts || exp.title));
+      setEditKey(field, 'resume.' + index + '.title', partsToText(exp.titleParts || exp.title), '第 ' + (index + 1) + ' 段经历 · 职位', false, 'text-en-display');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-company';
       renderTextParts(field, exp.companyParts || exp.company);
-      setEditKey(field, 'resume.' + index + '.company', partsToText(exp.companyParts || exp.company));
+      setEditKey(field, 'resume.' + index + '.company', partsToText(exp.companyParts || exp.company), '第 ' + (index + 1) + ' 段经历 · 公司');
       node.appendChild(field);
 
       field = document.createElement('div');
       field.className = 'node-desc';
       renderTextParts(field, exp.descParts || exp.desc);
-      setEditKey(field, 'resume.' + index + '.desc', partsToText(exp.descParts || exp.desc));
+      setEditKey(field, 'resume.' + index + '.desc', partsToText(exp.descParts || exp.desc), '第 ' + (index + 1) + ' 段经历 · 描述', true);
       node.appendChild(field);
 
       var tags = document.createElement('div');
@@ -349,7 +353,7 @@
         renderTextParts(tag, typeof highlight === 'string'
           ? [{ lang: 'zh-CN', text: '▶ ' + highlight }]
           : [{ lang: 'zh-CN', text: '▶ ' }].concat(highlight));
-        setEditKey(tag, 'resume.' + index + '.highlight.' + highlightIndex, '▶ ' + partsToText(highlight));
+        setEditKey(tag, 'resume.' + index + '.highlight.' + highlightIndex, '▶ ' + partsToText(highlight), '第 ' + (index + 1) + ' 段经历 · 亮点 ' + (highlightIndex + 1));
         tags.appendChild(tag);
       });
       node.appendChild(tags);
@@ -367,7 +371,7 @@
 
     if (introEl) {
       introEl.textContent = partsToText(contact.introParts);
-      setEditKey(introEl, 'terminal.intro', partsToText(contact.introParts));
+      setEditKey(introEl, 'terminal.intro', partsToText(contact.introParts), '开场提示', true);
     }
 
     var history = [];

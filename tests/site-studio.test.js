@@ -13,228 +13,259 @@ function createStyle() {
   const values = Object.create(null);
   return {
     setProperty: function (name, value) { values[name] = String(value); },
+    removeProperty: function (name) { delete values[name]; },
     getPropertyValue: function (name) { return values[name] || ''; }
   };
 }
 
-function createElement(attributes, text) {
+function attributeSelector(selector) {
+  const match = /^\[([^=\]]+)(?:="([^"]*)")?\]$/.exec(selector);
+  return match ? { name: match[1], value: match[2] } : null;
+}
+
+function createElement(tagName, attributes, text) {
+  if (typeof tagName !== 'string') {
+    text = attributes;
+    attributes = tagName;
+    tagName = 'div';
+  }
   const attrs = Object.assign(Object.create(null), attributes || {});
   const listeners = Object.create(null);
-  return {
+  const children = [];
+  let textValue = text || '';
+  const element = {
+    tagName: String(tagName || 'div').toUpperCase(),
     attributes: attrs,
     style: createStyle(),
-    textContent: text || '',
+    children: children,
+    parentNode: null,
+    value: '',
     hidden: false,
+    open: false,
+    checked: false,
     focused: false,
+    scrolled: false,
+    className: '',
     getAttribute: function (name) { return Object.hasOwn(attrs, name) ? attrs[name] : null; },
     setAttribute: function (name, value) { attrs[name] = String(value); },
     removeAttribute: function (name) { delete attrs[name]; },
-    addEventListener: function (name, listener) { listeners[name] = listener; },
-    fire: function (name, event) { if (listeners[name]) listeners[name](event || { target: this, preventDefault: function () {} }); },
-    contains: function (target) { return target === this; },
-    focus: function () { this.focused = true; },
-    blur: function () {
-      if (listeners.blur) listeners.blur({
-        target: this,
-        preventDefault: function () {}
+    appendChild: function (child) {
+      child.parentNode = element;
+      children.push(child);
+      return child;
+    },
+    removeChild: function (child) {
+      const index = children.indexOf(child);
+      if (index >= 0) children.splice(index, 1);
+      child.parentNode = null;
+      return child;
+    },
+    addEventListener: function (name, listener) {
+      if (!listeners[name]) listeners[name] = [];
+      listeners[name].push(listener);
+    },
+    fire: function (name, event) {
+      const payload = event || {};
+      if (!payload.target) payload.target = element;
+      if (!payload.preventDefault) payload.preventDefault = function () {};
+      if (!payload.stopPropagation) payload.stopPropagation = function () {};
+      (listeners[name] || []).forEach(function (listener) { listener(payload); });
+    },
+    contains: function (target) {
+      if (target === element) return true;
+      return children.some(function (child) { return child.contains && child.contains(target); });
+    },
+    matches: function (selector) {
+      const attr = attributeSelector(selector);
+      if (attr) {
+        if (!Object.hasOwn(attrs, attr.name)) return false;
+        return attr.value === undefined || attrs[attr.name] === attr.value;
+      }
+      if (selector.charAt(0) === '.') {
+        return String(element.className).split(/\s+/).indexOf(selector.slice(1)) >= 0;
+      }
+      return element.tagName.toLowerCase() === selector.toLowerCase();
+    },
+    querySelectorAll: function (selector) {
+      const found = [];
+      children.forEach(function visit(child) {
+        if (child.matches && child.matches(selector)) found.push(child);
+        (child.children || []).forEach(visit);
       });
+      return found;
+    },
+    querySelector: function (selector) { return element.querySelectorAll(selector)[0] || null; },
+    closest: function (selector) {
+      let current = element;
+      while (current) {
+        if (current.matches && current.matches(selector)) return current;
+        current = current.parentNode;
+      }
+      return null;
+    },
+    focus: function () { element.focused = true; },
+    blur: function () { element.fire('blur'); },
+    scrollIntoView: function () { element.scrolled = true; }
+  };
+  Object.defineProperty(element, 'firstChild', {
+    configurable: true,
+    get: function () { return children[0] || null; }
+  });
+  Object.defineProperty(element, 'textContent', {
+    configurable: true,
+    get: function () {
+      return children.length
+        ? children.map(function (child) { return child.textContent; }).join('')
+        : textValue;
+    },
+    set: function (value) {
+      while (children.length) children.pop().parentNode = null;
+      textValue = String(value);
+    }
+  });
+  return element;
+}
+
+function createDocument(editables, ids) {
+  const listeners = Object.create(null);
+  const root = createElement('html');
+  return {
+    documentElement: root,
+    createElement: function (tagName) { return createElement(tagName); },
+    querySelectorAll: function (selector) {
+      if (selector === '[data-edit-key]') return editables;
+      return [];
+    },
+    querySelector: function (selector) {
+      return this.querySelectorAll(selector)[0] || null;
+    },
+    getElementById: function (id) { return ids && ids[id] || null; },
+    addEventListener: function (name, listener) {
+      if (!listeners[name]) listeners[name] = [];
+      listeners[name].push(listener);
+    },
+    fire: function (name, event) {
+      (listeners[name] || []).forEach(function (listener) { listener(event || {}); });
     }
   };
+}
+
+function editable(key, label, text, extra) {
+  return createElement('span', Object.assign({
+    'data-edit-key': key,
+    'data-edit-section': key.split('.')[0],
+    'data-edit-label': label,
+    'data-edit-source': text
+  }, extra || {}), text);
 }
 
 function createStudioHarness(savedValue) {
-  const hero = createElement({ 'data-studio-section': 'hero' });
-  const about = createElement({ 'data-studio-section': 'about' });
-  const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
-  const aboutIntro = createElement({ 'data-edit-key': 'about.intro' }, '原始介绍');
-  const terminalInput = createElement({
+  const heroTitle = editable('hero.title', '姓名', '岁安');
+  const heroSubtitle = editable('hero.subtitle', '身份介绍', '> Data Analyst / AI Learner');
+  const aboutIntro = editable('about.intro', '个人介绍', '原始介绍', { 'data-edit-multiline': 'true' });
+  const terminalInput = createElement('input', {
     'data-edit-key': 'terminal.inputPlaceholder',
+    'data-edit-section': 'terminal',
+    'data-edit-label': '输入框提示',
     'data-edit-attribute': 'placeholder',
+    'data-edit-source': '输入 help 查看可用命令...',
     placeholder: '输入 help 查看可用命令...'
   });
+  const editables = [heroTitle, heroSubtitle, aboutIntro, terminalInput];
   const writes = [];
-  const doc = {
-    querySelectorAll: function (selector) {
-      if (selector === '[data-studio-section]') return [hero, about];
-      if (selector === '[data-edit-key]') return [heroTitle, aboutIntro, terminalInput];
-      return [];
-    }
-  };
   const storage = {
     getItem: function () { return savedValue == null ? null : String(savedValue); },
-    setItem: function (key, value) { writes.push([key, value]); }
+    setItem: function (key, value) { writes.push([key, value]); },
+    removeItem: function (key) { writes.push([key, null]); }
   };
-  return { doc, storage, hero, about, heroTitle, aboutIntro, terminalInput, writes };
+  const doc = createDocument(editables);
+  return { doc, storage, editables, heroTitle, heroSubtitle, aboutIntro, terminalInput, writes };
 }
 
-function createPanelHarness() {
-  const hero = createElement({ 'data-studio-section': 'hero' });
-  const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
-  const terminalInput = createElement({
-    'data-edit-key': 'terminal.inputPlaceholder',
-    'data-edit-attribute': 'placeholder',
-    placeholder: '输入 help 查看可用命令...'
-  });
-  terminalInput.value = '';
-
-  const toggle = createElement();
-  const panel = createElement();
+function createPanelHarness(savedValue) {
+  const base = createStudioHarness(savedValue);
+  const toggle = createElement('button');
+  const panel = createElement('aside');
   panel.hidden = true;
-  const close = createElement();
-  const editMode = createElement();
-  const resetAll = createElement();
-  const font = createElement();
-  font.value = 'classic';
-  const scale = createElement();
-  scale.value = '100';
-  const output = createElement();
-  const resetSection = createElement();
-  const group = createElement({ 'data-studio-control': 'hero' });
-  group.querySelector = function (selector) {
-    return {
-      '[data-studio-font-control]': font,
-      '[data-studio-scale-control]': scale,
-      '[data-studio-scale-value]': output,
-      '[data-studio-reset-section]': resetSection
-    }[selector] || null;
+  const close = createElement('button');
+  const sections = createElement('div');
+  const resetAll = createElement('button');
+  const ids = {
+    siteStudioToggle: toggle,
+    siteStudioPanel: panel,
+    siteStudioClose: close,
+    siteStudioSections: sections,
+    siteStudioResetAll: resetAll
   };
-
-  const listeners = Object.create(null);
-  const root = createElement();
-  const doc = {
-    documentElement: root,
-    getElementById: function (id) {
-      return {
-        siteStudioToggle: toggle,
-        siteStudioPanel: panel,
-        siteStudioClose: close,
-        siteStudioEditMode: editMode,
-        siteStudioResetAll: resetAll
-      }[id] || null;
-    },
-    querySelectorAll: function (selector) {
-      if (selector === '[data-studio-section]') return [hero];
-      if (selector === '[data-edit-key]') return [heroTitle, terminalInput];
-      if (selector === '[data-studio-control]') return [group];
-      return [];
-    },
-    addEventListener: function (name, listener) { listeners[name] = listener; }
-  };
-  const storage = {
-    getItem: function () { return null; },
-    setItem: function () {},
-    removeItem: function () {}
-  };
-  const controller = api.createController(doc, storage);
+  const doc = createDocument(base.editables, ids);
+  base.doc = doc;
+  const controller = api.createController(doc, base.storage);
   api.bindPanel(doc, controller);
-
-  return { controller, editMode, terminalInput };
+  return Object.assign(base, {
+    doc, controller, toggle, panel, close, sections, resetAll,
+    root: doc.documentElement,
+    outside: createElement('div')
+  });
 }
 
-test('normalizeDraft rejects malformed data and keeps valid scoped values', function () {
-  assert.deepEqual(api.normalizeDraft('{bad json'), api.createEmptyDraft());
-
-  const draft = api.normalizeDraft(JSON.stringify({
-    version: 1,
-    sections: {
-      hero: { font: 'terminal', scale: 115 },
-      unexpected: { font: 'code', scale: 100 }
+test('normalizes V2 text styles and UI state against known edit keys', function () {
+  const draft = api.normalizeDraft({
+    version: 2,
+    text: { 'hero.title': '', unknown: 'drop me' },
+    textStyles: {
+      'hero.title': { font: 'terminal', scale: 120 },
+      'hero.subtitle': { font: 'invalid', scale: 103 }
     },
-    text: { 'hero.title': '新的标题', oversized: 'x'.repeat(5001) }
-  }));
+    ui: { selectedKey: 'hero.title', openSections: ['hero', 'unknown', 'hero'] }
+  }, ['hero.title', 'hero.subtitle']);
 
-  assert.deepEqual(draft.sections.hero, { font: 'terminal', scale: 115 });
-  assert.equal(draft.sections.unexpected, undefined);
-  assert.equal(draft.text['hero.title'], '新的标题');
-  assert.equal(draft.text.oversized, undefined);
+  assert.equal(draft.text['hero.title'], '');
+  assert.equal(draft.text.unknown, undefined);
+  assert.deepEqual(draft.textStyles['hero.title'], { font: 'terminal', scale: 120 });
+  assert.deepEqual(draft.textStyles['hero.subtitle'], { font: 'classic', scale: 100 });
+  assert.deepEqual(draft.ui, { selectedKey: 'hero.title', openSections: ['hero'] });
 });
 
-test('controller restores safe text and independent section typography from storage', function () {
-  const savedDraft = JSON.stringify({
+test('migrates V1 section typography to every known item and writes V2 back', function () {
+  const raw = JSON.stringify({
     version: 1,
-    sections: { hero: { font: 'terminal', scale: 115 } },
-    text: { 'hero.title': '新的标题' }
+    sections: { hero: { font: 'code', scale: 125 } },
+    text: { 'hero.title': '新名字', unknown: 'drop me' }
   });
-  const harness = createStudioHarness(savedDraft);
-  const controller = api.createController(harness.doc, harness.storage);
+  const normalized = api.normalizeDraft(raw, ['hero.title', 'hero.subtitle', 'about.intro']);
+  assert.equal(normalized.version, 2);
+  assert.equal(normalized.text['hero.title'], '新名字');
+  assert.deepEqual(normalized.textStyles['hero.title'], { font: 'code', scale: 125 });
+  assert.deepEqual(normalized.textStyles['hero.subtitle'], { font: 'code', scale: 125 });
+  assert.equal(normalized.textStyles['about.intro'], undefined);
 
-  assert.equal(harness.heroTitle.textContent, '新的标题');
-  assert.equal(harness.hero.getAttribute('data-studio-font'), 'terminal');
-  assert.equal(harness.hero.style.getPropertyValue('--studio-text-scale'), '1.15');
-  assert.equal(harness.about.getAttribute('data-studio-font'), 'classic');
-  assert.equal(harness.about.style.getPropertyValue('--studio-text-scale'), '1');
-  assert.equal(controller.getDraft().text['hero.title'], '新的标题');
+  const harness = createStudioHarness(raw);
+  api.createController(harness.doc, harness.storage);
+  assert.equal(JSON.parse(harness.writes.at(-1)[1]).version, 2);
 });
 
-test('page loads the studio controller after dynamic page rendering', function () {
-  assert.match(html, /<script src="js\/script\.js"><\/script>\s*<script src="js\/site-studio\.js"><\/script>/);
-});
-
-test('page exposes an initially closed accessible site studio panel', function () {
-  assert.match(html, /id="siteStudioToggle"[\s\S]*aria-controls="siteStudioPanel"/);
-  assert.match(html, /id="siteStudioPanel"[^>]*hidden/);
-  assert.match(html, /value="classic"[\s\S]*value="terminal"[\s\S]*value="arcade"[\s\S]*value="code"/);
-  assert.match(html, /<details class="site-studio-section-control" data-studio-control="nav">/);
-});
-
-test('studio styles scope font choices and text scaling without sizing visual assets', function () {
-  assert.match(css, /\[data-studio-font="code"\][\s\S]*--studio-font-en-body:\s*var\(--font-code\)/);
-  assert.match(css, /--studio-text-scale:\s*1/);
-  assert.match(css, /--type-body:\s*calc\(var\(--base-type-body\) \* var\(--studio-text-scale, 1\)\)/);
-  assert.doesNotMatch(css, /\.project-icon\s*\{[^}]*var\(--studio-text-scale/);
-});
-
-test('inline edits persist plain text without accepting markup', function () {
+test('controller persists plain text and empty placeholder text without HTML execution', function () {
   const harness = createStudioHarness(null);
   const controller = api.createController(harness.doc, harness.storage);
-
   controller.setText('hero.title', '<b>岁安</b>');
-
-  assert.equal(harness.heroTitle.textContent, '<b>岁安</b>');
-  assert.equal(JSON.parse(harness.writes.at(-1)[1]).text['hero.title'], '<b>岁安</b>');
-});
-
-test('placeholder copy persists as an attribute and reset restores its source', function () {
-  const harness = createStudioHarness(null);
-  const controller = api.createController(harness.doc, harness.storage);
-
-  controller.setText('terminal.inputPlaceholder', '输入 game 开始挑战');
-  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
-  assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], '输入 game 开始挑战');
-
   controller.setText('terminal.inputPlaceholder', '');
+  assert.equal(harness.heroTitle.textContent, '<b>岁安</b>');
   assert.equal(harness.terminalInput.getAttribute('placeholder'), '');
   assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], '');
-
-  controller.resetAll();
-  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 help 查看可用命令...');
 });
 
-test('edited English followed by Chinese keeps the Chinese Zpix language boundary', function () {
+test('edited mixed text keeps separate English and Chinese language nodes', function () {
   const children = [];
-  const title = createElement({ 'data-edit-key': 'hero.title' }, '原始标题');
-  title.firstChild = null;
-  title.appendChild = function (child) {
-    children.push(child);
-    title.firstChild = children[0] || null;
-  };
+  const title = editable('hero.title', '姓名', '原始标题');
+  title.appendChild = function (child) { children.push(child); child.parentNode = title; };
   title.removeChild = function (child) {
     const index = children.indexOf(child);
     if (index >= 0) children.splice(index, 1);
-    title.firstChild = children[0] || null;
   };
-
-  const doc = {
-    querySelectorAll: function (selector) {
-      if (selector === '[data-edit-key]') return [title];
-      return [];
-    },
-    createElement: function () { return createElement(); }
-  };
+  Object.defineProperty(title, 'firstChild', { get: function () { return children[0] || null; } });
+  const doc = createDocument([title]);
   const controller = api.createController(doc, null);
-
   controller.setText('hero.title', 'AI 产品经理');
-
   assert.deepEqual(children.map(function (child) {
     return { lang: child.lang, text: child.textContent };
   }), [
@@ -243,180 +274,146 @@ test('edited English followed by Chinese keeps the Chinese Zpix language boundar
   ]);
 });
 
-test('section controls persist independently and reset only their own defaults', function () {
+test('applies font and scale independently to sibling Hero text', function () {
   const harness = createStudioHarness(null);
   const controller = api.createController(harness.doc, harness.storage);
-
-  controller.setSection('hero', 'code', 125);
-  controller.setSection('about', 'arcade', 90);
-  controller.resetSection('hero');
-
-  assert.equal(controller.getDraft().sections.hero, undefined);
-  assert.deepEqual(controller.getDraft().sections.about, { font: 'arcade', scale: 90 });
-  assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
-  assert.equal(harness.about.getAttribute('data-studio-font'), 'arcade');
+  controller.setTextStyle('hero.title', 'arcade', 90);
+  controller.setTextStyle('hero.subtitle', 'terminal', 125);
+  assert.equal(harness.heroTitle.getAttribute('data-studio-font'), 'arcade');
+  assert.equal(harness.heroTitle.style.getPropertyValue('--studio-item-scale'), '0.9');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-font'), 'terminal');
+  assert.equal(harness.heroSubtitle.style.getPropertyValue('--studio-item-scale'), '1.25');
 });
 
-test('section reset restores only text that belongs to that section', function () {
+test('item, section and global resets clear only their intended V2 scope', function () {
   const harness = createStudioHarness(null);
   const controller = api.createController(harness.doc, harness.storage);
+  controller.setText('hero.title', '新名字');
+  controller.setTextStyle('hero.title', 'code', 110);
+  controller.setTextStyle('hero.subtitle', 'terminal', 120);
+  controller.setTextStyle('about.intro', 'arcade', 90);
 
-  controller.setText('hero.title', '新的 Hero 标题');
-  controller.setText('terminal.inputPlaceholder', '输入 game 开始挑战');
-  harness.aboutIntro.textContent = '运行时呈现内容';
-  controller.resetSection('terminal');
-
-  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 help 查看可用命令...');
-  assert.equal(controller.getDraft().text['terminal.inputPlaceholder'], undefined);
-  assert.equal(harness.heroTitle.textContent, '新的 Hero 标题');
-  assert.equal(controller.getDraft().text['hero.title'], '新的 Hero 标题');
-  assert.equal(harness.aboutIntro.textContent, '运行时呈现内容');
-});
-
-test('resetAll clears only the temporary studio draft', function () {
-  const harness = createStudioHarness(null);
-  const controller = api.createController(harness.doc, harness.storage);
-
-  controller.setText('hero.title', '草稿标题');
-  controller.setSection('hero', 'terminal', 110);
-  controller.resetAll();
-
-  assert.deepEqual(controller.getDraft(), api.createEmptyDraft());
+  controller.resetItem('hero.title');
   assert.equal(harness.heroTitle.textContent, '岁安');
-  assert.equal(harness.hero.getAttribute('data-studio-font'), 'classic');
+  assert.equal(controller.getDraft().textStyles['hero.title'], undefined);
+  assert.deepEqual(controller.getDraft().textStyles['hero.subtitle'], { font: 'terminal', scale: 120 });
+
+  controller.resetSection('hero');
+  assert.equal(controller.getDraft().textStyles['hero.subtitle'], undefined);
+  assert.deepEqual(controller.getDraft().textStyles['about.intro'], { font: 'arcade', scale: 90 });
+
+  controller.resetAll();
+  assert.deepEqual(controller.getDraft(), api.createEmptyDraft());
 });
 
-test('panel controls open, edit, close outside and restore focus to the trigger', function () {
-  const hero = createElement({ 'data-studio-section': 'hero' });
-  const heroTitle = createElement({ 'data-edit-key': 'hero.title' }, '岁安');
-  const toggle = createElement();
-  const panel = createElement();
-  panel.hidden = true;
-  const close = createElement();
-  const editMode = createElement();
-  const resetAll = createElement();
-  const font = createElement();
-  font.value = 'classic';
-  const scale = createElement();
-  scale.value = '100';
-  const output = createElement();
-  const resetSection = createElement();
-  const group = createElement({ 'data-studio-control': 'hero' });
-  group.querySelector = function (selector) {
-    return {
-      '[data-studio-font-control]': font,
-      '[data-studio-scale-control]': scale,
-      '[data-studio-scale-value]': output,
-      '[data-studio-reset-section]': resetSection
-    }[selector] || null;
-  };
-  const listeners = Object.create(null);
-  const root = createElement();
-  const doc = {
-    documentElement: root,
-    getElementById: function (id) {
-      return {
-        siteStudioToggle: toggle,
-        siteStudioPanel: panel,
-        siteStudioClose: close,
-        siteStudioEditMode: editMode,
-        siteStudioResetAll: resetAll
-      }[id] || null;
-    },
-    querySelectorAll: function (selector) {
-      if (selector === '[data-studio-section]') return [hero];
-      if (selector === '[data-edit-key]') return [heroTitle];
-      if (selector === '[data-studio-control]') return [group];
-      return [];
-    },
-    addEventListener: function (name, listener) { listeners[name] = listener; },
-    fire: function (name, event) { listeners[name](event); }
-  };
-  const storage = { getItem: function () { return null; }, setItem: function () {} };
-  const controller = api.createController(doc, storage);
-  api.bindPanel(doc, controller);
+test('page provides a generated sidebar mount instead of section-wide controls', function () {
+  assert.match(html, /id="siteStudioSections"/);
+  assert.doesNotMatch(html, /id="siteStudioEditMode"/);
+  assert.doesNotMatch(html, /data-studio-font-control/);
+});
 
-  toggle.fire('click');
-  assert.equal(panel.hidden, false);
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+test('static and dynamic edit keys expose human-readable sidebar metadata', function () {
+  assert.match(html, /data-edit-key="nav\.brand"[^>]*data-edit-label="站点名称"/);
+  assert.match(html, /data-edit-key="hero\.scrollHint"[^>]*data-edit-label="下滑提示"/);
+  assert.match(html, /data-edit-key="terminal\.inputPlaceholder"[^>]*data-edit-label="输入框提示"/);
+  assert.match(script, /setEditKey\(heroTitle, 'hero\.title', user\.name, '姓名'/);
+  assert.match(script, /setEditKey\(heroDesc, 'hero\.description',[\s\S]*?'个人简介', true\)/);
+  assert.match(script, /proj\.title \+ ' · 项目介绍'/);
+  assert.match(script, /'第 ' \+ \(index \+ 1\) \+ ' 段经历 · 描述'/);
+});
 
-  editMode.checked = true;
-  editMode.fire('change');
-  assert.equal(heroTitle.getAttribute('contenteditable'), 'plaintext-only');
-  assert.equal(root.getAttribute('data-site-studio-editing'), 'true');
+test('sidebar generates all controls and edits copy and typography live', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  assert.equal(harness.panel.hidden, false);
+  assert.equal(harness.root.getAttribute('data-site-studio-editing'), 'true');
+  assert.equal(harness.sections.querySelectorAll('[data-studio-item-control]').length, 4);
 
+  const control = harness.sections.querySelector('[data-studio-item-control="hero.subtitle"]');
+  const textInput = control.querySelector('[data-studio-text-input]');
+  const font = control.querySelector('[data-studio-item-font]');
+  const scale = control.querySelector('[data-studio-item-scale]');
+  textInput.value = '> AI Product Manager';
+  textInput.fire('input');
   font.value = 'code';
-  scale.value = '125';
+  font.fire('change');
+  scale.value = '130';
   scale.fire('input');
-  assert.equal(hero.getAttribute('data-studio-font'), 'code');
-  assert.equal(output.textContent, '125%');
 
-  editMode.checked = false;
-  editMode.fire('change');
-  doc.fire('click', { target: createElement() });
-  assert.equal(panel.hidden, true);
-  assert.equal(toggle.focused, true);
-
-  toggle.fire('click');
-  doc.fire('keydown', { key: 'Escape' });
-  assert.equal(panel.hidden, true);
+  assert.equal(harness.heroSubtitle.textContent, '> AI Product Manager');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-font'), 'code');
+  assert.equal(harness.heroSubtitle.style.getPropertyValue('--studio-item-scale'), '1.3');
 });
 
-test('placeholder editing saves on Enter and cancels on Escape without becoming contenteditable', function () {
-  const harness = createPanelHarness();
-  harness.editMode.checked = true;
-  harness.editMode.fire('change');
+test('outside click and Escape keep sidebar open while only close exits editing', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  harness.doc.fire('click', { target: harness.outside });
+  harness.doc.fire('keydown', { key: 'Escape' });
+  assert.equal(harness.panel.hidden, false);
+  harness.close.fire('click');
+  assert.equal(harness.panel.hidden, true);
+  assert.equal(harness.root.getAttribute('data-site-studio-editing'), 'false');
+  assert.equal(harness.toggle.focused, true);
+});
 
-  assert.equal(harness.terminalInput.getAttribute('contenteditable'), null);
-  harness.terminalInput.fire('focus');
-  assert.equal(harness.terminalInput.value, '输入 help 查看可用命令...');
-
-  let stopped = false;
-  harness.terminalInput.value = '输入 game 开始挑战';
-  harness.terminalInput.fire('keydown', {
-    key: 'Enter',
-    preventDefault: function () {},
-    stopPropagation: function () { stopped = true; }
+test('page text selects, scrolls and focuses its sidebar editor and restores on reopen', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  let prevented = false;
+  harness.heroSubtitle.fire('click', {
+    target: harness.heroSubtitle,
+    preventDefault: function () { prevented = true; },
+    stopPropagation: function () {}
   });
-  assert.equal(stopped, true);
+  const control = harness.sections.querySelector('[data-studio-item-control="hero.subtitle"]');
+  const input = control.querySelector('[data-studio-text-input]');
+  assert.equal(prevented, true);
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-selected'), 'true');
+  assert.equal(control.open, true);
+  assert.equal(control.scrolled, true);
+  assert.equal(input.focused, true);
+
+  harness.close.fire('click');
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-selected'), null);
+  harness.toggle.fire('click');
+  const rebuilt = harness.sections.querySelector('[data-studio-item-control="hero.subtitle"]');
+  assert.equal(rebuilt.open, true);
+  assert.equal(harness.heroSubtitle.getAttribute('data-studio-selected'), 'true');
+});
+
+test('terminal placeholder is edited from the sidebar and never becomes contenteditable', function () {
+  const harness = createPanelHarness(null);
+  harness.toggle.fire('click');
+  const control = harness.sections.querySelector('[data-studio-item-control="terminal.inputPlaceholder"]');
+  const input = control.querySelector('[data-studio-text-input]');
+  input.value = '输入 game 开始挑战';
+  input.fire('input');
   assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
-  assert.equal(harness.terminalInput.value, '');
-
-  harness.terminalInput.fire('focus');
-  harness.terminalInput.value = '不保存这句';
-  harness.terminalInput.fire('keydown', { key: 'Escape', preventDefault: function () {} });
-  assert.equal(harness.terminalInput.getAttribute('placeholder'), '输入 game 开始挑战');
-  assert.equal(harness.terminalInput.value, '');
+  assert.equal(harness.terminalInput.getAttribute('contenteditable'), null);
+  assert.match(script, /if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;/);
 });
 
-test('terminal command handler yields to placeholder editing mode', function () {
-  assert.match(script, /input\.addEventListener\('keydown'[\s\S]*?if \(e\.key !== 'Enter'\) return;\s*if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;/);
+test('studio CSS applies per-item scaling, font presets and selected states', function () {
+  assert.match(css, /\[data-edit-key\][\s\S]*--studio-item-scale:\s*1/);
+  assert.match(css, /font-size:\s*calc\([^;]+var\(--studio-item-scale, 1\)\)/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-font="code"\]/);
+  assert.match(css, /\[data-edit-key\]\[data-studio-selected="true"\]/);
+  assert.doesNotMatch(css, /\[data-studio-section\][\s\S]{0,400}--studio-text-scale/);
+  assert.doesNotMatch(css, /\.project-icon\s*\{[^}]*--studio-item-scale/);
 });
 
-test('all site regions expose stable edit keys and the studio uses contenteditable only in edit mode', function () {
-  assert.match(html, /data-edit-key="nav\.brand"/);
-  assert.match(html, /data-edit-key="projects\.subtitle"/);
-  assert.match(html, /data-edit-key="footer\.gameover"/);
-  assert.match(script, /setEditKey\(heroTitle, 'hero\.title'/);
-  assert.match(script, /setEditKey\(titleCn, 'projects\.' \+ proj\.id \+ '\.title'/);
-  assert.match(script, /setEditKey\(field, 'resume\.' \+ index \+ '\.desc'/);
-  assert.match(studioScript, /contenteditable.*plaintext-only/);
-  assert.match(studioScript, /function bindPanel\(/);
-  assert.match(script, /data-site-studio-editing'\) === 'true'/);
-  assert.match(script, /\[contenteditable\]/);
+test('mobile typography and panel keep each item scale reachable', function () {
+  assert.match(css, /\.hero-title\s*\{[^}]*var\(--studio-item-scale, 1\)/);
+  assert.match(css, /\.nav-link\s*\{[^}]*var\(--studio-item-scale, 1\)/);
+  assert.match(css, /@media \(max-width: 640px\)[\s\S]*\.site-studio-panel/);
 });
 
-test('avatar scroll controls and mini game stay playable by default', function () {
-  assert.match(html, /<script src="js\/site-behaviors\.js"><\/script>\s*<script src="js\/script\.js">/);
+test('page still loads controller after dynamic rendering and keeps normal regressions', function () {
+  assert.match(html, /<script src="js\/script\.js"><\/script>\s*<script src="js\/site-studio\.js"><\/script>/);
   assert.match(script, /window\.addEventListener\('scroll', avatar\.onScroll, \{ passive: true \}\)/);
   assert.match(script, /speed = GAME_CONFIG\.startSpeed/);
   assert.match(script, /speed = Math\.min\(GAME_CONFIG\.maxSpeed, speed \+ GAME_CONFIG\.speedStep\)/);
   assert.doesNotMatch(html, /id="terminalInput"[^>]*autofocus/);
-});
-
-test('mobile typography overrides keep the per-section studio scale', function () {
-  assert.doesNotMatch(css, /\.nav-link\s*\{\s*font-size:\s*0\.(?:4375|375)rem/);
-  assert.doesNotMatch(css, /\.hero-title\s*\{\s*font-size:\s*0\.875rem/);
-  assert.doesNotMatch(css, /\.section-title\s*\{\s*font-size:\s*0\.75rem/);
-  assert.match(css, /\.hero-title\s*\{\s*font-size:\s*calc\(0\.875rem \* var\(--studio-text-scale, 1\)\)/);
+  assert.doesNotMatch(studioScript, /contenteditable/);
 });

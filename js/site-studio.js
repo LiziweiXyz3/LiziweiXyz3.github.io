@@ -8,7 +8,7 @@
 
   var CONFIG = Object.freeze({
     storageKey: 'personal-site-studio-draft',
-    version: 1,
+    version: 2,
     sections: ['nav', 'hero', 'about', 'projects', 'resume', 'terminal', 'footer'],
     presets: ['classic', 'terminal', 'arcade', 'code'],
     minScale: 80,
@@ -18,12 +18,38 @@
     maxTextLength: 5000
   });
 
+  var SECTION_LABELS = Object.freeze({
+    nav: '导航',
+    hero: 'Hero',
+    about: 'About',
+    projects: 'Projects',
+    resume: 'Resume',
+    terminal: 'Terminal',
+    footer: '页脚'
+  });
+
+  var FONT_LABELS = Object.freeze({
+    classic: '经典像素',
+    terminal: '清晰终端',
+    arcade: '硬核街机',
+    code: '代码等宽'
+  });
+
   function createEmptyDraft() {
-    return { version: CONFIG.version, sections: {}, text: {} };
+    return {
+      version: CONFIG.version,
+      text: {},
+      textStyles: {},
+      ui: { selectedKey: null, openSections: [] }
+    };
   }
 
   function has(list, value) {
     return list.indexOf(value) >= 0;
+  }
+
+  function hasOwn(object, key) {
+    return Object.prototype.hasOwnProperty.call(object, key);
   }
 
   function isValidScale(value) {
@@ -31,7 +57,12 @@
       (value - CONFIG.minScale) % CONFIG.step === 0;
   }
 
-  function normalizeSection(value) {
+  function sectionFromKey(key) {
+    var section = String(key || '').split('.')[0];
+    return has(CONFIG.sections, section) ? section : null;
+  }
+
+  function normalizeTextStyle(value) {
     var font = value && has(CONFIG.presets, value.font) ? value.font : 'classic';
     var scale = Number(value && value.scale);
     return { font: font, scale: isValidScale(scale) ? scale : CONFIG.defaultScale };
@@ -44,29 +75,65 @@
     return value && typeof value === 'object' ? value : null;
   }
 
-  function normalizeDraft(value) {
+  function uniqueKnownKeys(knownKeys) {
+    var result = [];
+    (knownKeys || []).forEach(function (key) {
+      if (typeof key === 'string' && key.length > 0 && key.length <= 120 && result.indexOf(key) < 0) {
+        result.push(key);
+      }
+    });
+    return result;
+  }
+
+  function normalizeDraft(value, knownKeys) {
     var parsed = parseDraft(value);
     var draft = createEmptyDraft();
-    if (!parsed || parsed.version !== CONFIG.version) return draft;
+    var keys = uniqueKnownKeys(knownKeys);
+    if (!parsed || (parsed.version !== 1 && parsed.version !== CONFIG.version)) return draft;
 
-    var sections = parsed.sections && typeof parsed.sections === 'object' ? parsed.sections : {};
-    CONFIG.sections.forEach(function (section) {
-      if (Object.prototype.hasOwnProperty.call(sections, section)) {
-        draft.sections[section] = normalizeSection(sections[section]);
+    var text = parsed.text && typeof parsed.text === 'object' ? parsed.text : {};
+    keys.forEach(function (key) {
+      if (typeof text[key] === 'string' && text[key].length <= CONFIG.maxTextLength) {
+        draft.text[key] = text[key];
       }
     });
 
-    var text = parsed.text && typeof parsed.text === 'object' ? parsed.text : {};
-    Object.keys(text).forEach(function (key) {
-      if (key.length > 0 && key.length <= 120 && typeof text[key] === 'string' && text[key].length <= CONFIG.maxTextLength) {
-        draft.text[key] = text[key];
+    if (parsed.version === 1) {
+      var sections = parsed.sections && typeof parsed.sections === 'object' ? parsed.sections : {};
+      keys.forEach(function (key) {
+        var section = sectionFromKey(key);
+        if (section && hasOwn(sections, section)) {
+          draft.textStyles[key] = normalizeTextStyle(sections[section]);
+        }
+      });
+      return draft;
+    }
+
+    var textStyles = parsed.textStyles && typeof parsed.textStyles === 'object' ? parsed.textStyles : {};
+    keys.forEach(function (key) {
+      if (hasOwn(textStyles, key) && textStyles[key] && typeof textStyles[key] === 'object') {
+        draft.textStyles[key] = normalizeTextStyle(textStyles[key]);
+      }
+    });
+
+    var ui = parsed.ui && typeof parsed.ui === 'object' ? parsed.ui : {};
+    draft.ui.selectedKey = has(keys, ui.selectedKey) ? ui.selectedKey : null;
+    var openSections = Array.isArray(ui.openSections) ? ui.openSections : [];
+    openSections.forEach(function (section) {
+      if (has(CONFIG.sections, section) && !has(draft.ui.openSections, section)) {
+        draft.ui.openSections.push(section);
       }
     });
     return draft;
   }
 
-  function cloneDraft(draft) {
-    return normalizeDraft({ version: CONFIG.version, sections: draft.sections, text: draft.text });
+  function cloneDraft(draft, knownKeys) {
+    return normalizeDraft({
+      version: CONFIG.version,
+      text: draft.text,
+      textStyles: draft.textStyles,
+      ui: draft.ui
+    }, knownKeys);
   }
 
   function getStorage(storage) {
@@ -75,35 +142,21 @@
     try { return window.localStorage; } catch (error) { return null; }
   }
 
-  function getSectionSetting(draft, name) {
-    return draft.sections[name] || { font: 'classic', scale: CONFIG.defaultScale };
-  }
-
-  function applySection(element, setting) {
-    if (!element) return;
-    element.setAttribute('data-studio-font', setting.font);
-    element.style.setProperty('--studio-text-scale', String(setting.scale / 100));
-  }
-
   function getTextElements(doc) {
-    return doc && doc.querySelectorAll ? Array.prototype.slice.call(doc.querySelectorAll('[data-edit-key]')) : [];
+    return doc && doc.querySelectorAll
+      ? Array.prototype.slice.call(doc.querySelectorAll('[data-edit-key]'))
+      : [];
   }
 
-  function ensureStaticEditKeys(doc) {
-    if (!doc || !doc.querySelector) return;
-    var registrations = [
-      { selector: '.hero-scroll-hint', key: 'hero.scrollHint' },
-      { selector: '#statsPanel .about-card-title span[lang="en"]', key: 'about.statsHeading' },
-      { selector: '#skillsPanel .about-card-title span[lang="en"]', key: 'about.skillsHeading' }
-    ];
-    registrations.forEach(function (registration) {
-      var element = doc.querySelector(registration.selector);
-      if (element && !element.getAttribute('data-edit-key')) element.setAttribute('data-edit-key', registration.key);
-    });
+  function getEditableText(element) {
+    if (element.getAttribute('data-edit-attribute') === 'placeholder') {
+      return element.getAttribute('placeholder') || '';
+    }
+    return element.textContent || '';
   }
 
   function clearElement(element) {
-    while (element.firstChild) element.removeChild(element.firstChild);
+    while (element && element.firstChild) element.removeChild(element.firstChild);
   }
 
   function splitTextByLanguage(text) {
@@ -131,20 +184,14 @@
       return;
     }
     clearElement(element);
+    var englishClass = element.getAttribute('data-edit-english-class') || 'text-en-body';
     splitTextByLanguage(text).forEach(function (part) {
       var span = doc.createElement('span');
       span.lang = part.lang;
-      span.className = part.lang === 'zh-CN' ? 'text-cn' : 'text-en-body';
+      span.className = part.lang === 'zh-CN' ? 'text-cn' : englishClass;
       span.textContent = part.text;
       element.appendChild(span);
     });
-  }
-
-  function getEditableText(element) {
-    if (element.getAttribute('data-edit-attribute') === 'placeholder') {
-      return element.getAttribute('placeholder') || '';
-    }
-    return element.textContent;
   }
 
   function applyEditableText(doc, element, text) {
@@ -155,23 +202,19 @@
     setPlainText(doc, element, text);
   }
 
-  function applyDraft(doc, draft, sourceText, restoreSourceText, restoreSection) {
-    if (!doc || !doc.querySelectorAll) return;
-    var sections = doc.querySelectorAll('[data-studio-section]');
-    sections.forEach(function (element) {
-      var name = element.getAttribute('data-studio-section');
-      applySection(element, getSectionSetting(draft, name));
-    });
-    getTextElements(doc).forEach(function (element) {
-      var key = element.getAttribute('data-edit-key');
-      if (Object.prototype.hasOwnProperty.call(draft.text, key)) {
-        applyEditableText(doc, element, draft.text[key]);
-        element.setAttribute('data-studio-draft-applied', 'true');
-      } else if (restoreSourceText && (!restoreSection || key.indexOf(restoreSection + '.') === 0)) {
-        if (typeof sourceText[key] === 'string') applyEditableText(doc, element, sourceText[key]);
-        element.removeAttribute('data-studio-draft-applied');
-      }
-    });
+  function clearTextStyle(element) {
+    if (!element) return;
+    element.removeAttribute('data-studio-font');
+    if (element.style && element.style.removeProperty) element.style.removeProperty('--studio-item-scale');
+  }
+
+  function applyTextStyle(element, setting) {
+    if (!element) return;
+    var safe = normalizeTextStyle(setting);
+    element.setAttribute('data-studio-font', safe.font);
+    if (element.style && element.style.setProperty) {
+      element.style.setProperty('--studio-item-scale', String(safe.scale / 100));
+    }
   }
 
   function createController(doc, storage) {
@@ -179,228 +222,409 @@
       if (typeof document === 'undefined') return null;
       doc = document;
     }
-    ensureStaticEditKeys(doc);
+    var elements = getTextElements(doc);
+    var knownKeys = elements.map(function (element) { return element.getAttribute('data-edit-key'); });
+    var elementByKey = {};
+    var sourceText = {};
+    elements.forEach(function (element) {
+      var key = element.getAttribute('data-edit-key');
+      elementByKey[key] = element;
+      var source = element.getAttribute('data-edit-source');
+      sourceText[key] = source !== null ? source : getEditableText(element);
+    });
+
     storage = getStorage(storage);
     var saved = null;
     if (storage) {
       try { saved = storage.getItem(CONFIG.storageKey); } catch (error) { saved = null; }
     }
-    var draft = normalizeDraft(saved);
-    var sourceText = {};
-    getTextElements(doc).forEach(function (element) {
-      var key = element.getAttribute('data-edit-key');
-      sourceText[key] = element.getAttribute('data-edit-source') || getEditableText(element);
-    });
+    var parsedSaved = parseDraft(saved);
+    var draft = normalizeDraft(parsedSaved, knownKeys);
 
     function persist() {
       if (!storage) return;
-      try { storage.setItem(CONFIG.storageKey, JSON.stringify(draft)); } catch (error) { /* storage is optional */ }
+      try { storage.setItem(CONFIG.storageKey, JSON.stringify(draft)); } catch (error) { /* optional */ }
     }
 
-    function apply(restoreSourceText, restoreSection) {
-      applyDraft(doc, draft, sourceText, restoreSourceText, restoreSection);
+    function applyItem(key, restoreSourceText) {
+      var element = elementByKey[key];
+      if (!element) return;
+      if (hasOwn(draft.text, key)) {
+        applyEditableText(doc, element, draft.text[key]);
+        element.setAttribute('data-studio-draft-applied', 'true');
+      } else if (restoreSourceText) {
+        applyEditableText(doc, element, sourceText[key]);
+        element.removeAttribute('data-studio-draft-applied');
+      }
+      if (hasOwn(draft.textStyles, key)) applyTextStyle(element, draft.textStyles[key]);
+      else clearTextStyle(element);
     }
 
-    function findTextElement(key) {
-      return getTextElements(doc).find(function (element) { return element.getAttribute('data-edit-key') === key; }) || null;
+    function applyAll(restoreSourceText) {
+      knownKeys.forEach(function (key) { applyItem(key, restoreSourceText); });
     }
 
-    apply(false);
+    function getItemState(key) {
+      var element = elementByKey[key];
+      if (!element) return null;
+      return {
+        key: key,
+        section: element.getAttribute('data-edit-section') || sectionFromKey(key),
+        label: element.getAttribute('data-edit-label') || key,
+        multiline: element.getAttribute('data-edit-multiline') === 'true',
+        text: getEditableText(element),
+        sourceText: sourceText[key],
+        style: hasOwn(draft.textStyles, key)
+          ? normalizeTextStyle(draft.textStyles[key])
+          : { font: 'classic', scale: CONFIG.defaultScale }
+      };
+    }
+
+    applyAll(false);
+    if (parsedSaved && parsedSaved.version === 1) persist();
 
     return {
-      getDraft: function () { return cloneDraft(draft); },
+      getDraft: function () { return cloneDraft(draft, knownKeys); },
+      getItems: function () {
+        return knownKeys.map(getItemState).filter(function (item) { return !!item; });
+      },
+      getElement: function (key) { return elementByKey[key] || null; },
+      getItemState: getItemState,
       setText: function (key, text) {
-        var element = findTextElement(key);
-        if (!element || typeof text !== 'string') return false;
+        if (!elementByKey[key] || typeof text !== 'string') return false;
         var safeText = text.slice(0, CONFIG.maxTextLength);
         if (safeText === sourceText[key]) delete draft.text[key];
         else draft.text[key] = safeText;
-        apply(true);
+        applyItem(key, true);
         persist();
         return true;
       },
-      setSection: function (name, font, scale) {
-        if (!has(CONFIG.sections, name)) return false;
-        draft.sections[name] = normalizeSection({ font: font, scale: scale });
-        apply(false);
+      setTextStyle: function (key, font, scale) {
+        if (!elementByKey[key]) return false;
+        var setting = normalizeTextStyle({ font: font, scale: Number(scale) });
+        if (setting.font === 'classic' && setting.scale === CONFIG.defaultScale) {
+          delete draft.textStyles[key];
+        } else {
+          draft.textStyles[key] = setting;
+        }
+        applyItem(key, false);
+        persist();
+        return true;
+      },
+      setUi: function (selectedKey, openSections) {
+        draft.ui.selectedKey = has(knownKeys, selectedKey) ? selectedKey : null;
+        draft.ui.openSections = [];
+        (openSections || []).forEach(function (section) {
+          if (has(CONFIG.sections, section) && !has(draft.ui.openSections, section)) {
+            draft.ui.openSections.push(section);
+          }
+        });
+        persist();
+      },
+      resetItem: function (key) {
+        if (!elementByKey[key]) return false;
+        delete draft.text[key];
+        delete draft.textStyles[key];
+        applyItem(key, true);
         persist();
         return true;
       },
       resetSection: function (name) {
         if (!has(CONFIG.sections, name)) return false;
-        delete draft.sections[name];
-        Object.keys(draft.text).forEach(function (key) {
-          if (key.indexOf(name + '.') === 0) delete draft.text[key];
+        knownKeys.forEach(function (key) {
+          if (sectionFromKey(key) === name) {
+            delete draft.text[key];
+            delete draft.textStyles[key];
+            applyItem(key, true);
+          }
         });
-        apply(true, name);
         persist();
         return true;
       },
       resetAll: function () {
         draft = createEmptyDraft();
-        apply(true);
+        applyAll(true);
         if (storage && storage.removeItem) {
           try { storage.removeItem(CONFIG.storageKey); } catch (error) { persist(); }
-        } else persist();
+        } else {
+          persist();
+        }
       }
     };
   }
 
+  function appendText(doc, parent, text, className) {
+    var span = doc.createElement('span');
+    if (className) span.className = className;
+    span.textContent = text;
+    parent.appendChild(span);
+    return span;
+  }
+
+  function truncatePreview(text) {
+    var compact = String(text).replace(/\s+/g, ' ').trim();
+    return compact.length > 28 ? compact.slice(0, 28) + '…' : compact;
+  }
+
   function bindPanel(doc, controller) {
-    if (!doc || !controller || !doc.getElementById) return;
+    if (!doc || !controller || !doc.getElementById || !doc.createElement) return;
     var toggle = doc.getElementById('siteStudioToggle');
     var panel = doc.getElementById('siteStudioPanel');
     var close = doc.getElementById('siteStudioClose');
-    var editMode = doc.getElementById('siteStudioEditMode');
+    var mount = doc.getElementById('siteStudioSections');
     var resetAll = doc.getElementById('siteStudioResetAll');
-    if (!toggle || !panel || !editMode) return;
+    if (!toggle || !panel || !close || !mount) return;
 
-    function setPanelOpen(open) {
+    var itemControls = {};
+    var sectionControls = {};
+    var selectedKey = controller.getDraft().ui.selectedKey;
+
+    function editingIsOpen() {
+      return panel.hidden === false;
+    }
+
+    function currentOpenSections() {
+      return CONFIG.sections.filter(function (section) {
+        return sectionControls[section] && sectionControls[section].details.open;
+      });
+    }
+
+    function saveUi() {
+      controller.setUi(selectedKey, currentOpenSections());
+    }
+
+    function clearPageSelection() {
+      controller.getItems().forEach(function (item) {
+        var element = controller.getElement(item.key);
+        if (element) element.removeAttribute('data-studio-selected');
+      });
+    }
+
+    function syncItem(key) {
+      var state = controller.getItemState(key);
+      var controls = itemControls[key];
+      if (!state || !controls) return;
+      controls.text.value = state.text;
+      controls.font.value = state.style.font;
+      controls.scale.value = String(state.style.scale);
+      controls.output.textContent = state.style.scale + '%';
+      controls.preview.textContent = truncatePreview(state.text) || '（空）';
+    }
+
+    function selectItem(key, focusEditor) {
+      var controls = itemControls[key];
+      var element = controller.getElement(key);
+      if (!controls || !element) return false;
+      selectedKey = key;
+      clearPageSelection();
+      element.setAttribute('data-studio-selected', 'true');
+      Object.keys(itemControls).forEach(function (itemKey) {
+        itemControls[itemKey].details.open = itemKey === key;
+      });
+      controls.section.open = true;
+      saveUi();
+      if (focusEditor) {
+        if (typeof controls.details.scrollIntoView === 'function') {
+          controls.details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        if (typeof controls.text.focus === 'function') controls.text.focus();
+      }
+      return true;
+    }
+
+    function makeFieldLabel(text) {
+      var label = doc.createElement('label');
+      label.className = 'site-studio-field';
+      appendText(doc, label, text, 'site-studio-field-label');
+      return label;
+    }
+
+    function buildItem(item, sectionDetails) {
+      var details = doc.createElement('details');
+      details.className = 'site-studio-item-control';
+      details.setAttribute('data-studio-item-control', item.key);
+
+      var summary = doc.createElement('summary');
+      summary.className = 'site-studio-item-summary';
+      appendText(doc, summary, item.label, 'site-studio-item-label');
+      var preview = appendText(doc, summary, truncatePreview(item.text) || '（空）', 'site-studio-item-preview');
+      details.appendChild(summary);
+
+      var textLabel = makeFieldLabel('文案');
+      var textInput = doc.createElement(item.multiline ? 'textarea' : 'input');
+      textInput.className = 'site-studio-text-input';
+      textInput.setAttribute('data-studio-text-input', '');
+      textInput.setAttribute('aria-label', item.label + '文案');
+      if (!item.multiline) textInput.setAttribute('type', 'text');
+      textInput.value = item.text;
+      textLabel.appendChild(textInput);
+      details.appendChild(textLabel);
+
+      var fontLabel = makeFieldLabel('字体');
+      var font = doc.createElement('select');
+      font.setAttribute('data-studio-item-font', '');
+      font.setAttribute('aria-label', item.label + '字体');
+      CONFIG.presets.forEach(function (preset) {
+        var option = doc.createElement('option');
+        option.value = preset;
+        option.setAttribute('value', preset);
+        option.textContent = FONT_LABELS[preset];
+        font.appendChild(option);
+      });
+      font.value = item.style.font;
+      fontLabel.appendChild(font);
+      details.appendChild(fontLabel);
+
+      var scaleLabel = makeFieldLabel('字号');
+      var output = doc.createElement('output');
+      output.className = 'site-studio-scale-value';
+      output.textContent = item.style.scale + '%';
+      scaleLabel.appendChild(output);
+      var scale = doc.createElement('input');
+      scale.setAttribute('data-studio-item-scale', '');
+      scale.setAttribute('aria-label', item.label + '字号');
+      scale.setAttribute('type', 'range');
+      scale.setAttribute('min', String(CONFIG.minScale));
+      scale.setAttribute('max', String(CONFIG.maxScale));
+      scale.setAttribute('step', String(CONFIG.step));
+      scale.value = String(item.style.scale);
+      scaleLabel.appendChild(scale);
+      details.appendChild(scaleLabel);
+
+      var reset = doc.createElement('button');
+      reset.className = 'site-studio-reset-item';
+      reset.setAttribute('type', 'button');
+      reset.textContent = '恢复此项默认值';
+      details.appendChild(reset);
+
+      itemControls[item.key] = {
+        details: details,
+        section: sectionDetails,
+        preview: preview,
+        text: textInput,
+        font: font,
+        scale: scale,
+        output: output
+      };
+
+      textInput.addEventListener('input', function () {
+        controller.setText(item.key, textInput.value);
+        preview.textContent = truncatePreview(textInput.value) || '（空）';
+      });
+      function saveStyle() {
+        controller.setTextStyle(item.key, font.value, Number(scale.value));
+        syncItem(item.key);
+      }
+      font.addEventListener('change', saveStyle);
+      scale.addEventListener('input', saveStyle);
+      reset.addEventListener('click', function () {
+        controller.resetItem(item.key);
+        syncItem(item.key);
+      });
+      details.addEventListener('toggle', function () {
+        if (!details.open) return;
+        Object.keys(itemControls).forEach(function (key) {
+          if (key !== item.key) itemControls[key].details.open = false;
+        });
+        selectedKey = item.key;
+        clearPageSelection();
+        var pageElement = controller.getElement(item.key);
+        if (pageElement && editingIsOpen()) pageElement.setAttribute('data-studio-selected', 'true');
+        saveUi();
+      });
+      return details;
+    }
+
+    function buildSidebar() {
+      clearElement(mount);
+      itemControls = {};
+      sectionControls = {};
+      var groups = {};
+      controller.getItems().forEach(function (item) {
+        if (!groups[item.section]) groups[item.section] = [];
+        groups[item.section].push(item);
+      });
+      var draft = controller.getDraft();
+      CONFIG.sections.forEach(function (section) {
+        var items = groups[section] || [];
+        if (!items.length) return;
+        var details = doc.createElement('details');
+        details.className = 'site-studio-section-control';
+        details.setAttribute('data-studio-section-control', section);
+        details.open = has(draft.ui.openSections, section) || sectionFromKey(selectedKey) === section;
+        var summary = doc.createElement('summary');
+        summary.textContent = SECTION_LABELS[section];
+        details.appendChild(summary);
+        items.forEach(function (item) { details.appendChild(buildItem(item, details)); });
+        var reset = doc.createElement('button');
+        reset.className = 'site-studio-reset-section';
+        reset.setAttribute('type', 'button');
+        reset.textContent = '恢复本模块默认值';
+        reset.addEventListener('click', function () {
+          controller.resetSection(section);
+          items.forEach(function (item) { syncItem(item.key); });
+        });
+        details.appendChild(reset);
+        details.addEventListener('toggle', saveUi);
+        sectionControls[section] = { details: details, items: items };
+        mount.appendChild(details);
+      });
+    }
+
+    function setPanelOpen(open, restoreFocus) {
       panel.hidden = !open;
       toggle.setAttribute('aria-expanded', String(open));
-      if (open) syncControls();
-    }
-
-    function closePanel() {
-      setPanelOpen(false);
-      if (typeof toggle.focus === 'function') toggle.focus();
-    }
-
-    function syncControls() {
-      var draft = controller.getDraft();
-      Array.prototype.slice.call(doc.querySelectorAll('[data-studio-control]')).forEach(function (group) {
-        var name = group.getAttribute('data-studio-control');
-        var setting = getSectionSetting(draft, name);
-        var font = group.querySelector('[data-studio-font-control]');
-        var scale = group.querySelector('[data-studio-scale-control]');
-        var output = group.querySelector('[data-studio-scale-value]');
-        if (font) font.value = setting.font;
-        if (scale) scale.value = String(setting.scale);
-        if (output) output.textContent = setting.scale + '%';
-      });
-    }
-
-    function isPlaceholderEditor(element) {
-      return element.getAttribute('data-edit-attribute') === 'placeholder';
-    }
-
-    function finishPlaceholderEdit(element, save) {
-      if (element.getAttribute('data-studio-placeholder-active') !== 'true') return;
-      var key = element.getAttribute('data-edit-key');
-      var original = element.getAttribute('data-studio-original');
-      if (save) controller.setText(key, element.value.slice(0, CONFIG.maxTextLength));
-      else if (original !== null) controller.setText(key, original);
-      element.value = '';
-      element.removeAttribute('data-studio-placeholder-active');
-      element.removeAttribute('data-studio-original');
-    }
-
-    function setEditMode(enabled) {
-      if (doc.documentElement) doc.documentElement.setAttribute('data-site-studio-editing', String(enabled));
-      getTextElements(doc).forEach(function (element) {
-        if (enabled) {
-          if (!isPlaceholderEditor(element)) {
-            element.setAttribute('contenteditable', 'plaintext-only');
-            if ('contentEditable' in element && element.contentEditable !== 'plaintext-only') {
-              element.setAttribute('contenteditable', 'true');
-            }
-          }
-          element.setAttribute('spellcheck', 'false');
-        } else {
-          if (isPlaceholderEditor(element) && element.getAttribute('data-studio-placeholder-active') === 'true') {
-            finishPlaceholderEdit(element, true);
-          }
-          element.removeAttribute('contenteditable');
-          element.removeAttribute('spellcheck');
-          element.removeAttribute('data-studio-original');
-          element.removeAttribute('data-studio-placeholder-active');
-          if (isPlaceholderEditor(element)) element.value = '';
-        }
-      });
-      editMode.checked = enabled;
-    }
-
-    toggle.addEventListener('click', function () { setPanelOpen(panel.hidden); });
-    if (close) close.addEventListener('click', closePanel);
-    editMode.addEventListener('change', function () { setEditMode(editMode.checked); });
-
-    getTextElements(doc).forEach(function (element) {
-      element.addEventListener('click', function (event) {
-        if (editMode.checked && !isPlaceholderEditor(element)) event.preventDefault();
-      });
-      element.addEventListener('focus', function () {
-        if (!editMode.checked) return;
-        element.setAttribute('data-studio-original', getEditableText(element));
-        if (isPlaceholderEditor(element)) {
-          element.setAttribute('data-studio-placeholder-active', 'true');
-          element.value = getEditableText(element);
-        }
-      });
-      element.addEventListener('blur', function () {
-        if (!editMode.checked) return;
-        if (isPlaceholderEditor(element)) finishPlaceholderEdit(element, true);
-        else controller.setText(element.getAttribute('data-edit-key'), element.textContent);
-        syncControls();
-      });
-      element.addEventListener('keydown', function (event) {
-        if (!editMode.checked) return;
-        if (isPlaceholderEditor(element)) {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            event.stopPropagation();
-            element.blur();
-          } else if (event.key === 'Escape') {
-            event.preventDefault();
-            finishPlaceholderEdit(element, false);
-            element.blur();
-          }
-          return;
-        }
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          var original = element.getAttribute('data-studio-original');
-          if (original !== null) controller.setText(element.getAttribute('data-edit-key'), original);
-          element.blur();
-          syncControls();
-        }
-      });
-    });
-
-    Array.prototype.slice.call(doc.querySelectorAll('[data-studio-control]')).forEach(function (group) {
-      var name = group.getAttribute('data-studio-control');
-      var font = group.querySelector('[data-studio-font-control]');
-      var scale = group.querySelector('[data-studio-scale-control]');
-      var reset = group.querySelector('[data-studio-reset-section]');
-      function saveSetting() {
-        controller.setSection(name, font.value, Number(scale.value));
-        syncControls();
+      if (doc.documentElement) {
+        doc.documentElement.setAttribute('data-site-studio-editing', String(open));
       }
-      if (font) font.addEventListener('change', saveSetting);
-      if (scale) scale.addEventListener('input', saveSetting);
-      if (reset) reset.addEventListener('click', function () { controller.resetSection(name); syncControls(); });
+      if (open) {
+        buildSidebar();
+        var savedSelected = controller.getDraft().ui.selectedKey;
+        if (savedSelected) selectItem(savedSelected, false);
+      } else {
+        clearPageSelection();
+        if (restoreFocus !== false && typeof toggle.focus === 'function') toggle.focus();
+      }
+    }
+
+    controller.getItems().forEach(function (item) {
+      var element = controller.getElement(item.key);
+      if (!element) return;
+      element.addEventListener('click', function (event) {
+        if (!editingIsOpen()) return;
+        event.preventDefault();
+        event.stopPropagation();
+        selectItem(item.key, true);
+      });
     });
 
-    if (resetAll) resetAll.addEventListener('click', function () { controller.resetAll(); syncControls(); });
-    doc.addEventListener('click', function (event) {
-      var target = event.target;
-      if (!panel.hidden && (!panel.contains(target) && !toggle.contains(target))) closePanel();
+    toggle.addEventListener('click', function () {
+      if (panel.hidden) setPanelOpen(true, false);
     });
-    doc.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape' && panel.hidden === false && !editMode.checked) closePanel();
-    });
-    setPanelOpen(false);
-    setEditMode(false);
+    close.addEventListener('click', function () { setPanelOpen(false, true); });
+    if (resetAll) {
+      resetAll.addEventListener('click', function () {
+        controller.resetAll();
+        selectedKey = null;
+        clearPageSelection();
+        buildSidebar();
+      });
+    }
+    setPanelOpen(false, false);
   }
 
   function init(doc, storage) {
-    var controller = createController(doc, storage);
+    var controller = createController(doc || (typeof document !== 'undefined' ? document : null), storage);
     if (controller) bindPanel(doc || document, controller);
     return controller;
   }
 
   if (typeof document !== 'undefined') {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { init(document); });
-    else init(document);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { init(document); });
+    } else {
+      init(document);
+    }
   }
 
   return {
@@ -409,6 +633,7 @@
     normalizeDraft: normalizeDraft,
     createController: createController,
     bindPanel: bindPanel,
+    splitTextByLanguage: splitTextByLanguage,
     init: init
   };
 });
