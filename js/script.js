@@ -236,7 +236,10 @@
       question.textContent = '???';
       var hint = document.createElement('p');
       hint.style.marginTop = '8px';
-      hint.textContent = 'QUEST SLOTS — 暂无项目，等待新的冒险...';
+      renderTextParts(hint, [
+        { lang: 'en', text: 'QUEST SLOTS — ' },
+        { lang: 'zh-CN', text: '暂无项目，等待新的冒险...' }
+      ]);
       empty.appendChild(lock);
       empty.appendChild(question);
       empty.appendChild(hint);
