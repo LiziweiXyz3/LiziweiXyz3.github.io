@@ -5,6 +5,7 @@ const path = require('node:path');
 const api = require('../js/site-studio.js');
 
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const css = fs.readFileSync(path.join(__dirname, '..', 'stylesheet.css'), 'utf8');
 
 function createStyle() {
   const values = Object.create(null);
@@ -83,4 +84,17 @@ test('controller restores safe text and independent section typography from stor
 
 test('page loads the studio controller after dynamic page rendering', function () {
   assert.match(html, /<script src="js\/script\.js"><\/script>\s*<script src="js\/site-studio\.js"><\/script>/);
+});
+
+test('page exposes an initially closed accessible site studio panel', function () {
+  assert.match(html, /id="siteStudioToggle"[\s\S]*aria-controls="siteStudioPanel"/);
+  assert.match(html, /id="siteStudioPanel"[^>]*hidden/);
+  assert.match(html, /value="classic"[\s\S]*value="terminal"[\s\S]*value="arcade"[\s\S]*value="code"/);
+});
+
+test('studio styles scope font choices and text scaling without sizing visual assets', function () {
+  assert.match(css, /\[data-studio-font="code"\][\s\S]*--studio-font-en-body:\s*var\(--font-code\)/);
+  assert.match(css, /--studio-text-scale:\s*1/);
+  assert.match(css, /--type-body:\s*calc\(var\(--base-type-body\) \* var\(--studio-text-scale, 1\)\)/);
+  assert.doesNotMatch(css, /\.project-icon[\s\S]*var\(--studio-text-scale/);
 });

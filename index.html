@@ -17,7 +17,7 @@
   <canvas class="particles-canvas" id="particles"></canvas>
 
   <!-- 导航栏 -->
-  <nav class="nav">
+  <nav class="nav" data-studio-section="nav">
     <div class="nav-inner">
       <span class="nav-brand">◈ SUIAN ◈</span>
       <div class="nav-actions">
@@ -45,7 +45,7 @@
   </nav>
 
   <!-- Hero 区 -->
-  <section class="hero" id="hero">
+  <section class="hero" id="hero" data-studio-section="hero">
     <div class="hero-avatar" id="heroAvatar"></div>
     <h1 class="hero-title" id="heroTitle"></h1>
     <div class="hero-subtitle" id="heroSubtitle"></div>
@@ -59,7 +59,7 @@
   </section>
 
   <!-- 关于我 -->
-  <section class="section" id="about">
+  <section class="section" id="about" data-studio-section="about">
     <h2 class="section-title">
       <span class="icon">📋</span> ABOUT ME
       <span class="bar"></span>
@@ -80,7 +80,7 @@
   </section>
 
   <!-- 项目 -->
-  <section class="section" id="projects">
+  <section class="section" id="projects" data-studio-section="projects">
     <h2 class="section-title">
       <span class="icon">📦</span> PROJECTS
       <span class="bar"></span>
@@ -93,7 +93,7 @@
   </section>
 
   <!-- 简历 -->
-  <section class="section" id="resume">
+  <section class="section" id="resume" data-studio-section="resume">
     <h2 class="section-title">
       <span class="icon">📜</span> RESUME
       <span class="bar"></span>
@@ -106,7 +106,7 @@
   </section>
 
   <!-- 终端 -->
-  <section class="section" id="contact">
+  <section class="section" id="contact" data-studio-section="terminal">
     <h2 class="section-title">
       <span class="icon">💻</span> TERMINAL
       <span class="bar"></span>
@@ -136,7 +136,7 @@
   </section>
 
   <!-- Footer -->
-  <footer class="footer">
+  <footer class="footer" data-studio-section="footer">
     <div class="footer-gameover">— GAME OVER —</div>
     <div class="footer-colors">
       <span class="footer-color"></span>
@@ -150,6 +150,32 @@
       <span class="text-en-body" lang="en">· Built with 8-bit love</span>
     </p>
   </footer>
+
+  <button class="site-studio-toggle" id="siteStudioToggle" type="button"
+          aria-expanded="false" aria-controls="siteStudioPanel">
+    <span aria-hidden="true">✎</span><span class="text-cn" lang="zh-CN">编辑网站</span>
+  </button>
+
+  <aside class="site-studio-panel" id="siteStudioPanel" hidden aria-label="网站排版与文案编辑">
+    <div class="site-studio-header">
+      <span class="text-cn" lang="zh-CN">排版与文案</span>
+      <button class="site-studio-close" id="siteStudioClose" type="button" aria-label="关闭编辑网站">×</button>
+    </div>
+    <label class="site-studio-edit-mode" for="siteStudioEditMode">
+      <input id="siteStudioEditMode" type="checkbox">
+      <span class="text-cn" lang="zh-CN">原地编辑文案</span>
+    </label>
+    <div class="site-studio-sections">
+      <fieldset class="site-studio-section-control" data-studio-control="nav"><legend>导航</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="hero"><legend>Hero</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="about"><legend>About</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="projects"><legend>Projects</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="resume"><legend>Resume</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="terminal"><legend>Terminal</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+      <fieldset class="site-studio-section-control" data-studio-control="footer"><legend>页脚</legend><label>字体<select data-studio-font-control><option value="classic">经典像素</option><option value="terminal">清晰终端</option><option value="arcade">硬核街机</option><option value="code">代码等宽</option></select></label><label>字号 <output data-studio-scale-value>100%</output><input data-studio-scale-control type="range" min="80" max="140" step="5" value="100"></label><button type="button" data-studio-reset-section>恢复默认</button></fieldset>
+    </div>
+    <button class="site-studio-reset-all" id="siteStudioResetAll" type="button">恢复全部默认值</button>
+  </aside>
 
   <script src="data.js"></script>
   <script src="js/font-scale.js"></script>

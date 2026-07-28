@@ -40,9 +40,12 @@ html[data-font-scale="130"] { font-size: 20.8px; }
   --scanline:   rgba(0, 0, 0, 0.08);
 
   --font-cn-pixel: 'Zpix', monospace;
-  --font-en-display: 'Press Start 2P', monospace;
-  --font-en-body: 'VT323', monospace;
-  --font-code: 'Fira Code', monospace;
+  --font-en-display-base: 'Press Start 2P', monospace;
+  --font-en-body-base: 'VT323', monospace;
+  --font-code-base: 'Fira Code', monospace;
+  --font-en-display: var(--font-en-display-base);
+  --font-en-body: var(--font-en-body-base);
+  --font-code: var(--font-code-base);
   --font-pixel: var(--font-en-display);
   --font-mono: var(--font-en-body);
   --font-cn: var(--font-cn-pixel);
@@ -56,27 +59,48 @@ html[data-font-scale="130"] { font-size: 20.8px; }
   --project-title-leading: 1.25;
   --project-title-gap: 0.45em;
 
-  --type-body-base: 1.375rem;
-  --type-display: 2rem;
-  --type-section: 1.25rem;
-  --type-section-subtitle: 1.25rem;
-  --type-card-title: 1.125rem;
-  --type-body: 1rem;
-  --type-nav-brand: 0.75rem;
-  --type-nav: 0.5625rem;
-  --type-button: 0.625rem;
-  --type-panel-title: 0.6875rem;
-  --type-stat: 1.125rem;
-  --type-skill: 0.5rem;
-  --type-status: 0.5rem;
-  --type-tag: 0.4375rem;
-  --type-caption: 0.875rem;
-  --type-small: 0.8125rem;
-  --type-support: 0.9375rem;
-  --type-terminal: 0.875rem;
-  --type-footer: 1.25rem;
-  --type-footer-title: 0.875rem;
-  --type-game-score: 0.75rem;
+  --base-type-body-base: 1.375rem;
+  --base-type-display: 2rem;
+  --base-type-section: 1.25rem;
+  --base-type-section-subtitle: 1.25rem;
+  --base-type-card-title: 1.125rem;
+  --base-type-body: 1rem;
+  --base-type-nav-brand: 0.75rem;
+  --base-type-nav: 0.5625rem;
+  --base-type-button: 0.625rem;
+  --base-type-panel-title: 0.6875rem;
+  --base-type-stat: 1.125rem;
+  --base-type-skill: 0.5rem;
+  --base-type-status: 0.5rem;
+  --base-type-tag: 0.4375rem;
+  --base-type-caption: 0.875rem;
+  --base-type-small: 0.8125rem;
+  --base-type-support: 0.9375rem;
+  --base-type-terminal: 0.875rem;
+  --base-type-footer: 1.25rem;
+  --base-type-footer-title: 0.875rem;
+  --base-type-game-score: 0.75rem;
+  --type-body-base: var(--base-type-body-base);
+  --type-display: var(--base-type-display);
+  --type-section: var(--base-type-section);
+  --type-section-subtitle: var(--base-type-section-subtitle);
+  --type-card-title: var(--base-type-card-title);
+  --type-body: var(--base-type-body);
+  --type-nav-brand: var(--base-type-nav-brand);
+  --type-nav: var(--base-type-nav);
+  --type-button: var(--base-type-button);
+  --type-panel-title: var(--base-type-panel-title);
+  --type-stat: var(--base-type-stat);
+  --type-skill: var(--base-type-skill);
+  --type-status: var(--base-type-status);
+  --type-tag: var(--base-type-tag);
+  --type-caption: var(--base-type-caption);
+  --type-small: var(--base-type-small);
+  --type-support: var(--base-type-support);
+  --type-terminal: var(--base-type-terminal);
+  --type-footer: var(--base-type-footer);
+  --type-footer-title: var(--base-type-footer-title);
+  --type-game-score: var(--base-type-game-score);
 
   --gap: 32px;
   --radius: 4px;
@@ -213,6 +237,117 @@ a:hover { color: var(--yellow); }
   display: flex;
   gap: 4px;
   flex-wrap: wrap;
+}
+
+/* ---------- 临时可视化编辑工作台 ---------- */
+[data-studio-section] {
+  --studio-text-scale: 1;
+  --studio-font-en-body: var(--font-en-body-base);
+  --studio-font-en-display: var(--font-en-display-base);
+  --font-en-body: var(--studio-font-en-body);
+  --font-en-display: var(--studio-font-en-display);
+  --font-pixel: var(--studio-font-en-display);
+  --font-mono: var(--studio-font-en-body);
+  --type-body-base: calc(var(--base-type-body-base) * var(--studio-text-scale, 1));
+  --type-display: calc(var(--base-type-display) * var(--studio-text-scale, 1));
+  --type-section: calc(var(--base-type-section) * var(--studio-text-scale, 1));
+  --type-section-subtitle: calc(var(--base-type-section-subtitle) * var(--studio-text-scale, 1));
+  --type-card-title: calc(var(--base-type-card-title) * var(--studio-text-scale, 1));
+  --type-body: calc(var(--base-type-body) * var(--studio-text-scale, 1));
+  --type-nav-brand: calc(var(--base-type-nav-brand) * var(--studio-text-scale, 1));
+  --type-nav: calc(var(--base-type-nav) * var(--studio-text-scale, 1));
+  --type-button: calc(var(--base-type-button) * var(--studio-text-scale, 1));
+  --type-panel-title: calc(var(--base-type-panel-title) * var(--studio-text-scale, 1));
+  --type-stat: calc(var(--base-type-stat) * var(--studio-text-scale, 1));
+  --type-skill: calc(var(--base-type-skill) * var(--studio-text-scale, 1));
+  --type-status: calc(var(--base-type-status) * var(--studio-text-scale, 1));
+  --type-tag: calc(var(--base-type-tag) * var(--studio-text-scale, 1));
+  --type-caption: calc(var(--base-type-caption) * var(--studio-text-scale, 1));
+  --type-small: calc(var(--base-type-small) * var(--studio-text-scale, 1));
+  --type-support: calc(var(--base-type-support) * var(--studio-text-scale, 1));
+  --type-terminal: calc(var(--base-type-terminal) * var(--studio-text-scale, 1));
+  --type-footer: calc(var(--base-type-footer) * var(--studio-text-scale, 1));
+  --type-footer-title: calc(var(--base-type-footer-title) * var(--studio-text-scale, 1));
+}
+[data-studio-font="terminal"] {
+  --studio-font-en-body: var(--font-en-body-base);
+  --studio-font-en-display: var(--font-en-body-base);
+}
+[data-studio-font="arcade"] {
+  --studio-font-en-body: var(--font-en-display-base);
+  --studio-font-en-display: var(--font-en-display-base);
+}
+[data-studio-font="code"] {
+  --studio-font-en-body: var(--font-code);
+  --studio-font-en-display: var(--font-code);
+}
+.site-studio-toggle,
+.site-studio-panel button,
+.site-studio-panel select,
+.site-studio-panel input {
+  font-family: var(--font-en-body-base);
+}
+.site-studio-toggle {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  z-index: 300;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 2px solid var(--purple);
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--pixel-shadow);
+  cursor: pointer;
+}
+.site-studio-panel {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 310;
+  width: min(320px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 14px;
+  border: 2px solid var(--purple);
+  background: var(--bg-card);
+  box-shadow: 6px 6px 0 #000;
+  color: var(--text);
+}
+.site-studio-panel[hidden] { display: none; }
+.site-studio-header,
+.site-studio-edit-mode,
+.site-studio-section-control label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.site-studio-header { margin-bottom: 12px; font-size: var(--type-card-title); }
+.site-studio-close,
+.site-studio-reset-all,
+.site-studio-section-control button {
+  border: 1px solid var(--border);
+  background: #111;
+  color: var(--text);
+  padding: 5px 7px;
+  cursor: pointer;
+}
+.site-studio-sections { display: grid; gap: 8px; margin: 12px 0; }
+.site-studio-section-control { display: grid; gap: 7px; padding: 8px; border: 1px solid var(--border); }
+.site-studio-section-control legend { padding: 0 4px; color: var(--yellow); }
+.site-studio-section-control select,
+.site-studio-section-control input[type="range"] { width: 100%; accent-color: var(--purple); }
+.site-studio-toggle:focus-visible,
+.site-studio-panel button:focus-visible,
+.site-studio-panel select:focus-visible,
+.site-studio-panel input:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .site-studio-toggle { top: auto; bottom: 16px; }
+  .site-studio-panel { top: auto; right: 0; bottom: 0; width: 100%; max-height: 75vh; border-bottom: 0; }
 }
 
 .nav-actions {
