@@ -26,9 +26,13 @@
 
     function onScroll() {
       var now = typeof getScrollY === 'function' ? getScrollY() : lastScroll;
-      if (now - lastScroll > 10) applyState('jump');
-      else if (lastScroll - now > 10) applyState('stand');
-      lastScroll = now;
+      if (now - lastScroll > 10) {
+        applyState('jump');
+        lastScroll = now;
+      } else if (lastScroll - now > 10) {
+        applyState('stand');
+        lastScroll = now;
+      }
     }
 
     function toggle() {
