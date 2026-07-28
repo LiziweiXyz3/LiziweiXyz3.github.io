@@ -343,6 +343,30 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 .advanced-panel summary { cursor: pointer; color: var(--studio-yellow); margin-bottom: 9px; }
 .color-editor { border-top: 1px solid var(--studio-border); padding-top: 10px; }
 .color-basic-grid { align-items: start; }
+.gradient-color-notice {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid var(--studio-purple);
+  background: #151126;
+  color: var(--studio-dim);
+}
+.gradient-color-notice[hidden] { display: none; }
+.gradient-color-preview {
+  height: 38px;
+  border: 1px solid var(--studio-border);
+  background: linear-gradient(90deg, #4285f4, #b388ff, #ea4335);
+}
+.swatch-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+  color: var(--studio-dim);
+}
+.swatch-heading small { margin: 0; text-align: right; }
 .color-swatches { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
 .color-swatch { width: 24px; height: 24px; padding: 0; border-color: #777; }
 .contrast-output, .status-box {

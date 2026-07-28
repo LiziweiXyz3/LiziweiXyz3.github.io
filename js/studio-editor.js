@@ -628,6 +628,8 @@
     form.hidden = false;
     var style = draft.styles.elements[selectedKey] || {};
     var defaults = selectionDefaults[selectedKey] || {};
+    var defaultGradient = defaults.defaultGradient || (defaults.colorMode === 'gradient' ? defaults.gradient : '');
+    var usesDefaultGradient = !!defaultGradient && !style.color;
     var parsed = parseColor(style.color || defaults.color || draft.theme.colors.text);
     byId('elementScope').textContent = sectionForKey(selectedKey) + ' / ' + selectedKey.split('.').slice(1, -1).join(' / ');
     byId('elementLabel').textContent = keyLabel(selectedKey);
@@ -653,7 +655,18 @@
     byId('colorHexControl').value = parsed.hex;
     byId('opacityControl').value = parsed.opacity;
     byId('opacityOutput').textContent = parsed.opacity + '%';
-    updateContrast(parsed.hex);
+    byId('gradientColorNotice').hidden = !usesDefaultGradient;
+    byId('gradientColorPreview').style.backgroundImage = usesDefaultGradient ? defaultGradient : '';
+    byId('solidColorLabel').textContent = usesDefaultGradient ? '改为单色' : '文字颜色';
+    byId('solidHexLabel').textContent = usesDefaultGradient ? '单色颜色值（HEX）' : '颜色值（HEX）';
+    byId('opacityLabel').textContent = usesDefaultGradient ? '单色透明度' : '透明度';
+    byId('restoreGradientButton').hidden = !defaultGradient || !style.color;
+    if (usesDefaultGradient) {
+      byId('contrastOutput').textContent = '当前为渐变文字；改成单色后将显示对比度。';
+      byId('contrastOutput').removeAttribute('data-pass');
+    } else {
+      updateContrast(parsed.hex);
+    }
     var linked = linkedColorTarget(selectedKey);
     byId('linkedColorControls').hidden = !linked;
     if (linked) {
@@ -741,7 +754,7 @@
       byId('colorHexControl').value = hex;
       byId('opacityOutput').textContent = opacity + '%';
       updateContrast(hex);
-      mutate(group, function () { styleForKey(selectedKey).color = rgba(hex, opacity); });
+      mutate(group, function () { styleForKey(selectedKey).color = rgba(hex, opacity); }, false, true);
     }
     byId('colorControl').addEventListener('input', function () { updateElementColor('style:' + selectedKey + ':color'); });
     byId('opacityControl').addEventListener('input', function () { updateElementColor('style:' + selectedKey + ':opacity'); });
@@ -755,6 +768,12 @@
       var target = linkedColorTarget(selectedKey);
       if (!target) return;
       mutate('linked-color:' + selectedKey, function () { target.set(byId('linkedColorControl').value); });
+    });
+    byId('restoreGradientButton').addEventListener('click', function () {
+      if (!selectedKey) return;
+      mutate('style:' + selectedKey + ':restore-gradient', function () {
+        delete styleForKey(selectedKey).color;
+      }, true, true);
     });
     byId('resetElementButton').addEventListener('click', function () {
       mutate('reset:' + selectedKey, function () {
@@ -780,9 +799,10 @@
         byId('colorControl').value = value;
         byId('colorHexControl').value = value;
         byId('opacityControl').value = 100;
-        styleForKey(selectedKey).color = value;
-        postDraft();
-        renderElementInspector();
+        mutate('style:' + selectedKey + ':color', function () {
+          styleForKey(selectedKey).color = value;
+        }, false, true);
+        endChange();
       });
       swatches.appendChild(button);
     });
@@ -797,7 +817,9 @@
     if (name === 'history') loadHistory();
   }
   function renderCurrentView() {
-    showInspectorView(selectedTool || 'element');
+    var view = selectedTool || 'element';
+    showInspectorView(view);
+    if (view === 'element') renderElementInspector();
   }
 
   function pixelCursorValue(preset) {

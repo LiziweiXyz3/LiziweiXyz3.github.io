@@ -11,6 +11,7 @@ const editorHtml = fs.readFileSync(path.join(root, 'editor.html'), 'utf8');
 const editorCss = fs.readFileSync(path.join(root, 'editor.css'), 'utf8');
 const editorScript = fs.readFileSync(path.join(root, 'js', 'studio-editor.js'), 'utf8');
 const runtimeScript = fs.readFileSync(path.join(root, 'js', 'site-runtime.js'), 'utf8');
+const publicCss = fs.readFileSync(path.join(root, 'stylesheet.css'), 'utf8');
 const serverScript = fs.readFileSync(path.join(root, 'scripts', 'studio-server.js'), 'utf8');
 const startEditorScript = fs.readFileSync(path.join(root, 'start-editor.cmd'), 'utf8');
 
@@ -131,6 +132,18 @@ test('element formatting applies only the properties explicitly changed', functi
   assert.match(editorHtml, /id="boldControl"/);
   assert.match(editorHtml, /字号（px）/);
   assert.doesNotMatch(editorHtml, /继承默认|字重|weightControl/);
+});
+
+test('editor distinguishes gradient text from solid colors and labels the quick palette', function () {
+  assert.match(runtimeScript, /colorMode:\s*hasGradientText \? 'gradient' : 'solid'/);
+  assert.match(runtimeScript, /gradient:\s*hasGradientText \? backgroundImage/);
+  assert.match(runtimeScript, /defaultGradient:\s*defaultGradient/);
+  assert.match(editorHtml, /id="gradientColorPreview"/);
+  assert.match(editorHtml, />快捷色板</);
+  assert.match(editorHtml, /id="restoreGradientButton"/);
+  assert.match(editorScript, /当前为渐变文字/);
+  assert.match(editorScript, /restoreGradientButton'\)\.hidden = !defaultGradient \|\| !style\.color/);
+  assert.match(publicCss, /data-studio-color="true"[\s\S]*?-webkit-text-fill-color:\s*var\(--studio-color\)\s*!important/);
 });
 
 test('preview stays visible while the editor scrolls and can collapse', function () {

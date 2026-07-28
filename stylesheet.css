@@ -580,7 +580,8 @@ html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true
 .hero-title {
   font-family: var(--font-cn-pixel);
   font-size: var(--type-display);
-  background: linear-gradient(90deg, var(--blue), var(--purple), var(--red));
+  --studio-default-gradient: linear-gradient(90deg, var(--blue), var(--purple), var(--red));
+  background: var(--studio-default-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1369,6 +1370,8 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
 
 [data-edit-key][data-studio-color="true"] {
   color: var(--studio-color) !important;
+  background-image: none !important;
+  -webkit-text-fill-color: var(--studio-color) !important;
 }
 
 [data-edit-key][data-studio-color="true"] [data-studio-text-part] {

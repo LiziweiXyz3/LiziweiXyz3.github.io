@@ -242,6 +242,12 @@
     var cn = element.querySelector('.text-cn, [lang="zh-CN"]') || element;
     var en = element.querySelector('[lang="en"]') || element;
     var computed = window.getComputedStyle(element);
+    var backgroundImage = computed.backgroundImage && computed.backgroundImage !== 'none'
+      ? computed.backgroundImage : '';
+    var textFillColor = computed.webkitTextFillColor || '';
+    var defaultGradient = computed.getPropertyValue('--studio-default-gradient').trim();
+    var hasGradientText = backgroundImage.indexOf('gradient(') >= 0 &&
+      (textFillColor === 'transparent' || textFillColor === 'rgba(0, 0, 0, 0)');
     var lineHeight = parseFloat(computed.lineHeight);
     var letterSpacing = parseFloat(computed.letterSpacing);
     var weight = Math.round((parseInt(computed.fontWeight, 10) || 400) / 100) * 100;
@@ -255,7 +261,10 @@
       italic: computed.fontStyle === 'italic' || computed.fontStyle === 'oblique',
       letterSpacing: Number.isFinite(letterSpacing) ? Number(letterSpacing.toFixed(1)) : 0,
       align: ['left', 'center', 'right'].indexOf(computed.textAlign) >= 0 ? computed.textAlign : 'left',
-      color: computed.color
+      color: computed.color,
+      colorMode: hasGradientText ? 'gradient' : 'solid',
+      gradient: hasGradientText ? backgroundImage : '',
+      defaultGradient: defaultGradient
     };
   }
 
