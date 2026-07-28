@@ -516,6 +516,13 @@ test('studio CSS applies per-item scaling, font presets and selected states', fu
   assert.doesNotMatch(css, /\.project-icon\s*\{[^}]*--studio-item-scale/);
 });
 
+test('selected text highlight preserves gradient-backed text such as the site brand', function () {
+  const selectedRule = css.match(/html\[data-site-studio-editing="true"\] \[data-edit-key\]\[data-studio-selected="true"\]\s*\{([^}]*)\}/);
+  assert.ok(selectedRule);
+  assert.doesNotMatch(selectedRule[1], /\bbackground(?:-color)?\s*:/);
+  assert.match(selectedRule[1], /box-shadow\s*:/);
+});
+
 test('mobile typography and panel keep each item scale reachable', function () {
   assert.match(css, /\.hero-title\s*\{[^}]*var\(--studio-item-scale, 1\)/);
   assert.match(css, /\.nav-link\s*\{[^}]*var\(--studio-item-scale, 1\)/);

@@ -414,7 +414,7 @@ html[data-site-studio-editing="true"] [data-edit-key] {
 }
 html[data-site-studio-editing="true"] [data-edit-key][data-studio-selected="true"] {
   outline: 2px solid var(--green);
-  background: rgba(0, 255, 65, 0.08);
+  box-shadow: 0 0 0 2px rgba(0, 255, 65, 0.18), 0 0 10px rgba(0, 255, 65, 0.22);
 }
 
 @media (max-width: 640px) {
