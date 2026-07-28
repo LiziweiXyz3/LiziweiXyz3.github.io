@@ -57,8 +57,8 @@ html[data-font-scale="130"] { font-size: 20.8px; }
   --project-title-gap: 0.45em;
 
   --type-body-base: 1.375rem;
-  --type-display: clamp(1.125rem, 5vw, 2rem);
-  --type-section: clamp(0.875rem, 3vw, 1.25rem);
+  --type-display: 2rem;
+  --type-section: 1.25rem;
   --type-section-subtitle: 1.25rem;
   --type-card-title: 1.125rem;
   --type-body: 1rem;
@@ -549,6 +549,10 @@ a:hover { color: var(--yellow); }
   gap: var(--gap);
   align-items: stretch;
 }
+.about-card-icon {
+  font-size: 11px;
+  line-height: 1;
+}
 
 .project-card {
   background: var(--bg-card);
@@ -632,6 +636,14 @@ a:hover { color: var(--yellow); }
 .text-en-body {
   font-family: var(--font-en-body);
   font-size: calc(1em * var(--font-en-body-scale));
+}
+
+#aboutIntro .text-cn,
+.stat-name .text-cn,
+.timeline-node .node-company .text-cn,
+.timeline-node .node-desc .text-cn,
+.timeline-node .node-tag .text-cn {
+  font-family: var(--font-cn-pixel);
 }
 
 .project-desc {
@@ -733,12 +745,14 @@ a:hover { color: var(--yellow); }
 }
 
 .timeline-node .node-company {
+  font-family: var(--font-cn-pixel);
   color: var(--text-dim);
   margin-bottom: 8px;
   font-size: var(--type-stat);
 }
 
 .timeline-node .node-desc {
+  font-family: var(--font-cn-pixel);
   color: var(--text-dim);
   margin-bottom: 8px;
   font-size: var(--type-support);
@@ -750,7 +764,7 @@ a:hover { color: var(--yellow); }
   gap: 6px;
 }
 .timeline-node .node-tag {
-  font-family: var(--font-pixel);
+  font-family: var(--font-cn-pixel);
   font-size: var(--type-panel-title);
   padding: 3px 8px;
   border: 1px solid var(--border);

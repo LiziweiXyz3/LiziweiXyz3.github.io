@@ -11,7 +11,13 @@
 const user = {
   name: "岁安",
   title: "Data Analyst / AI Learner",
-  bio: "互联网数据分析师，正在学习 AI。用数据理解世界，用 AI 拓展边界。",
+  bioParts: [
+    { lang: "zh-CN", text: "互联网数据分析师，正在学习 " },
+    { lang: "en", text: "AI" },
+    { lang: "zh-CN", text: "。用数据理解世界，用 " },
+    { lang: "en", text: "AI" },
+    { lang: "zh-CN", text: " 拓展边界。" }
+  ],
   avatar: "👾",          // 可以用 emoji，后续换成图片路径如 "assets/avatar.png"
   email: "zhongzhengzhng@gmail.com",
   github: "https://github.com/LiziweiXyz3",
@@ -29,7 +35,14 @@ const navItems = [
 
 // ---------- About Me — RPG 属性 ----------
 const about = {
-  intro: "Hey！我是岁安，一个游走在数据与代码之间的探索者。白天和 SQL 打交道，晚上折腾 AI 项目。\n\n这个网站是我在数字世界的「存档点」——记录学到的技能、做过的项目、踩过的坑。",
+  introParts: [
+    { lang: "en", text: "Hey" },
+    { lang: "zh-CN", text: "！我是岁安，一个游走在数据与代码之间的探索者。白天和 " },
+    { lang: "en", text: "SQL" },
+    { lang: "zh-CN", text: " 打交道，晚上折腾 " },
+    { lang: "en", text: "AI" },
+    { lang: "zh-CN", text: " 项目。\n\n这个网站是我在数字世界的「存档点」——记录学到的技能、做过的项目、踩过的坑。" }
+  ],
   stats: [
     { label: "HP",  name: "学习热情", value: 95, color: "#EA4335" },
     { label: "MP",  name: "技能点数", value: 70, color: "#4285F4" },
@@ -54,7 +67,10 @@ const projects = [
   {
     id: 1,
     title: "个人网站",
-    desc: "极客像素风格个人主页，数据驱动渲染，部署在 GitHub Pages",
+    descParts: [
+      { lang: "zh-CN", text: "极客像素风格个人主页，数据驱动渲染，部署在 " },
+      { lang: "en", text: "GitHub Pages" }
+    ],
     tags: ["HTML", "CSS", "JavaScript"],
     status: "done",
     link: "https://github.com/LiziweiXyz3/LiziweiXyz3.github.io",
@@ -74,15 +90,27 @@ const projects = [
 // ---------- 简历 / 经历 ----------
 const experiences = [
   {
-    period: "2024 - 至今",
+    periodParts: [
+      { lang: "en", text: "2024 -" },
+      { lang: "zh-CN", text: "至今" }
+    ],
     title: "数据分析师",
     company: "虎牙",
     type: "work",
-    desc: "负责 SDK 及渠道业务线数据分析，搭建指标体系，输出业务洞察与自动化报表",
-    highlights: ["日活监控看板搭建", "渠道产能分析", "SDK 周报自动化", "AB 测试设计"]
+    descParts: [
+      { lang: "zh-CN", text: "负责 " },
+      { lang: "en", text: "SDK" },
+      { lang: "zh-CN", text: " 及渠道业务线数据分析，搭建指标体系，输出业务洞察与自动化报表" }
+    ],
+    highlights: [
+      "日活监控看板搭建",
+      "渠道产能分析",
+      [{ lang: "en", text: "SDK" }, { lang: "zh-CN", text: " 周报自动化" }],
+      [{ lang: "en", text: "AB" }, { lang: "zh-CN", text: " 测试设计" }]
+    ]
   },
   {
-    period: "2023 - 2024",
+    periodParts: [{ lang: "en", text: "2023 - 2024" }],
     title: "数据分析师",
     company: "京东",
     type: "work",
@@ -90,22 +118,44 @@ const experiences = [
     highlights: ["仓储运营分析", "物流时效监控", "业务看板搭建"]
   },
   {
-    period: "2021 - 2022",
-    title: "MSc Digital Strategy & Information Systems",
+    periodParts: [{ lang: "en", text: "2021 - 2022" }],
+    titleParts: [{ lang: "en", text: "MSc Digital Strategy & Information Systems" }],
     company: "英国南安普顿大学",
     type: "edu",
-    desc: "数字战略与信息系统硕士，一等学位 (Distinction)",
+    descParts: [
+      { lang: "zh-CN", text: "数字战略与信息系统硕士，一等学位 (" },
+      { lang: "en", text: "Distinction" },
+      { lang: "zh-CN", text: ")" }
+    ],
     highlights: ["数据分析", "信息系统管理", "数字战略", "商业智能"]
   }
 ];
 
 // ---------- 联系方式 ----------
 const contact = {
-  intro: "> help 查看命令 | game 玩小游戏 | contact 联系方式 | clear 清屏",
+  introParts: [
+    { lang: "en", text: "> help " },
+    { lang: "zh-CN", text: "查看命令 | " },
+    { lang: "en", text: "game " },
+    { lang: "zh-CN", text: "玩小游戏 | " },
+    { lang: "en", text: "contact " },
+    { lang: "zh-CN", text: "联系方式 | " },
+    { lang: "en", text: "clear " },
+    { lang: "zh-CN", text: "清屏" }
+  ],
   commands: {
     help:   "可用命令: home | about | projects | resume | contact | game | clear",
     home:   "> 跳回首页...",
-    about:  `> ${user.name} / ${user.title}\n> ${user.bio}`,
+    about:  [
+      { lang: "en", text: "> " },
+      { lang: "zh-CN", text: user.name },
+      { lang: "en", text: " / " + user.title + "\n> " },
+      { lang: "zh-CN", text: "互联网数据分析师，正在学习 " },
+      { lang: "en", text: "AI" },
+      { lang: "zh-CN", text: "。用数据理解世界，用 " },
+      { lang: "en", text: "AI" },
+      { lang: "zh-CN", text: " 拓展边界。" }
+    ],
     projects: "> 跳转到项目展示区...",
     resume: "> 跳转到简历区...",
     contact: `> Email: ${user.email}\n> GitHub: ${user.github}`,

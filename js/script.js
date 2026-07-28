@@ -9,7 +9,7 @@
   function renderNav() {
     var container = document.getElementById('navLinks');
     if (!container) return;
-    container.innerHTML = '';
+    clearElement(container);
     navItems.forEach(function (item) {
       var a = document.createElement('a');
       a.className = 'nav-link';
@@ -56,6 +56,30 @@
     setActiveNav(current);
   }
 
+  function clearElement(element) {
+    while (element.firstChild) element.removeChild(element.firstChild);
+  }
+
+  // 将文字片段转为安全的 DOM 节点，避免把数据拼接进 HTML 字符串。
+  function renderTextParts(target, content, englishClass) {
+    var parts = typeof content === 'string' ? [{ text: content }] : content;
+    clearElement(target);
+    (parts || []).forEach(function (part) {
+      var span = document.createElement('span');
+      span.textContent = part.text;
+      if (part.lang) {
+        span.lang = part.lang;
+        span.className = part.lang === 'zh-CN' ? 'text-cn' : (englishClass || 'text-en-body');
+      }
+      target.appendChild(span);
+    });
+  }
+
+  function partsToText(content) {
+    if (typeof content === 'string') return content;
+    return (content || []).map(function (part) { return part.text; }).join('');
+  }
+
   // ========== Hero 渲染 ==========
   function renderHero() {
     var avatarEl = document.getElementById('heroAvatar');
@@ -99,8 +123,7 @@
     var heroDesc = document.getElementById('heroDesc');
     heroTitle.textContent = user.name;
     heroTitle.setAttribute('lang', 'zh-CN');
-    heroDesc.textContent = user.bio;
-    heroDesc.setAttribute('lang', 'zh-CN');
+    renderTextParts(heroDesc, user.bioParts);
     typeWriter('heroSubtitle', '> ' + user.title, 60, 'en');
   }
 
@@ -109,12 +132,24 @@
     var el = document.getElementById(elementId);
     if (!el) return;
     var i = 0;
-    el.innerHTML = '<span class="cursor"></span>';
+    renderFrame('');
+    function renderFrame(current) {
+      clearElement(el);
+      if (current) {
+        var text = document.createElement('span');
+        text.lang = lang;
+        text.className = lang === 'zh-CN' ? 'text-cn' : 'text-en-body';
+        text.textContent = current;
+        el.appendChild(text);
+      }
+      var cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      el.appendChild(cursor);
+    }
     function tick() {
       if (i < text.length) {
-        // remove cursor, add char, re-add cursor
         var current = text.substring(0, i + 1);
-        el.innerHTML = '<span lang="' + lang + '">' + current + '</span><span class="cursor"></span>';
+        renderFrame(current);
         i++;
         setTimeout(tick, speed);
       }
@@ -124,32 +159,54 @@
 
   // ========== About 渲染 ==========
   function renderAbout() {
-    document.getElementById('aboutIntro').textContent = about.intro;
+    var aboutIntro = document.getElementById('aboutIntro');
+    if (aboutIntro) renderTextParts(aboutIntro, about.introParts);
 
     // 属性条
     var statsContainer = document.getElementById('statsContainer');
-    statsContainer.innerHTML = '';
+    clearElement(statsContainer);
     about.stats.forEach(function (stat) {
       var row = document.createElement('div');
       row.className = 'stat-row';
-      row.innerHTML =
-        '<div class="stat-label">' +
-          '<span class="stat-name">[' + stat.label + '] ' + stat.name + '</span>' +
-          '<span class="stat-value">' + stat.value + '/100</span>' +
-        '</div>' +
-        '<div class="stat-bar-outer">' +
-          '<div class="stat-bar-inner" style="width:0;background:' + stat.color + ';" data-width="' + stat.value + '%"></div>' +
-        '</div>';
+      var label = document.createElement('div');
+      label.className = 'stat-label';
+      var name = document.createElement('span');
+      name.className = 'stat-name';
+      renderTextParts(name, [
+        { lang: 'en', text: '[' + stat.label + '] ' },
+        { lang: 'zh-CN', text: stat.name }
+      ]);
+      var value = document.createElement('span');
+      value.className = 'stat-value';
+      value.textContent = stat.value + '/100';
+      label.appendChild(name);
+      label.appendChild(value);
+      var outer = document.createElement('div');
+      outer.className = 'stat-bar-outer';
+      var inner = document.createElement('div');
+      inner.className = 'stat-bar-inner';
+      inner.style.width = '0';
+      inner.style.background = stat.color;
+      inner.setAttribute('data-width', stat.value + '%');
+      outer.appendChild(inner);
+      row.appendChild(label);
+      row.appendChild(outer);
       statsContainer.appendChild(row);
     });
 
     // 技能槽
     var skillsContainer = document.getElementById('skillsContainer');
-    skillsContainer.innerHTML = '';
+    clearElement(skillsContainer);
     about.skills.forEach(function (skill) {
       var slot = document.createElement('div');
       slot.className = 'skill-slot slot-cat-' + skill.category;
-      slot.innerHTML = '<span class="slot-dot"></span>' + skill.name + ' Lv.' + skill.level;
+      var dot = document.createElement('span');
+      dot.className = 'slot-dot';
+      slot.appendChild(dot);
+      var skillText = document.createElement('span');
+      skillText.lang = 'en';
+      skillText.textContent = skill.name + ' Lv.' + skill.level;
+      slot.appendChild(skillText);
       skillsContainer.appendChild(slot);
     });
   }
@@ -167,15 +224,23 @@
   function renderProjects() {
     var grid = document.getElementById('projectsGrid');
     if (!grid) return;
-    grid.innerHTML = '';
+    clearElement(grid);
 
     if (projects.length === 0) {
-      grid.innerHTML =
-        '<div class="project-empty">' +
-          '<span class="lock-icon">🔒</span>' +
-          '<p>???</p>' +
-          '<p style="margin-top:8px;">QUEST SLOTS — 暂无项目，等待新的冒险...</p>' +
-        '</div>';
+      var empty = document.createElement('div');
+      empty.className = 'project-empty';
+      var lock = document.createElement('span');
+      lock.className = 'lock-icon';
+      lock.textContent = '🔒';
+      var question = document.createElement('p');
+      question.textContent = '???';
+      var hint = document.createElement('p');
+      hint.style.marginTop = '8px';
+      hint.textContent = 'QUEST SLOTS — 暂无项目，等待新的冒险...';
+      empty.appendChild(lock);
+      empty.appendChild(question);
+      empty.appendChild(hint);
+      grid.appendChild(empty);
       return;
     }
 
@@ -189,29 +254,50 @@
         card.rel = 'noopener';
       }
 
-      var statusClass = 'status-' + proj.status;
       var statusText = { done: 'DONE', wip: 'WIP', planned: 'TODO' }[proj.status] || '???';
-
-      var tagsHtml = proj.tags.map(function (t) {
-        return '<span class="project-tag" lang="en">#' + t + '</span>';
-      }).join('');
-
-      var titleHtml =
-        '<span class="project-title-cn" lang="zh-CN">' + proj.title + '</span>' +
-        (proj.titleEn ? '<span class="project-title-en" lang="en">' + proj.titleEn + '</span>' : '');
-      var iconHtml = proj.image
-        ? '<img class="project-image" src="' + proj.image + '" alt="">'
-        : '<div class="project-icon">' + (proj.icon || String.fromCodePoint(0x1f4e6)) + '</div>';
-
-      card.innerHTML =
-        '<span class="project-status ' + statusClass + '" lang="en">' + statusText + '</span>' +
-        '<div class="project-icon">' + (proj.icon || '📦') + '</div>' +
-        '<h3 class="project-title">' + proj.title + '</h3>' +
-        '<p class="project-desc">' + proj.desc + '</p>' +
-        '<div class="project-tags">' + tagsHtml + '</div>';
-
-      card.querySelector('.project-icon').outerHTML = iconHtml;
-      card.querySelector('.project-title').innerHTML = titleHtml;
+      var status = document.createElement('span');
+      status.className = 'project-status status-' + proj.status;
+      status.lang = 'en';
+      status.textContent = statusText;
+      var icon = document.createElement(proj.image ? 'img' : 'div');
+      icon.className = proj.image ? 'project-image' : 'project-icon';
+      if (proj.image) {
+        icon.src = proj.image;
+        icon.alt = '';
+      } else {
+        icon.textContent = proj.icon || String.fromCodePoint(0x1f4e6);
+      }
+      var title = document.createElement('h3');
+      title.className = 'project-title';
+      var titleCn = document.createElement('span');
+      titleCn.className = 'project-title-cn';
+      titleCn.lang = 'zh-CN';
+      titleCn.textContent = proj.title;
+      title.appendChild(titleCn);
+      if (proj.titleEn) {
+        var titleEn = document.createElement('span');
+        titleEn.className = 'project-title-en';
+        titleEn.lang = 'en';
+        titleEn.textContent = proj.titleEn;
+        title.appendChild(titleEn);
+      }
+      var desc = document.createElement('p');
+      desc.className = 'project-desc';
+      renderTextParts(desc, proj.descParts || proj.desc);
+      var tags = document.createElement('div');
+      tags.className = 'project-tags';
+      proj.tags.forEach(function (tag) {
+        var tagEl = document.createElement('span');
+        tagEl.className = 'project-tag';
+        tagEl.lang = 'en';
+        tagEl.textContent = '#' + tag;
+        tags.appendChild(tagEl);
+      });
+      card.appendChild(status);
+      card.appendChild(icon);
+      card.appendChild(title);
+      card.appendChild(desc);
+      card.appendChild(tags);
 
       grid.appendChild(card);
     });
@@ -221,32 +307,46 @@
   function renderResume() {
     var timeline = document.getElementById('timeline');
     if (!timeline) return;
-    timeline.innerHTML = '';
+    clearElement(timeline);
 
     experiences.forEach(function (exp) {
       var node = document.createElement('div');
       node.className = 'timeline-node node-type-' + exp.type;
 
-      var tagsHtml = (exp.highlights || []).map(function (h) {
-        return '<span class="node-tag">▶ ' + h + '</span>';
-      }).join('');
+      var field = document.createElement('div');
+      field.className = 'node-period ' + exp.type;
+      renderTextParts(field, exp.periodParts || exp.period);
+      node.appendChild(field);
 
-      node.innerHTML =
-        '<div class="node-period ' + exp.type + '">' + exp.period + '</div>' +
-        '<div class="node-title">' + exp.title + '</div>' +
-        '<div class="node-company">' + exp.company + '</div>' +
-        '<div class="node-desc">' + exp.desc + '</div>' +
-        '<div class="node-tags">' + tagsHtml + '</div>';
+      field = document.createElement('div');
+      field.className = 'node-title';
+      renderTextParts(field, exp.titleParts || exp.title, 'text-en-display');
+      node.appendChild(field);
+
+      field = document.createElement('div');
+      field.className = 'node-company';
+      renderTextParts(field, exp.companyParts || exp.company);
+      node.appendChild(field);
+
+      field = document.createElement('div');
+      field.className = 'node-desc';
+      renderTextParts(field, exp.descParts || exp.desc);
+      node.appendChild(field);
+
+      var tags = document.createElement('div');
+      tags.className = 'node-tags';
+      (exp.highlights || []).forEach(function (highlight) {
+        var tag = document.createElement('span');
+        tag.className = 'node-tag';
+        renderTextParts(tag, typeof highlight === 'string'
+          ? [{ lang: 'zh-CN', text: '▶ ' + highlight }]
+          : [{ lang: 'zh-CN', text: '▶ ' }].concat(highlight));
+        tags.appendChild(tag);
+      });
+      node.appendChild(tags);
 
       timeline.appendChild(node);
     });
-  }
-
-  function escapeHtml(text) {
-    return text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
   }
 
   // ========== 终端 ==========
@@ -256,14 +356,17 @@
     var introEl = document.getElementById('terminalIntro');
     if (!body || !input) return;
 
-    if (introEl) introEl.textContent = contact.intro;
+    if (introEl) introEl.textContent = partsToText(contact.introParts);
 
     var history = [];
 
-    function addLine(text, type) {
+    function addLine(content, type) {
       var line = document.createElement('div');
       line.className = 'terminal-line';
-      line.innerHTML = '<span class="' + (type || 'output') + '">' + escapeHtml(text) + '</span>';
+      var output = document.createElement('span');
+      output.className = type || 'output';
+      output.textContent = partsToText(content);
+      line.appendChild(output);
       body.appendChild(line);
       body.scrollTop = body.scrollHeight;
     }
@@ -277,7 +380,7 @@
       addLine('SuiAn@dev:~$ ' + cmd, 'cmd');
 
       if (cmd === 'clear') {
-        body.innerHTML = '';
+        clearElement(body);
       } else if (cmd === 'home') {
         addLine(contact.commands[cmd], 'output');
         var hero = document.getElementById('hero');
@@ -720,7 +823,10 @@
       var finalScore = Math.floor(score / 6);
       var line = document.createElement('div');
       line.className = 'terminal-line';
-      line.innerHTML = '<span class="error">GAME OVER  SCORE ' + finalScore + '</span>';
+      var error = document.createElement('span');
+      error.className = 'error';
+      error.textContent = 'GAME OVER  SCORE ' + finalScore;
+      line.appendChild(error);
       body.appendChild(line);
       body.scrollTop = body.scrollHeight;
       wrap.parentNode.removeChild(wrap);
