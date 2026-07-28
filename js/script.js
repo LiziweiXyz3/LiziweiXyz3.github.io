@@ -95,8 +95,12 @@
     };
     window.addEventListener('scroll', scrollHandler, { passive: true });
 
-    document.getElementById('heroTitle').innerHTML = '<span lang="zh-CN">' + user.name + '</span>';
-    document.getElementById('heroDesc').innerHTML = '<span lang="zh-CN">' + user.bio + '</span>';
+    var heroTitle = document.getElementById('heroTitle');
+    var heroDesc = document.getElementById('heroDesc');
+    heroTitle.textContent = user.name;
+    heroTitle.setAttribute('lang', 'zh-CN');
+    heroDesc.textContent = user.bio;
+    heroDesc.setAttribute('lang', 'zh-CN');
     typeWriter('heroSubtitle', '> ' + user.title, 60, 'en');
   }
 

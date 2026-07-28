@@ -261,7 +261,7 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-title {
-  font-family: var(--font-pixel);
+  font-family: var(--font-cn-pixel);
   font-size: var(--type-display);
   background: linear-gradient(90deg, var(--blue), var(--purple), var(--red));
   -webkit-background-clip: text;
@@ -272,7 +272,7 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-subtitle {
-  font-family: var(--font-cn);
+  font-family: var(--font-en-body);
   font-size: var(--type-card-title);
   color: var(--terminal);
   min-height: 24px;
@@ -301,7 +301,7 @@ a:hover { color: var(--yellow); }
 }
 
 .hero-desc {
-  font-family: var(--font-cn);
+  font-family: var(--font-cn-pixel);
   color: var(--text-dim);
   max-width: 500px;
   font-size: var(--type-body);
