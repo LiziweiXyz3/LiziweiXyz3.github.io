@@ -106,7 +106,7 @@ test('studio styles scope font choices and text scaling without sizing visual as
   assert.match(css, /\[data-studio-font="code"\][\s\S]*--studio-font-en-body:\s*var\(--font-code\)/);
   assert.match(css, /--studio-text-scale:\s*1/);
   assert.match(css, /--type-body:\s*calc\(var\(--base-type-body\) \* var\(--studio-text-scale, 1\)\)/);
-  assert.doesNotMatch(css, /\.project-icon[\s\S]*var\(--studio-text-scale/);
+  assert.doesNotMatch(css, /\.project-icon\s*\{[^}]*var\(--studio-text-scale/);
 });
 
 test('inline edits persist plain text without accepting markup', function () {
@@ -117,6 +117,39 @@ test('inline edits persist plain text without accepting markup', function () {
 
   assert.equal(harness.heroTitle.textContent, '<b>岁安</b>');
   assert.equal(JSON.parse(harness.writes.at(-1)[1]).text['hero.title'], '<b>岁安</b>');
+});
+
+test('edited English followed by Chinese keeps the Chinese Zpix language boundary', function () {
+  const children = [];
+  const title = createElement({ 'data-edit-key': 'hero.title' }, '原始标题');
+  title.firstChild = null;
+  title.appendChild = function (child) {
+    children.push(child);
+    title.firstChild = children[0] || null;
+  };
+  title.removeChild = function (child) {
+    const index = children.indexOf(child);
+    if (index >= 0) children.splice(index, 1);
+    title.firstChild = children[0] || null;
+  };
+
+  const doc = {
+    querySelectorAll: function (selector) {
+      if (selector === '[data-edit-key]') return [title];
+      return [];
+    },
+    createElement: function () { return createElement(); }
+  };
+  const controller = api.createController(doc, null);
+
+  controller.setText('hero.title', 'AI 产品经理');
+
+  assert.deepEqual(children.map(function (child) {
+    return { lang: child.lang, text: child.textContent };
+  }), [
+    { lang: 'en', text: 'AI ' },
+    { lang: 'zh-CN', text: '产品经理' }
+  ]);
 });
 
 test('section controls persist independently and reset only their own defaults', function () {
@@ -241,4 +274,11 @@ test('avatar scroll controls and mini game stay playable by default', function (
   assert.match(script, /speed = GAME_CONFIG\.startSpeed/);
   assert.match(script, /speed = Math\.min\(GAME_CONFIG\.maxSpeed, speed \+ GAME_CONFIG\.speedStep\)/);
   assert.doesNotMatch(html, /id="terminalInput"[^>]*autofocus/);
+});
+
+test('mobile typography overrides keep the per-section studio scale', function () {
+  assert.doesNotMatch(css, /\.nav-link\s*\{\s*font-size:\s*0\.(?:4375|375)rem/);
+  assert.doesNotMatch(css, /\.hero-title\s*\{\s*font-size:\s*0\.875rem/);
+  assert.doesNotMatch(css, /\.section-title\s*\{\s*font-size:\s*0\.75rem/);
+  assert.match(css, /\.hero-title\s*\{\s*font-size:\s*calc\(0\.875rem \* var\(--studio-text-scale, 1\)\)/);
 });

@@ -1096,7 +1096,7 @@ html[data-site-studio-editing="true"] [data-edit-key]:focus {
     transform: translateX(-50%);
   }
   .nav-link {
-    font-size: 0.4375rem;
+    font-size: calc(0.4375rem * var(--studio-text-scale, 1));
     padding: 4px 7px;
   }
   .hero { padding-top: 140px; }
@@ -1105,9 +1105,9 @@ html[data-site-studio-editing="true"] [data-edit-key]:focus {
 }
 
 @media (max-width: 480px) {
-  .hero-title { font-size: 0.875rem; }
-  .section-title { font-size: 0.75rem; }
-  .nav-link { font-size: 0.375rem; }
+  .hero-title { font-size: calc(0.875rem * var(--studio-text-scale, 1)); }
+  .section-title { font-size: calc(0.75rem * var(--studio-text-scale, 1)); }
+  .nav-link { font-size: calc(0.375rem * var(--studio-text-scale, 1)); }
 }
 
 /* ======== 终端内嵌小恐龙游戏 ======== */

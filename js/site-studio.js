@@ -111,7 +111,9 @@
     var current = '';
     var language = 'zh-CN';
     String(text).split('').forEach(function (character) {
-      var nextLanguage = /[A-Za-z0-9_+#@&/.-]/.test(character) ? 'en' : language;
+      var nextLanguage = language;
+      if (/[A-Za-z0-9_+#@&/.-]/.test(character)) nextLanguage = 'en';
+      else if (/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(character)) nextLanguage = 'zh-CN';
       if (current && nextLanguage !== language) {
         parts.push({ lang: language, text: current });
         current = '';
