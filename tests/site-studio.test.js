@@ -7,6 +7,7 @@ const api = require('../js/site-studio.js');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '..', 'stylesheet.css'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '..', 'js', 'script.js'), 'utf8');
+const floatingScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'floating-clawd.js'), 'utf8');
 const studioScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'site-studio.js'), 'utf8');
 const editorHtml = fs.readFileSync(path.join(__dirname, '..', 'editor.html'), 'utf8');
 const editorScript = fs.readFileSync(path.join(__dirname, '..', 'js', 'studio-editor.js'), 'utf8');
@@ -625,7 +626,7 @@ test('mobile typography and panel keep each item scale reachable', function () {
 
 test('public page loads config runtime after dynamic rendering and keeps normal regressions', function () {
   assert.match(html, /<script src="js\/site-config\.js"><\/script>/);
-  assert.match(html, /<script src="js\/site-runtime\.js"><\/script>\s*<script src="js\/script\.js"><\/script>/);
+  assert.match(html, /<script src="js\/site-runtime\.js"><\/script>\s*<script src="js\/floating-clawd\.js"><\/script>\s*<script src="js\/script\.js"><\/script>/);
   assert.match(script, /window\.addEventListener\('scroll', avatar\.onScroll, \{ passive: true \}\)/);
   assert.match(script, /speed = GAME_CONFIG\.startSpeed/);
   assert.match(script, /speed = Math\.min\(GAME_CONFIG\.maxSpeed, speed \+ GAME_CONFIG\.speedStep\)/);
@@ -635,11 +636,13 @@ test('public page loads config runtime after dynamic rendering and keeps normal 
 
 test('the terminal game character floats through the page background without blocking interaction', function () {
   assert.match(html, /<canvas class="floating-clawd-canvas" id="floatingClawd" aria-hidden="true"><\/canvas>/);
-  assert.match(script, /initParticles\(\);\s*initFloatingClawd\(\);/);
-  assert.match(script, /function initFloatingClawd\(\)/);
-  assert.match(script, /drawSprite\(x, y \+ bob, armSwing\)/);
-  assert.match(script, /prefers-reduced-motion: reduce/);
+  assert.match(html, /<script src="js\/floating-clawd\.js"><\/script>\s*<script src="js\/script\.js"><\/script>/);
+  assert.match(script, /initParticles\(\);\s*if \(window\.FloatingClawd\) window\.FloatingClawd\.init\(\);/);
+  assert.match(floatingScript, /function init\(options\)/);
+  assert.match(floatingScript, /prefers-reduced-motion: reduce/);
+  assert.match(floatingScript, /COLLISION_SELECTOR/);
   assert.match(css, /\.floating-clawd-canvas\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*-1;[^}]*pointer-events:\s*none;/);
+  assert.match(css, /\.floating-clawd-hit\s*\{[^}]*animation:\s*clawd-impact-flash 180ms/);
 });
 
 test('mini game uses distance-based obstacle pacing instead of fixed-frame spawning', function () {

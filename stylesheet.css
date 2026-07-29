@@ -1183,9 +1183,26 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   opacity: 0.78;
 }
 
+.floating-clawd-hit {
+  outline: 2px solid transparent;
+  outline-offset: 3px;
+  animation: clawd-impact-flash 180ms steps(2, end) both;
+}
+
 /* ============================================================
    动画
    ============================================================ */
+@keyframes clawd-impact-flash {
+  0%, 100% {
+    outline-color: transparent;
+    filter: brightness(1);
+  }
+  50% {
+    outline-color: var(--purple);
+    filter: brightness(1.45);
+  }
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-8px); }

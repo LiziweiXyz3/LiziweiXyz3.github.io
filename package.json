@@ -5,6 +5,6 @@
   "scripts": {
     "dev": "node scripts/studio-server.js",
     "test": "node --test",
-    "check": "node --check data.js && node --check js/script.js && node --check js/site-runtime.js && node --check js/studio-editor.js && node --check scripts/studio-server.js"
+    "check": "node --check data.js && node --check js/script.js && node --check js/floating-clawd.js && node --check js/site-runtime.js && node --check js/studio-editor.js && node --check scripts/studio-server.js"
   }
 }
