@@ -13,6 +13,8 @@
   var ARM_SWING_RADIANS_PER_SECOND = TAU / ARM_SWING_CYCLE_SECONDS;
   var MAIN_CONTENT_MAX_WIDTH = 1000;
   var SIDE_LANE_GAP = 18;
+  var DEFAULT_BODY_COLOR = '#DA7756';
+  var COMPLEMENTARY_BODY_COLOR = '#56B9DA';
   var COLLISION_SELECTOR = [
     '.nav',
     '#heroAvatar',
@@ -198,7 +200,12 @@
     var palette = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#00ff41', '#b388ff'];
     var pointer = { x: -1000, y: -1000, radius: 18, active: false };
     var sideLanes = null;
-    var lane = random() < 0.5 ? 'left' : 'right';
+    var bodyColor = typeof options.bodyColor === 'string' && options.bodyColor.trim()
+      ? options.bodyColor.trim()
+      : DEFAULT_BODY_COLOR;
+    var lane = options.initialLane === 'left' || options.initialLane === 'right'
+      ? options.initialLane
+      : (random() < 0.5 ? 'left' : 'right');
 
     function readPalette() {
       if (!view.getComputedStyle) return;
@@ -348,7 +355,7 @@
     function drawSprite(armAngle) {
       var ox = 9.23;
       var oy = 8.74;
-      var color = '#DA7756';
+      var color = bodyColor;
       var px = -spriteWidth / 2;
       var py = -spriteHeight / 2;
 
@@ -667,6 +674,8 @@
     ARM_SWING_RADIANS_PER_SECOND: ARM_SWING_RADIANS_PER_SECOND,
     MAIN_CONTENT_MAX_WIDTH: MAIN_CONTENT_MAX_WIDTH,
     SIDE_LANE_GAP: SIDE_LANE_GAP,
+    DEFAULT_BODY_COLOR: DEFAULT_BODY_COLOR,
+    COMPLEMENTARY_BODY_COLOR: COMPLEMENTARY_BODY_COLOR,
     COLLISION_SELECTOR: COLLISION_SELECTOR,
     speedForViewport: speedForViewport,
     circleRectCollision: circleRectCollision,

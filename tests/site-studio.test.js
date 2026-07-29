@@ -636,8 +636,11 @@ test('public page loads config runtime after dynamic rendering and keeps normal 
 
 test('the terminal game character floats through the page background without blocking interaction', function () {
   assert.match(html, /<canvas class="floating-clawd-canvas" id="floatingClawd" aria-hidden="true"><\/canvas>/);
+  assert.match(html, /<canvas class="floating-clawd-canvas" id="floatingClawdBlue" aria-hidden="true"><\/canvas>/);
   assert.match(html, /<script src="js\/floating-clawd\.js"><\/script>\s*<script src="js\/script\.js"><\/script>/);
-  assert.match(script, /initParticles\(\);\s*if \(window\.FloatingClawd\) window\.FloatingClawd\.init\(\);/);
+  assert.match(script, /canvasId: 'floatingClawd'/);
+  assert.match(script, /canvasId: 'floatingClawdBlue'/);
+  assert.match(script, /bodyColor: window\.FloatingClawd\.COMPLEMENTARY_BODY_COLOR/);
   assert.match(floatingScript, /function init\(options\)/);
   assert.match(floatingScript, /prefers-reduced-motion: reduce/);
   assert.match(floatingScript, /COLLISION_SELECTOR/);

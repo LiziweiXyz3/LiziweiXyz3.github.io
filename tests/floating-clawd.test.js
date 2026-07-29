@@ -87,6 +87,11 @@ test('arm motion uses an independent two-and-a-half-second cycle', function () {
   assert.ok(Math.abs(cycleSeconds - 2.5) < 1e-9);
 });
 
+test('the second character uses the blue complementary body color', function () {
+  assert.equal(physics.DEFAULT_BODY_COLOR, '#DA7756');
+  assert.equal(physics.COMPLEMENTARY_BODY_COLOR, '#56B9DA');
+});
+
 test('wide screens expose two side lanes outside the central 1000px content corridor', function () {
   const lanes = physics.sideLaneGeometry(1920, 38, 18, 1000, 18);
   assert.equal(lanes.available, true);

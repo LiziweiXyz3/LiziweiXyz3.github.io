@@ -655,7 +655,17 @@
     // 等所有动态内容准备完成后再应用正式配置，避免公开主页首次加载时漏掉样式。
     applyCurrentSiteConfig();
     initParticles();
-    if (window.FloatingClawd) window.FloatingClawd.init();
+    if (window.FloatingClawd) {
+      window.FloatingClawd.init({
+        canvasId: 'floatingClawd',
+        initialLane: 'left'
+      });
+      window.FloatingClawd.init({
+        canvasId: 'floatingClawdBlue',
+        initialLane: 'right',
+        bodyColor: window.FloatingClawd.COMPLEMENTARY_BODY_COLOR
+      });
+    }
     initScrollReveal();
 
     window.addEventListener('scroll', handleScroll, { passive: true });
