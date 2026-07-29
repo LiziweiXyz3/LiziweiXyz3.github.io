@@ -863,6 +863,9 @@
           if (value === '') delete style[entry[1]];
           else style[entry[1]] = value;
         });
+        if (entry[0] === 'letterSpacingControl') {
+          byId('letterSpacingOutput').textContent = value + 'px';
+        }
         if (entry[0] === 'fontEnControl') updateFontVisualHint();
       });
       byId(entry[0]).addEventListener('change', endChange);

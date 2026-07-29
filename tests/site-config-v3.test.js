@@ -132,6 +132,7 @@ test('element formatting applies only the properties explicitly changed', functi
   assert.match(runtimeScript, /typeof style\.italic === 'boolean'/);
   assert.match(editorHtml, /id="boldControl"/);
   assert.match(editorHtml, /字号（px）/);
+  assert.match(editorScript, /letterSpacingOutput'\)\.textContent = value \+ 'px'/);
   assert.doesNotMatch(editorHtml, /继承默认|字重|weightControl/);
 });
 
