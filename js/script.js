@@ -440,6 +440,13 @@
     }
 
     var history = [];
+    var terminalSectionTargets = {
+      home: 'hero',
+      about: 'about',
+      projects: 'projects',
+      resume: 'resume',
+      contact: 'contact'
+    };
 
     function addLine(content, type) {
       var line = document.createElement('div');
@@ -463,14 +470,19 @@
 
       if (cmd === 'clear') {
         clearElement(body);
-      } else if (cmd === 'home') {
-        addLine(contact.commands[cmd], 'output');
-        var hero = document.getElementById('hero');
-        if (hero) hero.scrollIntoView({ behavior: 'smooth' });
       } else if (cmd === 'game') {
         addLine(contact.commands[cmd], 'output');
         startDinoGame();
         setTimeout(function () { input.blur(); }, 10);
+      } else if (terminalSectionTargets[cmd]) {
+        var commandOutput = cmd === 'about'
+          ? partsToText(about.introParts)
+          : contact.commands[cmd];
+        addLine(commandOutput, 'output');
+        var targetSection = document.getElementById(terminalSectionTargets[cmd]);
+        var smoothScroll = !window.siteConfig || !window.siteConfig.effects ||
+          window.siteConfig.effects.smoothScroll !== false;
+        if (targetSection) targetSection.scrollIntoView({ behavior: smoothScroll ? 'smooth' : 'auto' });
       } else if (contact.commands[cmd]) {
         addLine(contact.commands[cmd], 'output');
       } else {

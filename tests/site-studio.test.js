@@ -482,6 +482,16 @@ test('editing mode suppresses project-card navigation and terminal command focus
   assert.match(script, /body\.addEventListener\('click',[\s\S]*?if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;[\s\S]*?input\.focus\(\)/);
 });
 
+test('terminal navigation commands share page content and scroll to every matching section', function () {
+  assert.match(
+    script,
+    /var terminalSectionTargets = \{[\s\S]*?home:\s*'hero'[\s\S]*?about:\s*'about'[\s\S]*?projects:\s*'projects'[\s\S]*?resume:\s*'resume'[\s\S]*?contact:\s*'contact'/
+  );
+  assert.match(script, /cmd === 'about'[\s\S]*?\? partsToText\(about\.introParts\)/);
+  assert.match(script, /document\.getElementById\(terminalSectionTargets\[cmd\]\)/);
+  assert.match(script, /targetSection\.scrollIntoView\(\{ behavior: smoothScroll \? 'smooth' : 'auto' \}\)/);
+});
+
 test('global Enter shortcut leaves studio summaries and controls to their native keyboard behavior', function () {
   assert.match(script, /siteStudioPanel[\s\S]*?contains\(e\.target\)[\s\S]*?return/);
   assert.match(script, /matches\('button, a, input, select, textarea, summary, \[contenteditable\]'\)/);
