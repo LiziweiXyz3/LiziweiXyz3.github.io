@@ -14,6 +14,25 @@ const STATE_DIR = path.join(ROOT, '.site-studio');
 const HISTORY_DIR = path.join(STATE_DIR, 'history');
 const ASSET_DIR = path.join(ROOT, 'assets', 'custom');
 const MAX_BODY = 6 * 1024 * 1024;
+const TRACKED_SERVER_FILES = [
+  __filename,
+  require.resolve('../js/site-config.js'),
+  path.join(ROOT, 'site-config.schema.json')
+];
+const STARTUP_FILE_TIMES = new Map(TRACKED_SERVER_FILES.map((filePath) => [
+  filePath,
+  fs.statSync(filePath).mtimeMs
+]));
+
+function serverIsStale() {
+  return TRACKED_SERVER_FILES.some((filePath) => {
+    try {
+      return fs.statSync(filePath).mtimeMs !== STARTUP_FILE_TIMES.get(filePath);
+    } catch {
+      return true;
+    }
+  });
+}
 
 function getArg(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -204,7 +223,7 @@ async function saveAsset(payload) {
 
 async function handleApi(req, res, url) {
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    json(res, 200, { ok: true, version: SiteConfig.VERSION });
+    json(res, 200, { ok: true, version: SiteConfig.VERSION, stale: serverIsStale() });
     return true;
   }
   if (req.method === 'GET' && url.pathname === '/api/config') {

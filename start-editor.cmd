@@ -5,9 +5,9 @@ cd /d "%~dp0"
 set "EDITOR_URL=http://127.0.0.1:4173/editor.html"
 set "HEALTH_URL=http://127.0.0.1:4173/api/health"
 
-rem If the local service is already running, reuse it instead of starting
-rem another process on the same port.
-powershell -NoProfile -Command "try { $response = Invoke-WebRequest -UseBasicParsing -Uri '%HEALTH_URL%' -TimeoutSec 2; if ($response.StatusCode -eq 200) { exit 0 }; exit 1 } catch { exit 1 }"
+rem Reuse a healthy current service. If code changed after it started, stop the
+rem old PersonalSite service first so server-side validation cannot lag behind.
+powershell -NoProfile -Command "try { $health = Invoke-RestMethod -Uri '%HEALTH_URL%' -TimeoutSec 2; if ($health.ok -and $health.stale -eq $false) { exit 0 }; if ($health.ok -and $health.version -eq 3) { $line = netstat -ano | Select-String '^\s*TCP\s+127\.0\.0\.1:4173\s+.*LISTENING\s+(\d+)\s*$' | Select-Object -First 1; if ($line) { $serverPid = [int]$line.Matches[0].Groups[1].Value; Stop-Process -Id $serverPid -Force -ErrorAction SilentlyContinue }; Start-Sleep -Milliseconds 250 }; exit 1 } catch { exit 1 }"
 if not errorlevel 1 (
     start "" "%EDITOR_URL%"
     exit /b 0

@@ -1254,7 +1254,12 @@
   }
 
   function init() {
-    requestJson('/api/config').then(function (payload) {
+    Promise.all([requestJson('/api/health'), requestJson('/api/config')]).then(function (responses) {
+      var health = responses[0];
+      var payload = responses[1];
+      if (health.stale !== false) {
+        throw new Error('本地编辑器服务代码已更新，请重新双击 start-editor.cmd');
+      }
       savedConfig = window.SiteConfig.normalizeConfig(payload.config, payload.config);
       var local = null;
       try { local = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (error) { local = null; }

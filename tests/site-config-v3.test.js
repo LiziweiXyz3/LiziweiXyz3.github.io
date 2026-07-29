@@ -214,10 +214,15 @@ test('local server uses atomic saves, restricted assets and a 20 version history
   assert.match(serverScript, /target\.startsWith\(ROOT \+ path\.sep\)/);
   assert.match(serverScript, /光标尺寸不能超过 128 × 128/);
   assert.match(serverScript, /素材文件内容与格式不匹配/);
+  assert.match(serverScript, /function serverIsStale/);
+  assert.match(serverScript, /stale:\s*serverIsStale\(\)/);
 });
 
 test('editor starter reuses an existing local service and opens the editor directly', function () {
   assert.match(startEditorScript, /api\/health/);
+  assert.match(startEditorScript, /\$health\.stale -eq \$false/);
+  assert.match(startEditorScript, /Stop-Process -Id \$serverPid/);
+  assert.match(editorScript, /本地编辑器服务代码已更新，请重新双击 start-editor\.cmd/);
   assert.match(startEditorScript, /start "" "%EDITOR_URL%"/);
   assert.doesNotMatch(startEditorScript, /studio-server\.js --open/);
 });
