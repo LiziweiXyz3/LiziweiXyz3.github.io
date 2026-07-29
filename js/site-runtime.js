@@ -35,6 +35,30 @@
     return window.CSS && CSS.escape ? CSS.escape(value) : String(value).replace(/["\\]/g, '\\$&');
   }
 
+  function languageParts(value) {
+    if (window.SiteBehaviors && window.SiteBehaviors.splitTextByLanguage) {
+      return window.SiteBehaviors.splitTextByLanguage(value);
+    }
+    var parts = [];
+    var current = '';
+    var language = 'zh-CN';
+    function flush() {
+      if (!current) return;
+      parts.push({ lang: language, text: current });
+      current = '';
+    }
+    String(value || '').split('').forEach(function (character) {
+      var nextLanguage = language;
+      if (/[A-Za-z0-9_+#@&/.-]/.test(character)) nextLanguage = 'en';
+      else if (/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(character)) nextLanguage = 'zh-CN';
+      if (current && nextLanguage !== language) flush();
+      language = nextLanguage;
+      current += character;
+    });
+    flush();
+    return parts;
+  }
+
   function splitText(element, value) {
     if (!element) return;
     if (element.getAttribute('data-edit-attribute') === 'placeholder') {
@@ -45,29 +69,32 @@
       return child.getAttribute && child.getAttribute('data-edit-preserve') === 'true';
     });
     while (element.firstChild) element.removeChild(element.firstChild);
-    var current = '';
-    var lang = 'zh-CN';
-    function flush() {
-      if (!current) return;
+    languageParts(value).forEach(function (part) {
       var span = document.createElement('span');
-      span.lang = lang;
-      span.className = lang === 'zh-CN' ? 'text-cn' :
+      span.lang = part.lang;
+      span.className = part.lang === 'zh-CN' ? 'text-cn' :
         (element.getAttribute('data-edit-english-class') || 'text-en-body');
-      span.textContent = current;
+      span.textContent = part.text;
       span.setAttribute('data-studio-text-part', 'true');
       element.appendChild(span);
-      current = '';
-    }
-    String(value).split('').forEach(function (character) {
-      var next = lang;
-      if (/[A-Za-z0-9_+#@&/.-]/.test(character)) next = 'en';
-      else if (/[\u3400-\u9FFF\uF900-\uFAFF]/.test(character)) next = 'zh-CN';
-      if (current && next !== lang) flush();
-      lang = next;
-      current += character;
     });
-    flush();
     preserved.forEach(function (child) { element.appendChild(child); });
+  }
+
+  function repairMislabeledTextParts(element) {
+    if (!element || element.getAttribute('data-edit-attribute') === 'placeholder') return;
+    var parts = Array.prototype.slice.call(
+      element.querySelectorAll ? element.querySelectorAll('[data-studio-text-part]') : []
+    );
+    var needsRepair = parts.some(function (part) {
+      var value = part.textContent || '';
+      var hasLatin = /[A-Za-z0-9]/.test(value);
+      var hasChinese = /[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(value);
+      return (hasLatin && part.lang !== 'en') ||
+        (hasChinese && part.lang !== 'zh-CN') ||
+        (hasLatin && hasChinese);
+    });
+    if (needsRepair) splitText(element, element.textContent || '');
   }
 
   function applyTheme(config) {
@@ -187,6 +214,7 @@
       var element = document.querySelector('[data-edit-key="' + escapeSelector(key) + '"]');
       var style = styles[key];
       if (!element || !style) return;
+      repairMislabeledTextParts(element);
       element.setAttribute('data-studio-style', 'true');
       if (FONT_CN[style.fontCn]) {
         element.setAttribute('data-studio-font-cn', 'true');

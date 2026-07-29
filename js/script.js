@@ -75,6 +75,9 @@
   }
 
   function splitTextByLanguage(value) {
+    if (window.SiteBehaviors && window.SiteBehaviors.splitTextByLanguage) {
+      return window.SiteBehaviors.splitTextByLanguage(value);
+    }
     var parts = [];
     var current = '';
     var language = 'zh-CN';
@@ -413,7 +416,7 @@
         var tag = document.createElement('span');
         tag.className = 'node-tag';
         renderTextParts(tag, typeof highlight === 'string'
-          ? [{ lang: 'zh-CN', text: '▶ ' + highlight }]
+          ? [{ lang: 'zh-CN', text: '▶ ' }].concat(splitTextByLanguage(highlight))
           : [{ lang: 'zh-CN', text: '▶ ' }].concat(highlight));
         setEditKey(tag, 'resume.' + experienceId + '.highlight.' + highlightId, '▶ ' + partsToText(highlight), exp.company + ' · 亮点 ' + (highlightIndex + 1));
         tags.appendChild(tag);

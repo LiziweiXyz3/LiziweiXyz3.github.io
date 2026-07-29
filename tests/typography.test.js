@@ -41,6 +41,8 @@ test('data-driven text is rendered with language-aware DOM nodes rather than inn
   assert.match(script, /renderTextParts\(aboutIntro, about\.introParts\)/);
   assert.match(script, /renderTextParts\(introEl, contact\.introParts\)/);
   assert.match(script, /renderTextParts\(field, exp\.(?:periodParts|titleParts|companyParts|descParts)/);
+  assert.match(script, /\[\{\s*lang:\s*'zh-CN',\s*text:\s*'▶ '\s*\}\]\.concat\(splitTextByLanguage\(highlight\)\)/);
+  assert.doesNotMatch(script, /lang:\s*'zh-CN',\s*text:\s*'▶ '\s*\+\s*highlight/);
   assert.doesNotMatch(script, /(?:heroDesc|aboutIntro|row|node|card)\.innerHTML\s*=/);
 });
 

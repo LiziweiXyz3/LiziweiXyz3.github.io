@@ -24,6 +24,29 @@
     sequences: []
   });
 
+  function splitTextByLanguage(value) {
+    var parts = [];
+    var current = '';
+    var language = 'zh-CN';
+
+    function flush() {
+      if (!current) return;
+      parts.push({ lang: language, text: current });
+      current = '';
+    }
+
+    String(value || '').split('').forEach(function (character) {
+      var nextLanguage = language;
+      if (/[A-Za-z0-9_+#@&/.-]/.test(character)) nextLanguage = 'en';
+      else if (/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/.test(character)) nextLanguage = 'zh-CN';
+      if (current && nextLanguage !== language) flush();
+      language = nextLanguage;
+      current += character;
+    });
+    flush();
+    return parts;
+  }
+
   function firstObstacleX(width, config) {
     var active = config || GAME_CONFIG;
     return Math.round(Number(width) * Number(active.firstObstacleRatio));
@@ -82,6 +105,7 @@
 
   return {
     GAME_CONFIG: GAME_CONFIG,
+    splitTextByLanguage: splitTextByLanguage,
     firstObstacleX: firstObstacleX,
     obstacleGap: obstacleGap,
     canSpawnObstacle: canSpawnObstacle,

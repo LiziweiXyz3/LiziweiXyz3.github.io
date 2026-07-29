@@ -20,6 +20,17 @@ test('avatar begins standing, jumps on downward scroll and stands on upward scro
   assert.equal(avatar.getState(), 'stand');
 });
 
+test('language splitter keeps Resume highlight English independently editable', function () {
+  assert.deepEqual(api.splitTextByLanguage('Text-to-SQL 数据增长策略'), [
+    { lang: 'en', text: 'Text-to-SQL ' },
+    { lang: 'zh-CN', text: '数据增长策略' }
+  ]);
+  assert.deepEqual(api.splitTextByLanguage('AB 测试设计'), [
+    { lang: 'en', text: 'AB ' },
+    { lang: 'zh-CN', text: '测试设计' }
+  ]);
+});
+
 test('avatar accumulates smooth-scroll movement before changing state', function () {
   let y = 0;
   const image = { src: '', style: {} };

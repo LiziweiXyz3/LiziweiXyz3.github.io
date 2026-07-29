@@ -264,6 +264,13 @@ test('preview bridge accepts only same-origin editor messages', function () {
   assert.match(runtimeScript, /studio:start-game/);
 });
 
+test('runtime repairs stale language labels before applying independent fonts', function () {
+  assert.match(runtimeScript, /function repairMislabeledTextParts\(element\)/);
+  assert.match(runtimeScript, /repairMislabeledTextParts\(element\);\s*element\.setAttribute\('data-studio-style'/);
+  assert.match(runtimeScript, /hasLatin && part\.lang !== 'en'/);
+  assert.match(runtimeScript, /hasChinese && part\.lang !== 'zh-CN'/);
+});
+
 test('element formatting applies only the properties explicitly changed', function () {
   assert.match(runtimeScript, /data-studio-size/);
   assert.match(runtimeScript, /data-studio-font-cn/);
