@@ -9,7 +9,10 @@
   var CROSSING_SECONDS_MIN = 35;
   var CROSSING_SECONDS_MAX = 55;
   var COLLISION_COOLDOWN_MS = 180;
-  var ARM_SWING_RADIANS_PER_SECOND = 1.8;
+  var ARM_SWING_CYCLE_SECONDS = 2.5;
+  var ARM_SWING_RADIANS_PER_SECOND = TAU / ARM_SWING_CYCLE_SECONDS;
+  var MAIN_CONTENT_MAX_WIDTH = 1000;
+  var SIDE_LANE_GAP = 18;
   var COLLISION_SELECTOR = [
     '.nav',
     '#heroAvatar',
@@ -122,6 +125,36 @@
     return now - lastHit >= (Number(cooldownMs) || COLLISION_COOLDOWN_MS);
   }
 
+  function sideLaneGeometry(viewportWidth, collisionRadius, margin, contentWidth, gap) {
+    var width = Math.max(1, Number(viewportWidth) || 1);
+    var radius = Math.max(0, Number(collisionRadius) || 0);
+    var edgeMargin = Math.max(0, Number(margin) || 0);
+    var corridorWidth = Math.min(width, Math.max(0, Number(contentWidth) || MAIN_CONTENT_MAX_WIDTH));
+    var corridorGap = Math.max(0, Number(gap) || 0);
+    var corridorLeft = (width - corridorWidth) / 2;
+    var corridorRight = corridorLeft + corridorWidth;
+    var leftMin = edgeMargin + radius;
+    var leftMax = corridorLeft - corridorGap - radius;
+    var rightMin = corridorRight + corridorGap + radius;
+    var rightMax = width - edgeMargin - radius;
+    return {
+      available: leftMax >= leftMin && rightMax >= rightMin,
+      corridor: { left: corridorLeft, right: corridorRight },
+      left: { min: leftMin, max: leftMax },
+      right: { min: rightMin, max: rightMax }
+    };
+  }
+
+  function wrapAcrossViewport(positionX, collisionRadius, viewportWidth, lane) {
+    if (lane === 'left' && positionX + collisionRadius < 0) {
+      return { x: viewportWidth + collisionRadius, lane: 'right', wrapped: true };
+    }
+    if (lane === 'right' && positionX - collisionRadius > viewportWidth) {
+      return { x: -collisionRadius, lane: 'left', wrapped: true };
+    }
+    return { x: positionX, lane: lane, wrapped: false };
+  }
+
   function init(options) {
     options = options || {};
     var view = options.window || (typeof window !== 'undefined' ? window : null);
@@ -164,6 +197,8 @@
     var observer = null;
     var palette = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#00ff41', '#b388ff'];
     var pointer = { x: -1000, y: -1000, radius: 18, active: false };
+    var sideLanes = null;
+    var lane = random() < 0.5 ? 'left' : 'right';
 
     function readPalette() {
       if (!view.getComputedStyle) return;
@@ -176,12 +211,27 @@
     }
 
     function chooseTarget(awayNormal) {
-      var maxX = Math.max(margin + collisionRadius, w - margin - collisionRadius);
+      if (!sideLanes || !sideLanes.available) {
+        target = { x: position.x, y: position.y };
+        speed = 0;
+        return;
+      }
       var maxY = Math.max(margin + collisionRadius, h - margin - collisionRadius);
       var candidate = null;
+      var laneRange = sideLanes[lane];
+      var shouldWrap = !awayNormal && random() < 0.28;
+      if (shouldWrap) {
+        target = {
+          x: lane === 'left' ? -collisionRadius * 4 : w + collisionRadius * 4,
+          y: randomBetween(margin + collisionRadius, maxY, random)
+        };
+        speed = speedForViewport(w,
+          randomBetween(CROSSING_SECONDS_MIN, CROSSING_SECONDS_MAX, random));
+        return;
+      }
       for (var attempt = 0; attempt < 16; attempt++) {
         candidate = {
-          x: randomBetween(margin + collisionRadius, maxX, random),
+          x: randomBetween(laneRange.min, laneRange.max, random),
           y: randomBetween(margin + collisionRadius, maxY, random)
         };
         if (!awayNormal) break;
@@ -229,8 +279,15 @@
     }
 
     function placeAtFreePosition() {
+      if (!sideLanes || !sideLanes.available) {
+        position.x = w / 2;
+        position.y = h / 2;
+        return;
+      }
       for (var attempt = 0; attempt < 40; attempt++) {
-        var x = randomBetween(margin + collisionRadius, Math.max(margin + collisionRadius, w - margin - collisionRadius), random);
+        lane = attempt % 2 === 0 ? lane : (lane === 'left' ? 'right' : 'left');
+        var laneRange = sideLanes[lane];
+        var x = randomBetween(laneRange.min, laneRange.max, random);
         var y = randomBetween(margin + collisionRadius, Math.max(margin + collisionRadius, h - margin - collisionRadius), random);
         if (pointIsFree(x, y)) {
           position.x = x;
@@ -238,13 +295,14 @@
           return;
         }
       }
-      position.x = w - margin - collisionRadius;
+      lane = 'right';
+      position.x = sideLanes.right.max;
       position.y = h - margin - collisionRadius;
     }
 
     function resize() {
-      var oldW = w;
       var oldH = h;
+      var lanesWereAvailable = sideLanes && sideLanes.available;
       w = Math.max(1, view.innerWidth);
       h = Math.max(1, view.innerHeight);
       dpr = Math.min(view.devicePixelRatio || 1, 2);
@@ -254,6 +312,13 @@
       collisionRadius = Math.sqrt(
         spriteWidth * spriteWidth + spriteHeight * spriteHeight
       ) / 2;
+      sideLanes = sideLaneGeometry(
+        w,
+        collisionRadius,
+        margin,
+        MAIN_CONTENT_MAX_WIDTH,
+        SIDE_LANE_GAP
+      );
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -261,10 +326,21 @@
       collisionDirty = true;
 
       if (initialized) {
-        if (oldW > 0) position.x = position.x / oldW * w;
         if (oldH > 0) position.y = position.y / oldH * h;
-        position.x = clamp(position.x, margin + collisionRadius, w - margin - collisionRadius);
         position.y = clamp(position.y, margin + collisionRadius, h - margin - collisionRadius);
+        if (!sideLanes.available) {
+          velocity = { x: 0, y: 0 };
+          return;
+        }
+        if (!lanesWereAvailable) {
+          placeAtFreePosition();
+        } else {
+          position.x = clamp(
+            position.x,
+            sideLanes[lane].min,
+            sideLanes[lane].max
+          );
+        }
         chooseTarget();
       }
     }
@@ -365,17 +441,35 @@
     }
 
     function collideWithViewport(now) {
-      var left = margin + collisionRadius;
-      var right = w - margin - collisionRadius;
       var top = margin + collisionRadius;
       var bottom = h - margin - collisionRadius;
+      if (!sideLanes || !sideLanes.available) return;
 
-      if (position.x < left) {
-        position.x = left;
-        bounceFromNormal({ x: 1, y: 0 }, { x: margin, y: position.y }, now, null, 'left');
-      } else if (position.x > right) {
-        position.x = right;
-        bounceFromNormal({ x: -1, y: 0 }, { x: w - margin, y: position.y }, now, null, 'right');
+      var wrapped = wrapAcrossViewport(position.x, collisionRadius, w, lane);
+      if (wrapped.wrapped) {
+        position.x = wrapped.x;
+        lane = wrapped.lane;
+        chooseTarget();
+      }
+
+      if (lane === 'left' && position.x > sideLanes.left.max) {
+        position.x = sideLanes.left.max;
+        bounceFromNormal(
+          { x: -1, y: 0 },
+          { x: sideLanes.corridor.left - SIDE_LANE_GAP, y: position.y },
+          now,
+          null,
+          'inner-left'
+        );
+      } else if (lane === 'right' && position.x < sideLanes.right.min) {
+        position.x = sideLanes.right.min;
+        bounceFromNormal(
+          { x: 1, y: 0 },
+          { x: sideLanes.corridor.right + SIDE_LANE_GAP, y: position.y },
+          now,
+          null,
+          'inner-right'
+        );
       }
       if (position.y < top) {
         position.y = top;
@@ -438,6 +532,7 @@
 
     function update(deltaSeconds, now) {
       if (collisionDirty) refreshCollisionTargets();
+      if (!sideLanes || !sideLanes.available) return;
       var dx = target.x - position.x;
       var dy = target.y - position.y;
       var distance = Math.sqrt(dx * dx + dy * dy);
@@ -471,6 +566,7 @@
 
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      if (!sideLanes || !sideLanes.available) return;
       for (var index = 0; index < sparks.length; index++) {
         var spark = sparks[index];
         ctx.globalAlpha = spark.life / spark.maxLife;
@@ -567,7 +663,10 @@
     CROSSING_SECONDS_MIN: CROSSING_SECONDS_MIN,
     CROSSING_SECONDS_MAX: CROSSING_SECONDS_MAX,
     COLLISION_COOLDOWN_MS: COLLISION_COOLDOWN_MS,
+    ARM_SWING_CYCLE_SECONDS: ARM_SWING_CYCLE_SECONDS,
     ARM_SWING_RADIANS_PER_SECOND: ARM_SWING_RADIANS_PER_SECOND,
+    MAIN_CONTENT_MAX_WIDTH: MAIN_CONTENT_MAX_WIDTH,
+    SIDE_LANE_GAP: SIDE_LANE_GAP,
     COLLISION_SELECTOR: COLLISION_SELECTOR,
     speedForViewport: speedForViewport,
     circleRectCollision: circleRectCollision,
@@ -576,6 +675,8 @@
     advanceRotation: advanceRotation,
     advancePosition: advancePosition,
     collisionReady: collisionReady,
+    sideLaneGeometry: sideLaneGeometry,
+    wrapAcrossViewport: wrapAcrossViewport,
     init: init
   };
 });

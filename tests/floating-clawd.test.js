@@ -81,10 +81,36 @@ test('free rotation supports a complete upside-down pose and wraps safely', func
   assert.equal(physics.advanceRotation(0, -Math.PI / 2, 1), Math.PI * 1.5);
 });
 
-test('arm motion uses an independent, slightly faster three-and-a-half-second cycle', function () {
-  assert.equal(physics.ARM_SWING_RADIANS_PER_SECOND, 1.8);
+test('arm motion uses an independent two-and-a-half-second cycle', function () {
+  assert.equal(physics.ARM_SWING_CYCLE_SECONDS, 2.5);
   const cycleSeconds = Math.PI * 2 / physics.ARM_SWING_RADIANS_PER_SECOND;
-  assert.ok(cycleSeconds > 3.4 && cycleSeconds < 3.6);
+  assert.ok(Math.abs(cycleSeconds - 2.5) < 1e-9);
+});
+
+test('wide screens expose two side lanes outside the central 1000px content corridor', function () {
+  const lanes = physics.sideLaneGeometry(1920, 38, 18, 1000, 18);
+  assert.equal(lanes.available, true);
+  assert.deepEqual(lanes.corridor, { left: 460, right: 1460 });
+  assert.deepEqual(lanes.left, { min: 56, max: 404 });
+  assert.deepEqual(lanes.right, { min: 1516, max: 1864 });
+
+  const narrow = physics.sideLaneGeometry(1200, 38, 18, 1000, 18);
+  assert.equal(narrow.available, false);
+});
+
+test('leaving one outer edge wraps the character to the opposite side', function () {
+  assert.deepEqual(
+    physics.wrapAcrossViewport(-39, 38, 1920, 'left'),
+    { x: 1958, lane: 'right', wrapped: true }
+  );
+  assert.deepEqual(
+    physics.wrapAcrossViewport(1959, 38, 1920, 'right'),
+    { x: -38, lane: 'left', wrapped: true }
+  );
+  assert.deepEqual(
+    physics.wrapAcrossViewport(-38, 38, 1920, 'left'),
+    { x: -38, lane: 'left', wrapped: false }
+  );
 });
 
 test('collision targets use top-level visible blocks instead of nested labels', function () {

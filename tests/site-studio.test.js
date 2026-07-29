@@ -643,6 +643,8 @@ test('the terminal game character floats through the page background without blo
   assert.match(floatingScript, /COLLISION_SELECTOR/);
   assert.match(floatingScript, /addEventListener\('mousemove', handlePointerMove/);
   assert.match(floatingScript, /collideWithPointer\(now\)/);
+  assert.match(floatingScript, /sideLaneGeometry\(/);
+  assert.match(floatingScript, /wrapAcrossViewport\(/);
   assert.match(css, /\.floating-clawd-canvas\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*-1;[^}]*pointer-events:\s*none;/);
   assert.doesNotMatch(css, /floating-clawd-hit|clawd-impact-flash/);
 });
