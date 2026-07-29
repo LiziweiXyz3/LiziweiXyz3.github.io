@@ -616,6 +616,9 @@
     renderAbout();
     renderProjects();
     renderResume();
+  }
+
+  function applyCurrentSiteConfig() {
     if (window.SiteRuntime && window.siteConfig) {
       window.SiteRuntime.applyConfig(window.siteConfig);
     }
@@ -635,6 +638,9 @@
 
     renderConfiguredContent();
     setupTerminal();
+    // 终端文案的可编辑标记由 setupTerminal 动态创建。
+    // 等所有动态内容准备完成后再应用正式配置，避免公开主页首次加载时漏掉样式。
+    applyCurrentSiteConfig();
     initParticles();
     initScrollReveal();
 
@@ -1055,6 +1061,7 @@
       if (!config) return;
       if (typeof applySiteConfigGlobals === 'function') applySiteConfigGlobals(config);
       renderConfiguredContent();
+      applyCurrentSiteConfig();
     },
     startGame: function () {
       var terminal = document.getElementById('contact');

@@ -11,6 +11,7 @@ const editorHtml = fs.readFileSync(path.join(root, 'editor.html'), 'utf8');
 const editorCss = fs.readFileSync(path.join(root, 'editor.css'), 'utf8');
 const editorScript = fs.readFileSync(path.join(root, 'js', 'studio-editor.js'), 'utf8');
 const runtimeScript = fs.readFileSync(path.join(root, 'js', 'site-runtime.js'), 'utf8');
+const publicScript = fs.readFileSync(path.join(root, 'js', 'script.js'), 'utf8');
 const publicCss = fs.readFileSync(path.join(root, 'stylesheet.css'), 'utf8');
 const serverScript = fs.readFileSync(path.join(root, 'scripts', 'studio-server.js'), 'utf8');
 const startEditorScript = fs.readFileSync(path.join(root, 'start-editor.cmd'), 'utf8');
@@ -463,4 +464,16 @@ test('public index remains editor-free', function () {
   assert.doesNotMatch(publicHtml, /siteStudioToggle/);
   assert.match(publicHtml, /site-config\.js/);
   assert.match(publicHtml, /site-runtime\.js/);
+});
+
+test('public page applies saved styles after terminal edit keys are initialized', function () {
+  const setupIndex = publicScript.indexOf('setupTerminal();');
+  const applyIndex = publicScript.indexOf('applyCurrentSiteConfig();', setupIndex);
+
+  assert.ok(setupIndex >= 0, 'terminal initialization should run on public-page boot');
+  assert.ok(applyIndex > setupIndex, 'saved styles should be applied after terminal edit keys exist');
+  assert.match(
+    publicScript,
+    /applyConfig:\s*function\s*\(config\)[\s\S]*?renderConfiguredContent\(\);[\s\S]*?applyCurrentSiteConfig\(\);/
+  );
 });
