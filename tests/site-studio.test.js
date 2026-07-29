@@ -482,12 +482,15 @@ test('editing mode suppresses project-card navigation and terminal command focus
   assert.match(script, /body\.addEventListener\('click',[\s\S]*?if \(document\.documentElement\.getAttribute\('data-site-studio-editing'\) === 'true'\) return;[\s\S]*?input\.focus\(\)/);
 });
 
-test('terminal navigation commands share page content and scroll to every matching section', function () {
+test('terminal navigation commands use the dedicated about copy and scroll to every matching section', function () {
   assert.match(
     script,
-    /var terminalSectionTargets = \{[\s\S]*?home:\s*'hero'[\s\S]*?about:\s*'about'[\s\S]*?projects:\s*'projects'[\s\S]*?resume:\s*'resume'[\s\S]*?contact:\s*'contact'/
+    /var terminalSectionTargets = \{[\s\S]*?home:\s*'hero'[\s\S]*?projects:\s*'projects'[\s\S]*?resume:\s*'resume'[\s\S]*?contact:\s*'contact'/
   );
-  assert.match(script, /cmd === 'about'[\s\S]*?\? partsToText\(about\.introParts\)/);
+  assert.doesNotMatch(script, /terminalSectionTargets\s*=\s*\{[^}]*about:\s*'about'/);
+  assert.match(script, /Hey！我是岁安，一个游走在数据与代码之间的探索者。\\n/);
+  assert.match(script, /这个网站是我在数字世界的「存档点」，可以随便逛逛~/);
+  assert.match(script, /cmd === 'about'\)[\s\S]*?addLine\(terminalAboutCopy, 'output'\)/);
   assert.match(script, /document\.getElementById\(terminalSectionTargets\[cmd\]\)/);
   assert.match(script, /targetSection\.scrollIntoView\(\{ behavior: smoothScroll \? 'smooth' : 'auto' \}\)/);
 });

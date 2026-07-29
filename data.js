@@ -155,16 +155,7 @@ var contact = {
   commands: {
     help:   "可用命令: home | about | projects | resume | contact | game | clear",
     home:   "> 跳回首页...",
-    about:  [
-      { lang: "en", text: "> " },
-      { lang: "zh-CN", text: user.name },
-      { lang: "en", text: " / " + user.title + "\n> " },
-      { lang: "zh-CN", text: "互联网数据分析师，正在学习 " },
-      { lang: "en", text: "AI" },
-      { lang: "zh-CN", text: "。用数据理解世界，用 " },
-      { lang: "en", text: "AI" },
-      { lang: "zh-CN", text: " 拓展边界。" }
-    ],
+    about:  "Hey！我是岁安，一个游走在数据与代码之间的探索者。\n这个网站是我在数字世界的「存档点」，可以随便逛逛~",
     projects: "> 跳转到项目展示区...",
     resume: "> 跳转到简历区...",
     contact: `> Email: ${user.email}\n> GitHub: ${user.github}`,

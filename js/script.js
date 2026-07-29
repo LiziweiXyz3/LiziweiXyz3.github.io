@@ -442,11 +442,13 @@
     var history = [];
     var terminalSectionTargets = {
       home: 'hero',
-      about: 'about',
       projects: 'projects',
       resume: 'resume',
       contact: 'contact'
     };
+    var terminalAboutCopy =
+      'Hey！我是岁安，一个游走在数据与代码之间的探索者。\n' +
+      '这个网站是我在数字世界的「存档点」，可以随便逛逛~';
 
     function addLine(content, type) {
       var line = document.createElement('div');
@@ -474,11 +476,10 @@
         addLine(contact.commands[cmd], 'output');
         startDinoGame();
         setTimeout(function () { input.blur(); }, 10);
+      } else if (cmd === 'about') {
+        addLine(terminalAboutCopy, 'output');
       } else if (terminalSectionTargets[cmd]) {
-        var commandOutput = cmd === 'about'
-          ? partsToText(about.introParts)
-          : contact.commands[cmd];
-        addLine(commandOutput, 'output');
+        addLine(contact.commands[cmd], 'output');
         var targetSection = document.getElementById(terminalSectionTargets[cmd]);
         var smoothScroll = !window.siteConfig || !window.siteConfig.effects ||
           window.siteConfig.effects.smoothScroll !== false;
