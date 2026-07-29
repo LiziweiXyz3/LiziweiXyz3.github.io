@@ -1173,6 +1173,16 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   pointer-events: none;
 }
 
+.floating-clawd-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.78;
+}
+
 /* ============================================================
    动画
    ============================================================ */

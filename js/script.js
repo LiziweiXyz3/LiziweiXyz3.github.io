@@ -604,6 +604,142 @@
     draw();
   }
 
+  // ========== 太空漂浮 Clawd ==========
+  function initFloatingClawd() {
+    var canvas = document.getElementById('floatingClawd');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var reducedMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var w = 0, h = 0, dpr = 1;
+    var scale = window.innerWidth <= 640 ? 0.18 : 0.25;
+    var spriteWidth = 255 * scale;
+    var spriteHeight = 164 * scale;
+    var margin = 18;
+    var x = 0, y = 0, targetX = 0, targetY = 0;
+    var vx = 0, vy = 0;
+    var driftSpeed = 0.32;
+    var phase = Math.random() * Math.PI * 2;
+    var lastTime = 0;
+    var initialized = false;
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function chooseTarget() {
+      var maxX = Math.max(margin, w - spriteWidth - margin);
+      var maxY = Math.max(margin, h - spriteHeight - margin);
+      targetX = margin + Math.random() * Math.max(0, maxX - margin);
+      targetY = margin + Math.random() * Math.max(0, maxY - margin);
+      driftSpeed = 0.22 + Math.random() * 0.22;
+    }
+
+    function resize() {
+      var oldW = w;
+      var oldH = h;
+      w = window.innerWidth;
+      h = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      scale = w <= 640 ? 0.18 : 0.25;
+      spriteWidth = 255 * scale;
+      spriteHeight = 164 * scale;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+
+      if (!initialized) {
+        x = margin + Math.random() * Math.max(0, w - spriteWidth - margin * 2);
+        y = margin + Math.random() * Math.max(0, h - spriteHeight - margin * 2);
+        initialized = true;
+        chooseTarget();
+      } else {
+        if (oldW > 0) x = x / oldW * w;
+        if (oldH > 0) y = y / oldH * h;
+        x = clamp(x, margin, Math.max(margin, w - spriteWidth - margin));
+        y = clamp(y, margin, Math.max(margin, h - spriteHeight - margin));
+        chooseTarget();
+      }
+    }
+
+    function drawSprite(px, py, armAngle) {
+      var ox = 9.23;
+      var oy = 8.74;
+      var color = '#DA7756';
+
+      function rect(sx, sy, sw, sh, fill) {
+        ctx.fillStyle = fill;
+        ctx.fillRect(
+          Math.round(px + (sx - ox) * scale),
+          Math.round(py + (sy - oy) * scale),
+          Math.max(1, Math.round(sw * scale)),
+          Math.max(1, Math.round(sh * scale))
+        );
+      }
+
+      function arm(pivotX, pivotY, armX, armY, armWidth, armHeight, sign) {
+        ctx.save();
+        ctx.translate(
+          Math.round(px + (pivotX - ox) * scale),
+          Math.round(py + (pivotY - oy) * scale)
+        );
+        ctx.rotate(armAngle * sign);
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.round((armX - pivotX) * scale),
+          Math.round((armY - pivotY) * scale),
+          Math.max(1, Math.round(armWidth * scale)),
+          Math.max(1, Math.round(armHeight * scale))
+        );
+        ctx.restore();
+      }
+
+      rect(40.9, 8.74, 191.6, 127.85, color);
+      arm(48.9, 58.45, 9.23, 42.62, 39.67, 31.66, -1);
+      arm(224, 58.45, 224, 42.62, 40.17, 31.66, 1);
+      rect(57.4, 144.59, 15.39, 28.18, color);
+      rect(89.29, 144.59, 15.76, 28.18, color);
+      rect(168.67, 144.59, 15.6, 28.18, color);
+      rect(200.04, 144.59, 15.18, 28.18, color);
+      rect(73.24, 42.62, 16.26, 30.66, '#000');
+      rect(183.9, 42.62, 16.26, 30.66, '#000');
+    }
+
+    function render(now) {
+      var frameScale = lastTime ? Math.min(2, (now - lastTime) / 16.67) : 1;
+      lastTime = now;
+      ctx.clearRect(0, 0, w, h);
+
+      if (!reducedMotion) {
+        var dx = targetX - x;
+        var dy = targetY - y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 28) {
+          chooseTarget();
+        } else {
+          var desiredX = dx / distance * driftSpeed;
+          var desiredY = dy / distance * driftSpeed;
+          vx += (desiredX - vx) * 0.018 * frameScale;
+          vy += (desiredY - vy) * 0.018 * frameScale;
+          x += vx * frameScale;
+          y += vy * frameScale;
+        }
+        phase += 0.018 * frameScale;
+      }
+
+      var bob = reducedMotion ? 0 : Math.sin(phase) * 5;
+      var armSwing = reducedMotion ? 0 : Math.sin(phase * 0.8) * 0.24;
+      drawSprite(x, y + bob, armSwing);
+
+      if (!reducedMotion) window.requestAnimationFrame(render);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    window.requestAnimationFrame(render);
+  }
+
   // ========== 滚动动画 ==========
   function initScrollReveal() {
     var observer = new IntersectionObserver(function (entries) {
@@ -655,6 +791,7 @@
     // 等所有动态内容准备完成后再应用正式配置，避免公开主页首次加载时漏掉样式。
     applyCurrentSiteConfig();
     initParticles();
+    initFloatingClawd();
     initScrollReveal();
 
     window.addEventListener('scroll', handleScroll, { passive: true });

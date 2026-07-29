@@ -633,6 +633,15 @@ test('public page loads config runtime after dynamic rendering and keeps normal 
   assert.doesNotMatch(studioScript, /contenteditable/);
 });
 
+test('the terminal game character floats through the page background without blocking interaction', function () {
+  assert.match(html, /<canvas class="floating-clawd-canvas" id="floatingClawd" aria-hidden="true"><\/canvas>/);
+  assert.match(script, /initParticles\(\);\s*initFloatingClawd\(\);/);
+  assert.match(script, /function initFloatingClawd\(\)/);
+  assert.match(script, /drawSprite\(x, y \+ bob, armSwing\)/);
+  assert.match(script, /prefers-reduced-motion: reduce/);
+  assert.match(css, /\.floating-clawd-canvas\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*-1;[^}]*pointer-events:\s*none;/);
+});
+
 test('mini game uses distance-based obstacle pacing instead of fixed-frame spawning', function () {
   assert.doesNotMatch(script, /frame % 60/);
   assert.match(script, /firstObstacleX\(W\)/);
