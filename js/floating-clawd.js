@@ -9,6 +9,7 @@
   var CROSSING_SECONDS_MIN = 35;
   var CROSSING_SECONDS_MAX = 55;
   var COLLISION_COOLDOWN_MS = 180;
+  var ARM_SWING_RADIANS_PER_SECOND = 1.8;
   var COLLISION_SELECTOR = [
     '.nav',
     '#heroAvatar',
@@ -148,6 +149,7 @@
     var velocity = { x: 0, y: 0 };
     var speed = 0;
     var angle = reducedMotion ? 0 : random() * TAU;
+    var armPhase = reducedMotion ? 0 : random() * TAU;
     var baseAngularVelocity = random() < 0.5 ? -0.16 : 0.16;
     var angularVelocity = baseAngularVelocity;
     var sparks = [];
@@ -459,6 +461,11 @@
       angularVelocity += (baseAngularVelocity - angularVelocity) *
         (1 - Math.exp(-0.65 * deltaSeconds));
       angle = advanceRotation(angle, angularVelocity, deltaSeconds);
+      armPhase = advanceRotation(
+        armPhase,
+        ARM_SWING_RADIANS_PER_SECOND,
+        deltaSeconds
+      );
       updateSparks(deltaSeconds);
     }
 
@@ -474,7 +481,7 @@
       ctx.save();
       ctx.translate(Math.round(position.x), Math.round(position.y));
       ctx.rotate(angle);
-      drawSprite(Math.sin(angle * 1.7) * 0.22);
+      drawSprite(Math.sin(armPhase) * 0.22);
       ctx.restore();
     }
 
@@ -560,6 +567,7 @@
     CROSSING_SECONDS_MIN: CROSSING_SECONDS_MIN,
     CROSSING_SECONDS_MAX: CROSSING_SECONDS_MAX,
     COLLISION_COOLDOWN_MS: COLLISION_COOLDOWN_MS,
+    ARM_SWING_RADIANS_PER_SECOND: ARM_SWING_RADIANS_PER_SECOND,
     COLLISION_SELECTOR: COLLISION_SELECTOR,
     speedForViewport: speedForViewport,
     circleRectCollision: circleRectCollision,

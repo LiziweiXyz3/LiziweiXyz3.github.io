@@ -81,6 +81,12 @@ test('free rotation supports a complete upside-down pose and wraps safely', func
   assert.equal(physics.advanceRotation(0, -Math.PI / 2, 1), Math.PI * 1.5);
 });
 
+test('arm motion uses an independent, slightly faster three-and-a-half-second cycle', function () {
+  assert.equal(physics.ARM_SWING_RADIANS_PER_SECOND, 1.8);
+  const cycleSeconds = Math.PI * 2 / physics.ARM_SWING_RADIANS_PER_SECOND;
+  assert.ok(cycleSeconds > 3.4 && cycleSeconds < 3.6);
+});
+
 test('collision targets use top-level visible blocks instead of nested labels', function () {
   [
     '.nav', '#heroAvatar', '#heroTitle', '.about-card',
