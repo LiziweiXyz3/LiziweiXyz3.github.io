@@ -622,6 +622,8 @@ test('mobile typography and panel keep each item scale reachable', function () {
   assert.match(css, /\.hero-title\s*\{[^}]*var\(--studio-item-scale, 1\)/);
   assert.match(css, /\.nav-link\s*\{[^}]*var\(--studio-item-scale, 1\)/);
   assert.match(css, /@media \(max-width: 640px\)[\s\S]*\.site-studio-panel/);
+  assert.match(css, /@media \(max-width: 480px\)[\s\S]*\.nav-links\s*\{[^}]*grid-template-columns:\s*repeat\(5,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(css, /@media \(max-width: 480px\)[\s\S]*\.nav-link\s*\{[^}]*white-space:\s*nowrap/);
 });
 
 test('public page loads config runtime after dynamic rendering and keeps normal regressions', function () {
@@ -656,6 +658,10 @@ test('the terminal game character floats through the page background without blo
 
 test('mini game uses distance-based obstacle pacing instead of fixed-frame spawning', function () {
   assert.doesNotMatch(script, /frame % 60/);
+  assert.match(script, /var mobileGameCanvas = window\.innerWidth <= 480/);
+  assert.match(script, /canvas\.width = mobileGameCanvas \? 360 : 800/);
+  assert.match(script, /canvas\.height = mobileGameCanvas \? 220 : 280/);
+  assert.match(css, /@media \(max-width: 480px\)[\s\S]*\.dino-game-wrap canvas\s*\{[^}]*width:\s*100%/);
   assert.match(script, /firstObstacleX\(W\)/);
   assert.match(script, /canSpawnObstacle\(W, latest\.x, obstacles\.length, nextObstacleGap\)/);
   assert.match(script, /obstacleGap\(Math\.random\(\)\)/);

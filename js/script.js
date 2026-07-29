@@ -697,8 +697,9 @@
     var scoreEl = document.createElement('div');
     scoreEl.className = 'dino-game-score';
     var canvas = document.createElement('canvas');
-    canvas.width = 800;
-    canvas.height = 280;
+    var mobileGameCanvas = window.innerWidth <= 480;
+    canvas.width = mobileGameCanvas ? 360 : 800;
+    canvas.height = mobileGameCanvas ? 220 : 280;
     wrap.appendChild(scoreEl);
     wrap.appendChild(canvas);
     body.appendChild(wrap);
