@@ -20,8 +20,7 @@ var user = {
   ],
   avatar: "👾",          // 可以用 emoji，后续换成图片路径如 "assets/avatar.png"
   email: "zhongzhengzhng@gmail.com",
-  github: "https://github.com/LiziweiXyz3",
-  location: "中国"
+  github: "https://github.com/LiziweiXyz3"
 };
 
 // ---------- 导航 ----------
@@ -179,8 +178,7 @@ function applySiteConfigGlobals(config) {
     bioParts: configuredUser.bio || user.bioParts,
     avatar: user.avatar,
     email: configuredUser.email || user.email,
-    github: configuredUser.github || user.github,
-    location: configuredUser.location || user.location
+    github: configuredUser.github || user.github
   };
 
   if (Array.isArray(content.nav)) navItems = content.nav;

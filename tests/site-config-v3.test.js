@@ -25,6 +25,14 @@ test('V3 config uses stable ids for reorderable content', function () {
   assert.ok(config.content.about.skills.every((item) => typeof item.id === 'string'));
 });
 
+test('public profile does not expose personal location metadata', function () {
+  const legacyData = fs.readFileSync(path.join(root, 'data.js'), 'utf8');
+
+  assert.equal(Object.hasOwn(config.content.user, 'location'), false);
+  assert.doesNotMatch(legacyData, /\blocation\s*:/);
+  assert.doesNotMatch(legacyData, /configuredUser\.location|user\.location/);
+});
+
 test('site brand uses one Press Start 2P run at twelve pixels', function () {
   assert.equal(config.content.static['nav.brand'], '◈ SUIAN ◈');
   assert.deepEqual(config.styles.elements['nav.brand'], {
