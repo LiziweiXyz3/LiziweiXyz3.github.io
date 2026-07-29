@@ -641,8 +641,10 @@ test('the terminal game character floats through the page background without blo
   assert.match(floatingScript, /function init\(options\)/);
   assert.match(floatingScript, /prefers-reduced-motion: reduce/);
   assert.match(floatingScript, /COLLISION_SELECTOR/);
+  assert.match(floatingScript, /addEventListener\('mousemove', handlePointerMove/);
+  assert.match(floatingScript, /collideWithPointer\(now\)/);
   assert.match(css, /\.floating-clawd-canvas\s*\{[^}]*position:\s*fixed;[^}]*z-index:\s*-1;[^}]*pointer-events:\s*none;/);
-  assert.match(css, /\.floating-clawd-hit\s*\{[^}]*animation:\s*clawd-impact-flash 180ms/);
+  assert.doesNotMatch(css, /floating-clawd-hit|clawd-impact-flash/);
 });
 
 test('mini game uses distance-based obstacle pacing instead of fixed-frame spawning', function () {

@@ -75,6 +75,26 @@
     };
   }
 
+  function circleCircleCollision(first, second) {
+    var dx = first.x - second.x;
+    var dy = first.y - second.y;
+    var radius = first.radius + second.radius;
+    var distanceSquared = dx * dx + dy * dy;
+    if (distanceSquared > radius * radius) return null;
+    var distance = Math.sqrt(distanceSquared);
+    var normal = distance > 0.0001
+      ? { x: dx / distance, y: dy / distance }
+      : { x: 1, y: 0 };
+    return {
+      normal: normal,
+      penetration: radius - distance,
+      point: {
+        x: second.x + normal.x * second.radius,
+        y: second.y + normal.y * second.radius
+      }
+    };
+  }
+
   function reflectVelocity(velocity, normal, restitution) {
     var dot = velocity.x * normal.x + velocity.y * normal.y;
     if (dot >= 0) return { x: velocity.x, y: velocity.y };
@@ -141,6 +161,7 @@
     var edgeCooldowns = Object.create(null);
     var observer = null;
     var palette = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#00ff41', '#b388ff'];
+    var pointer = { x: -1000, y: -1000, radius: 18, active: false };
 
     function readPalette() {
       if (!view.getComputedStyle) return;
@@ -309,16 +330,6 @@
       }
     }
 
-    function flashElement(element) {
-      if (!element || !element.classList) return;
-      element.classList.remove('floating-clawd-hit');
-      void element.offsetWidth;
-      element.classList.add('floating-clawd-hit');
-      view.setTimeout(function () {
-        element.classList.remove('floating-clawd-hit');
-      }, COLLISION_COOLDOWN_MS);
-    }
-
     function canTriggerElement(element, now) {
       if (!elementCooldowns) return true;
       var lastHit = elementCooldowns.get(element) || -Infinity;
@@ -337,7 +348,6 @@
       }
       if (!canTrigger) return;
 
-      if (element) flashElement(element);
       spawnSparks(point);
       var turn = normal.x * velocity.y - normal.y * velocity.x;
       var direction = turn === 0 ? (random() < 0.5 ? -1 : 1) : (turn < 0 ? -1 : 1);
@@ -387,6 +397,28 @@
       }
     }
 
+    function collideWithPointer(now) {
+      if (!pointer.active) return;
+      var collision = circleCircleCollision({
+        x: position.x,
+        y: position.y,
+        radius: collisionRadius
+      }, pointer);
+      if (!collision) return;
+
+      position.x += collision.normal.x * (collision.penetration + 3);
+      position.y += collision.normal.y * (collision.penetration + 3);
+      velocity = reflectVelocity(velocity, collision.normal, 0.96);
+      var outwardSpeed = velocity.x * collision.normal.x + velocity.y * collision.normal.y;
+      var pointerKick = 68;
+      if (outwardSpeed < pointerKick) {
+        velocity.x += collision.normal.x * (pointerKick - outwardSpeed);
+        velocity.y += collision.normal.y * (pointerKick - outwardSpeed);
+      }
+      chooseTarget(collision.normal);
+      triggerImpact(null, collision.point, collision.normal, now, 'pointer');
+    }
+
     function updateSparks(deltaSeconds) {
       for (var index = sparks.length - 1; index >= 0; index--) {
         var spark = sparks[index];
@@ -423,6 +455,7 @@
 
       collideWithViewport(now);
       collideWithElements(now);
+      collideWithPointer(now);
       angularVelocity += (baseAngularVelocity - angularVelocity) *
         (1 - Math.exp(-0.65 * deltaSeconds));
       angle = advanceRotation(angle, angularVelocity, deltaSeconds);
@@ -458,6 +491,16 @@
       collisionDirty = true;
     }
 
+    function handlePointerMove(event) {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = true;
+    }
+
+    function handlePointerLeave() {
+      pointer.active = false;
+    }
+
     function handleResize() {
       resize();
       if (collisionDirty) refreshCollisionTargets();
@@ -469,6 +512,8 @@
       if (frameId) view.cancelAnimationFrame(frameId);
       view.removeEventListener('resize', handleResize);
       view.removeEventListener('scroll', markCollisionDirty);
+      view.removeEventListener('mousemove', handlePointerMove);
+      doc.documentElement.removeEventListener('mouseleave', handlePointerLeave);
       doc.removeEventListener('site:ready', markCollisionDirty);
       if (observer) observer.disconnect();
       canvas.__floatingClawdController = null;
@@ -488,6 +533,8 @@
 
     view.addEventListener('resize', handleResize);
     view.addEventListener('scroll', markCollisionDirty, { passive: true });
+    view.addEventListener('mousemove', handlePointerMove, { passive: true });
+    doc.documentElement.addEventListener('mouseleave', handlePointerLeave);
     doc.addEventListener('site:ready', markCollisionDirty);
     if (view.MutationObserver && doc.body) {
       observer = new view.MutationObserver(markCollisionDirty);
@@ -516,6 +563,7 @@
     COLLISION_SELECTOR: COLLISION_SELECTOR,
     speedForViewport: speedForViewport,
     circleRectCollision: circleRectCollision,
+    circleCircleCollision: circleCircleCollision,
     reflectVelocity: reflectVelocity,
     advanceRotation: advanceRotation,
     advancePosition: advancePosition,

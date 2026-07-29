@@ -50,6 +50,20 @@ test('a character spawned inside a block receives the shortest escape direction'
   assert.equal(collision.penetration, 17);
 });
 
+test('mouse cursor collision reports a stable outward direction and contact point', function () {
+  const collision = physics.circleCircleCollision(
+    { x: 120, y: 80, radius: 30 },
+    { x: 100, y: 80, radius: 18 }
+  );
+  assert.deepEqual(collision.normal, { x: 1, y: 0 });
+  assert.equal(collision.penetration, 28);
+  assert.deepEqual(collision.point, { x: 118, y: 80 });
+  assert.equal(physics.circleCircleCollision(
+    { x: 200, y: 80, radius: 30 },
+    { x: 100, y: 80, radius: 18 }
+  ), null);
+});
+
 test('velocity reflects only when moving into a surface', function () {
   assert.deepEqual(
     physics.reflectVelocity({ x: 20, y: 5 }, { x: -1, y: 0 }, 1),
