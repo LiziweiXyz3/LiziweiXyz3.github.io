@@ -153,8 +153,13 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
 });
 
 test('editor can add and remove About items, project stacks and resume highlights', function () {
-  assert.match(editorScript, /label:\s*'新增属性条'/);
-  assert.match(editorScript, /label:\s*'新增技能'/);
+  assert.match(editorScript, /createGroupHeader\('属性条',[\s\S]*?'新增属性条'/);
+  assert.match(editorScript, /createGroupHeader\('技能',[\s\S]*?'新增技能'/);
+  assert.match(editorScript, /createGroupHeader\('属性条'/);
+  assert.match(editorScript, /createGroupHeader\('技能'/);
+  assert.match(editorScript, /tree-record-remove/);
+  assert.match(editorCss, /\.tree-group-header\s*\{/);
+  assert.match(editorCss, /\.tree-record-remove\s*\{/);
   assert.match(editorScript, /label:\s*'属性条颜色'/);
   assert.match(editorScript, /label:\s*'技能色块颜色'/);
   assert.match(editorScript, /新增技术栈/);

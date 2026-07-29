@@ -333,21 +333,10 @@
       add.addEventListener('click', function (event) { event.preventDefault(); onAddChild(); });
       actions.appendChild(add);
     }
-    var remove = el('button', '', '删除');
-    remove.type = 'button';
-    remove.addEventListener('click', function (event) {
-      event.preventDefault();
-      if (!window.confirm('确定删除这条内容吗？')) return;
-      mutate('delete:' + kind + ':' + id, function () {
-        list.splice(index, 1);
-        selectedKey = null;
-      }, true, true);
-    });
-    actions.appendChild(remove);
     return actions;
   }
 
-  function createRecord(label, items, actions) {
+  function createRecord(label, items, actions, onRemove) {
     var details = el('details', 'tree-record');
     if (items.some(function (item) { return item.key === selectedKey; })) details.open = true;
     details.appendChild(el('summary', '', label));
@@ -373,7 +362,39 @@
     });
     details.appendChild(itemBox);
     if (actions) details.appendChild(actions);
-    return details;
+    if (!onRemove) return details;
+
+    var row = el('div', 'tree-record-row');
+    row.appendChild(details);
+    var removeRecord = el('button', 'tree-record-remove', '删除');
+    removeRecord.type = 'button';
+    removeRecord.setAttribute('aria-label', '删除' + label);
+    removeRecord.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!window.confirm('确定删除“' + label + '”吗？')) return;
+      onRemove();
+    });
+    row.appendChild(removeRecord);
+    return row;
+  }
+
+  function createGroupHeader(label, count, addLabel, addAction) {
+    var header = el('div', 'tree-group-header');
+    header.appendChild(el('span', '', label + '（' + count + '）'));
+    var add = el('button', 'tree-group-add', '＋ 新增');
+    add.type = 'button';
+    add.setAttribute('aria-label', addLabel);
+    add.addEventListener('click', addAction);
+    header.appendChild(add);
+    return header;
+  }
+
+  function removeRecord(kind, id, list, index) {
+    mutate('delete:' + kind + ':' + id, function () {
+      list.splice(index, 1);
+      selectedKey = null;
+    }, true, true);
   }
 
   function createSection(title, records, items, addActions) {
@@ -458,22 +479,23 @@
       return createRecord(stat.name, [
         { key: 'about.stats.' + stat.id + '.name', label: '属性名称' },
         { key: 'about.stats.' + stat.id + '.value', label: '属性数值' }
-      ], recordActions('stat', stat.id, list, index));
+      ], recordActions('stat', stat.id, list, index), function () {
+        removeRecord('stat', stat.id, list, index);
+      });
     });
     var skillRecords = draft.content.about.skills.map(function (skill, index, list) {
       return createRecord(skill.name, [{ key: 'about.skills.' + skill.id, label: '技能文字' }],
-        recordActions('skill', skill.id, list, index));
+        recordActions('skill', skill.id, list, index), function () {
+          removeRecord('skill', skill.id, list, index);
+        });
     });
-    var aboutRecords = [el('div', 'tree-subheading', '属性条')]
-      .concat(statRecords, [el('div', 'tree-subheading', '技能')], skillRecords);
+    var aboutRecords = [createGroupHeader('属性条', statRecords.length, '新增属性条', addStat)]
+      .concat(statRecords, [createGroupHeader('技能', skillRecords.length, '新增技能', addSkill)], skillRecords);
     root.appendChild(createSection('About', aboutRecords, [
       { key: 'about.heading', label: '模块标题' },
       { key: 'about.intro', label: '个人介绍' },
       { key: 'about.statsHeading', label: '属性面板标题' },
       { key: 'about.skillsHeading', label: '技能面板标题' }
-    ], [
-      { label: '新增属性条', onClick: addStat },
-      { label: '新增技能', onClick: addSkill }
     ]));
 
     var projectRecords = draft.content.projects.map(function (project, index, list) {
@@ -500,7 +522,9 @@
           project.tags.push({ id: tagId, text: '新标签' });
           selectedKey = 'projects.' + project.id + '.tag.' + tagId;
         }, true, true);
-      }, '新增技术栈'));
+      }, '新增技术栈'), function () {
+        removeRecord('project', project.id, list, index);
+      });
     });
     root.appendChild(createSection('Projects', projectRecords, [
       { key: 'projects.heading', label: '模块标题' },
@@ -533,7 +557,9 @@
             experience.highlights.push({ id: highlightId, text: '新亮点' });
             selectedKey = 'resume.' + experience.id + '.highlight.' + highlightId;
           }, true, true);
-        }, '新增亮点'));
+        }, '新增亮点'), function () {
+          removeRecord('experience', experience.id, list, index);
+        });
     });
     root.appendChild(createSection('Resume', resumeRecords, [
       { key: 'resume.heading', label: '模块标题' },
