@@ -193,7 +193,10 @@
     });
     clearElement(element);
     var englishClass = element.getAttribute('data-edit-english-class') || 'text-en-body';
-    splitTextByLanguage(text).forEach(function (part) {
+    var parts = element.getAttribute('lang') === 'en'
+      ? [{ lang: 'en', text: String(text || '') }]
+      : splitTextByLanguage(text);
+    parts.forEach(function (part) {
       var span = doc.createElement('span');
       span.lang = part.lang;
       span.className = part.lang === 'zh-CN' ? 'text-cn' : englishClass;

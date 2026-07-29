@@ -69,7 +69,10 @@
       return child.getAttribute && child.getAttribute('data-edit-preserve') === 'true';
     });
     while (element.firstChild) element.removeChild(element.firstChild);
-    languageParts(value).forEach(function (part) {
+    var parts = element.getAttribute('lang') === 'en'
+      ? [{ lang: 'en', text: String(value || '') }]
+      : languageParts(value);
+    parts.forEach(function (part) {
       var span = document.createElement('span');
       span.lang = part.lang;
       span.className = part.lang === 'zh-CN' ? 'text-cn' :

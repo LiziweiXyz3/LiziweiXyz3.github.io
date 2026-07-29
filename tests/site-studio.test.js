@@ -294,6 +294,10 @@ test('edited mixed text keeps separate English and Chinese language nodes', func
   ]);
 });
 
+test('explicitly English editable text keeps punctuation in the English font run', function () {
+  assert.match(studioScript, /element\.getAttribute\('lang'\) === 'en'[\s\S]*lang: 'en'/);
+});
+
 test('applies font, scale, bold and italic independently to sibling Hero text', function () {
   const harness = createStudioHarness(null);
   const controller = api.createController(harness.doc, harness.storage);

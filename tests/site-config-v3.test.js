@@ -25,6 +25,16 @@ test('V3 config uses stable ids for reorderable content', function () {
   assert.ok(config.content.about.skills.every((item) => typeof item.id === 'string'));
 });
 
+test('site brand uses one Press Start 2P run at twelve pixels', function () {
+  assert.equal(config.content.static['nav.brand'], '* SUIAN *');
+  assert.deepEqual(config.styles.elements['nav.brand'], {
+    fontEn: 'press-start',
+    size: 12
+  });
+  assert.match(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /data-edit-key="nav\.brand"[^>]*lang="en">\* SUIAN \*<\/span>/);
+  assert.match(runtimeScript, /element\.getAttribute\('lang'\) === 'en'[\s\S]*lang: 'en'/);
+});
+
 test('project cards use repository-backed stacks and include GameLive ChatBI', function () {
   const projects = Object.fromEntries(config.content.projects.map((item) => [item.id, item]));
 
