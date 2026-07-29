@@ -256,35 +256,17 @@ a:hover { color: var(--yellow); }
 }
 
 .nav-brand {
-  font-family: var(--font-pixel);
+  font-family: 'Press Start 2P', 'Zpix', monospace;
   font-size: var(--type-nav-brand);
   color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
   background: linear-gradient(90deg, var(--blue), var(--red), var(--yellow), var(--green));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.nav-brand::before,
-.nav-brand::after {
-  --brand-mark-color: var(--blue);
-  content: '';
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
-  background:
-    linear-gradient(var(--brand-mark-color), var(--brand-mark-color)) 2px 0 / 2px 2px no-repeat,
-    linear-gradient(var(--brand-mark-color), var(--brand-mark-color)) 0 2px / 2px 2px no-repeat,
-    linear-gradient(var(--brand-mark-color), var(--brand-mark-color)) 4px 2px / 2px 2px no-repeat,
-    linear-gradient(var(--brand-mark-color), var(--brand-mark-color)) 2px 4px / 2px 2px no-repeat;
-  -webkit-text-fill-color: initial;
-}
-
-.nav-brand::after {
-  --brand-mark-color: var(--green);
+.nav-brand .text-en-display {
+  font-family: 'Press Start 2P', 'Zpix', monospace;
 }
 
 .nav-links {
@@ -345,6 +327,9 @@ a:hover { color: var(--yellow); }
 [data-edit-key][data-studio-font="code"],
 [data-edit-key][data-studio-font="code"] [data-studio-text-part] {
   font-family: 'Fira Code', 'FangSong', 'SimSun', 'Zpix', monospace;
+}
+.nav-brand[data-edit-key][data-studio-font="arcade"] .text-en-display {
+  font-family: 'Press Start 2P', 'Zpix', monospace;
 }
 [data-edit-key][data-studio-bold="true"] { font-weight: 700; }
 [data-edit-key][data-studio-italic="true"] { font-style: italic; }

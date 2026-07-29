@@ -26,13 +26,13 @@ test('V3 config uses stable ids for reorderable content', function () {
 });
 
 test('site brand uses one Press Start 2P run at twelve pixels', function () {
-  assert.equal(config.content.static['nav.brand'], 'SUIAN');
+  assert.equal(config.content.static['nav.brand'], '◈ SUIAN ◈');
   assert.deepEqual(config.styles.elements['nav.brand'], {
     fontEn: 'press-start',
     size: 12
   });
-  assert.match(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /data-edit-key="nav\.brand"[^>]*lang="en">SUIAN<\/span>/);
-  assert.match(publicCss, /\.nav-brand::before,\s*\.nav-brand::after\s*\{[\s\S]*2px 0 \/ 2px 2px no-repeat[\s\S]*2px 4px \/ 2px 2px no-repeat/);
+  assert.match(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), /data-edit-key="nav\.brand"[^>]*lang="en">◈ SUIAN ◈<\/span>/);
+  assert.match(publicCss, /\.nav-brand\[data-edit-key\]\[data-studio-font="arcade"\] \.text-en-display\s*\{[^}]*font-family:\s*'Press Start 2P',\s*'Zpix',\s*monospace/);
   assert.match(runtimeScript, /element\.getAttribute\('lang'\) === 'en'[\s\S]*lang: 'en'/);
 });
 
