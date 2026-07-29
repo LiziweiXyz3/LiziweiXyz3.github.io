@@ -80,10 +80,19 @@ var projects = [
     id: 2,
     title: "松绑",
     desc: "面向职场青年的心理韧性训练与理想生活探索工具。",
-    tags: ["React", "Vite", "Tailwind CSS", "PWA"],
+    tags: ["React", "TypeScript", "Vite", "Tailwind CSS", "IndexedDB"],
     status: "wip",
     link: "https://github.com/LiziweiXyz3/songbang",
     icon: "💼"
+  },
+  {
+    id: 3,
+    title: "游戏直播 ChatBI",
+    desc: "面向游戏直播运营团队的对话式数据分析原型，用自然语言完成指标查询与经营诊断。",
+    tags: ["Dify", "FastAPI", "DuckDB", "SQLGlot", "Python"],
+    status: "done",
+    link: "https://github.com/LiziweiXyz3/gamelive-chatbi",
+    icon: "📊"
   }
 ];
 

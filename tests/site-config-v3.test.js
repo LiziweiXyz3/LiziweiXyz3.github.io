@@ -24,6 +24,24 @@ test('V3 config uses stable ids for reorderable content', function () {
   assert.ok(config.content.about.skills.every((item) => typeof item.id === 'string'));
 });
 
+test('project cards use repository-backed stacks and include GameLive ChatBI', function () {
+  const projects = Object.fromEntries(config.content.projects.map((item) => [item.id, item]));
+
+  assert.deepEqual(projects['personal-site'].tags.map((tag) => tag.text), [
+    'HTML', 'CSS', 'JavaScript'
+  ]);
+  assert.deepEqual(projects.songbang.tags.map((tag) => tag.text), [
+    'React', 'TypeScript', 'Vite', 'Tailwind CSS', 'IndexedDB'
+  ]);
+  assert.equal(projects.songbang.status, 'wip');
+
+  assert.equal(projects['gamelive-chatbi'].link, 'https://github.com/LiziweiXyz3/gamelive-chatbi');
+  assert.equal(projects['gamelive-chatbi'].status, 'done');
+  assert.deepEqual(projects['gamelive-chatbi'].tags.map((tag) => tag.text), [
+    'Dify', 'FastAPI', 'DuckDB', 'SQLGlot', 'Python'
+  ]);
+});
+
 test('versioned JSON Schema describes the complete formal configuration', function () {
   assert.equal(schema.properties.version.const, 3);
   assert.ok(schema.$defs.textStyle.properties.fontEn.enum.includes('zpix'));

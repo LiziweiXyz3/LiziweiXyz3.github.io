@@ -184,6 +184,10 @@
             "text": "React"
           },
           {
+            "id": "typescript",
+            "text": "TypeScript"
+          },
+          {
             "id": "vite",
             "text": "Vite"
           },
@@ -192,13 +196,44 @@
             "text": "Tailwind CSS"
           },
           {
-            "id": "pwa",
-            "text": "PWA"
+            "id": "indexeddb",
+            "text": "IndexedDB"
           }
         ],
         "status": "wip",
         "link": "https://github.com/LiziweiXyz3/songbang",
         "icon": "💼",
+        "image": ""
+      },
+      {
+        "id": "gamelive-chatbi",
+        "title": "游戏直播 ChatBI",
+        "description": "面向游戏直播运营团队的对话式数据分析原型，用自然语言完成指标查询与经营诊断。",
+        "tags": [
+          {
+            "id": "dify",
+            "text": "Dify"
+          },
+          {
+            "id": "fastapi",
+            "text": "FastAPI"
+          },
+          {
+            "id": "duckdb",
+            "text": "DuckDB"
+          },
+          {
+            "id": "sqlglot",
+            "text": "SQLGlot"
+          },
+          {
+            "id": "python",
+            "text": "Python"
+          }
+        ],
+        "status": "done",
+        "link": "https://github.com/LiziweiXyz3/gamelive-chatbi",
+        "icon": "📊",
         "image": ""
       }
     ],
@@ -315,7 +350,60 @@
     "sectionGap": 32
   },
   "styles": {
-    "elements": {}
+    "elements": {
+      "projects.personal-site.description": {
+        "fontEn": "zpix",
+        "size": 15,
+        "lineHeight": 1.6
+      },
+      "projects.personal-site.tag.html": {
+        "size": 8
+      },
+      "projects.personal-site.tag.css": {
+        "size": 8
+      },
+      "projects.personal-site.tag.javascript": {
+        "size": 8
+      },
+      "projects.songbang.description": {
+        "size": 15
+      },
+      "projects.songbang.tag.react": {
+        "fontCn": "zpix",
+        "fontEn": "press-start",
+        "size": 8
+      },
+      "projects.songbang.tag.typescript": {
+        "size": 8
+      },
+      "projects.songbang.tag.vite": {
+        "size": 8
+      },
+      "projects.songbang.tag.tailwind": {
+        "size": 8
+      },
+      "projects.songbang.tag.indexeddb": {
+        "size": 8
+      },
+      "projects.gamelive-chatbi.description": {
+        "size": 15
+      },
+      "projects.gamelive-chatbi.tag.dify": {
+        "size": 8
+      },
+      "projects.gamelive-chatbi.tag.fastapi": {
+        "size": 8
+      },
+      "projects.gamelive-chatbi.tag.duckdb": {
+        "size": 8
+      },
+      "projects.gamelive-chatbi.tag.sqlglot": {
+        "size": 8
+      },
+      "projects.gamelive-chatbi.tag.python": {
+        "size": 8
+      }
+    }
   },
   "responsive": {
     "mobile": {}
