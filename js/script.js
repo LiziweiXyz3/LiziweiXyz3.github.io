@@ -443,7 +443,7 @@
 
     function addLine(content, type) {
       var line = document.createElement('div');
-      line.className = 'terminal-line';
+      line.className = 'terminal-line terminal-command-line';
       var output = document.createElement('span');
       output.className = type || 'output';
       output.textContent = partsToText(content);
@@ -686,15 +686,15 @@
 
     var gameBehaviors = window.SiteBehaviors || {};
     var DEFAULT_GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
-      startSpeed: 1, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 600,
-      firstObstacleRatio: 0.6, minObstacleGap: 260, maxObstacleGap: 360, maxObstacles: 3,
-      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, hangFrames: 8,
-      anticipationFrames: 6, landingFrames: 3
+      startSpeed: 0.9, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 900,
+      firstObstacleRatio: 0.6, minObstacleGap: 330, maxObstacleGap: 450, maxObstacles: 2,
+      jumpVelocity: -6.2, riseGravity: 0.16, fallGravity: 0.065, hangFrames: 10,
+      anticipationFrames: 3, landingFrames: 5
     };
     var GAME_CONFIG = Object.assign({}, DEFAULT_GAME_CONFIG,
       window.siteConfig && window.siteConfig.game ? window.siteConfig.game : {});
-    GAME_CONFIG.maxSpeed = Math.min(2.5, Number(GAME_CONFIG.maxSpeed) || 2.5);
-    GAME_CONFIG.startSpeed = Math.min(GAME_CONFIG.maxSpeed, Number(GAME_CONFIG.startSpeed) || 1);
+    GAME_CONFIG.maxSpeed = 1.8;
+    GAME_CONFIG.startSpeed = 0.9;
     var firstObstacleXBase = gameBehaviors.firstObstacleX || function (width, config) {
       config = config || GAME_CONFIG;
       return Math.round(width * config.firstObstacleRatio);
@@ -746,7 +746,9 @@
 
     function chooseSequence() {
       var enabled = (GAME_CONFIG.sequences || []).filter(function (sequence) {
-        return sequence && sequence.enabled !== false && sequence.items && sequence.items.length;
+        if (!sequence || sequence.enabled === false || !sequence.items || !sequence.items.length) return false;
+        return !gameBehaviors.isSequencePlayable ||
+          gameBehaviors.isSequencePlayable(sequence, speed, GAME_CONFIG);
       });
       if (!enabled.length) return { items: [{ type: Math.random() < 0.35 ? 'cactus-big' : 'cactus-small', gap: 0 }] };
       var total = enabled.reduce(function (sum, sequence) { return sum + Math.max(1, Number(sequence.weight) || 1); }, 0);

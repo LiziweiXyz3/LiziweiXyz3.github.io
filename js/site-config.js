@@ -142,6 +142,13 @@
     Object.keys(sourceStyles).slice(0, 500).forEach(function (key) {
       if (/^[a-z0-9._-]{1,120}$/i.test(key)) result.styles.elements[key] = normalizeElementStyle(sourceStyles[key]);
     });
+    ['terminal.intro', 'terminal.prompt', 'terminal.inputPlaceholder'].forEach(function (key) {
+      result.styles.elements[key] = Object.assign({}, result.styles.elements[key] || {}, {
+        fontCn: 'zpix',
+        fontEn: 'zpix',
+        size: 15
+      });
+    });
     result.responsive = { mobile: {} };
     var mobile = source.responsive && isObject(source.responsive.mobile) ? source.responsive.mobile : {};
     Object.keys(mobile).slice(0, 500).forEach(function (key) {
@@ -188,7 +195,8 @@
       sequences: (Array.isArray(sourceGame.sequences) ? sourceGame.sequences : [])
         .slice(0, 12).map(normalizeSequence).filter(function (sequence) { return sequence.items.length > 0; })
     };
-    if (result.game.startSpeed > result.game.maxSpeed) result.game.startSpeed = result.game.maxSpeed;
+    result.game.startSpeed = 0.9;
+    result.game.maxSpeed = 1.8;
     if (result.game.minObstacleGap > result.game.maxObstacleGap) {
       result.game.maxObstacleGap = result.game.minObstacleGap;
     }

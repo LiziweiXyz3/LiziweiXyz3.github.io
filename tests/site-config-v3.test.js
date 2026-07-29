@@ -69,41 +69,23 @@ test('normalization caps game speed and preserves per-element styles', function 
     color: '#ffffff'
   };
   const normalized = api.normalizeConfig(next, config);
-  assert.equal(normalized.game.maxSpeed, 2.5);
-  assert.equal(normalized.game.startSpeed, 2.5);
+  assert.equal(normalized.game.maxSpeed, 1.8);
+  assert.equal(normalized.game.startSpeed, 0.9);
   assert.equal(normalized.game.hangFrames, 30);
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].fontCn, 'cubic-11');
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].mobileSize, 20);
 });
 
-test('friendly game presets remain playable and respect the speed cap', function () {
-  const presets = [
-    {
-      startSpeed: 0.8, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 900,
-      jumpVelocity: -6.2, riseGravity: 0.16, fallGravity: 0.065, hangFrames: 10,
-      anticipationFrames: 3, landingFrames: 5,
-      maxObstacles: 2, minObstacleGap: 330, maxObstacleGap: 450
-    },
-    {
-      startSpeed: 1, maxSpeed: 2.2, speedStep: 0.1, speedEveryFrames: 720,
-      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, hangFrames: 8,
-      anticipationFrames: 4, landingFrames: 4,
-      maxObstacles: 3, minObstacleGap: 270, maxObstacleGap: 380
-    },
-    {
-      startSpeed: 1.2, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 480,
-      jumpVelocity: -6, riseGravity: 0.2, fallGravity: 0.1, hangFrames: 6,
-      anticipationFrames: 3, landingFrames: 3,
-      maxObstacles: 3, minObstacleGap: 220, maxObstacleGap: 310
-    }
-  ];
-
-  presets.forEach(function (preset) {
-    const next = api.clone(config);
-    Object.assign(next.game, preset);
-    assert.ok(next.game.maxSpeed <= 2.5);
-    assert.equal(api.validateConfig(next).valid, true);
-  });
+test('formal game configuration uses the fixed playable speed range', function () {
+  assert.equal(config.game.startSpeed, 0.9);
+  assert.equal(config.game.maxSpeed, 1.8);
+  assert.equal(api.validateConfig(config).valid, true);
+  const stale = api.clone(config);
+  stale.game.startSpeed = 1.2;
+  stale.game.maxSpeed = 2.5;
+  const normalized = api.normalizeConfig(stale, config);
+  assert.equal(normalized.game.startSpeed, 0.9);
+  assert.equal(normalized.game.maxSpeed, 1.8);
 });
 
 test('every typography property updates independently without touching sibling fields or modules', function () {
@@ -279,8 +261,9 @@ test('editor uses a two-column preview and contextual editor without redundant t
   assert.match(editorHtml, /打开公开主页|公开主页/);
   assert.match(editorHtml, /data-view="element"/);
   assert.match(editorHtml, /data-view="cursor"/);
-  assert.match(editorHtml, /data-view="game"/);
   assert.match(editorHtml, /data-view="history"/);
+  assert.doesNotMatch(editorHtml, /data-view="game"|终端小游戏|更多微调（一般不用改）/);
+  assert.doesNotMatch(editorScript, /createToolItem\('game'|GAME_PRESETS|startGamePreview|renderGame/);
   assert.doesNotMatch(editorHtml, /data-tab=/);
   assert.doesNotMatch(editorHtml, /studio-topbar|hidePreviewButton|showPreviewButton|折叠预览|手机字号|data-viewport|typewriterControl|自定义光标|heroStandUpload|projectIconUpload|旧版草稿工具/);
   assert.doesNotMatch(editorHtml, /data-view="theme"|data-view="effects"/);
@@ -316,6 +299,20 @@ test('element formatting applies only the properties explicitly changed', functi
   assert.match(editorScript, /function mutateElementStyle/);
   assert.match(editorScript, /SiteConfig\.updateElementStyle\(draft, targetKey, property, value\)/);
   assert.doesNotMatch(editorScript, /styleForKey\(/);
+  assert.match(editorHtml, /id="terminalTypographyNotice"[^>]*>终端命令文字已统一为 Zpix · 15px/);
+  assert.match(editorScript, /usesLockedTerminalTypography[\s\S]*?'terminal\.intro'[\s\S]*?'terminal\.prompt'[\s\S]*?'terminal\.inputPlaceholder'/);
+  assert.match(editorScript, /sizeField'\)\.hidden = usesLockedTerminalTypography/);
+  const staleTerminal = api.clone(config);
+  staleTerminal.styles.elements['terminal.prompt'] = { fontEn: 'fira-code', size: 22 };
+  const normalizedTerminal = api.normalizeConfig(staleTerminal, config);
+  assert.deepEqual(
+    {
+      fontCn: normalizedTerminal.styles.elements['terminal.prompt'].fontCn,
+      fontEn: normalizedTerminal.styles.elements['terminal.prompt'].fontEn,
+      size: normalizedTerminal.styles.elements['terminal.prompt'].size
+    },
+    { fontCn: 'zpix', fontEn: 'zpix', size: 15 }
+  );
 });
 
 test('editor distinguishes gradient text from solid colors and labels the quick palette', function () {
@@ -361,20 +358,11 @@ test('editor can add and remove About items, project stacks and resume highlight
   assert.match(editorScript, /Press Start 2P 的视觉尺寸偏大/);
 });
 
-test('game editor leads with friendly presets and hides technical tuning by default', function () {
-  assert.match(editorHtml, /推荐手感/);
-  assert.match(editorHtml, /data-game-preset="easy"[\s\S]*?>轻松</);
-  assert.match(editorHtml, /data-game-preset="balanced"[\s\S]*?>标准</);
-  assert.match(editorHtml, /data-game-preset="challenge"[\s\S]*?>挑战</);
-  assert.match(editorHtml, /更多微调（一般不用改）/);
-  assert.match(editorHtml, /刚开始跑多快/);
-  assert.match(editorHtml, /越小，落地越慢/);
-  assert.doesNotMatch(editorHtml, /加速间隔（帧）|上升重力|下降重力|最高点滞空帧|出现权重/);
-  assert.match(editorScript, /var GAME_PRESETS = \{/);
-  assert.match(editorScript, /function updateGameSummary\(\)/);
-  assert.match(editorScript, /function friendlyGameErrors\(errors\)/);
-  assert.match(editorScript, /maxSpeed:\s*2\.5/);
-  assert.match(editorCss, /\.game-presets\s*\{/);
+test('game tuning is an internal website behavior rather than an editor feature', function () {
+  assert.doesNotMatch(editorHtml, /gameStartSpeed|gameJumpVelocity|sequenceEditor|testGameButton/);
+  assert.doesNotMatch(editorScript, /gameStartSpeed|gameJumpVelocity|sequence:add|studio:start-game/);
+  assert.match(publicScript, /GAME_CONFIG\.maxSpeed = 1\.8/);
+  assert.match(publicScript, /GAME_CONFIG\.startSpeed = 0\.9/);
 });
 
 test('reorderable content uses drag handles instead of visible move buttons', function () {

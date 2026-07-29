@@ -55,20 +55,20 @@ test('avatar accumulates smooth-scroll movement before changing state', function
 
 test('mini game difficulty uses the agreed capped speed constants', function () {
   assert.deepEqual(api.GAME_CONFIG, {
-    startSpeed: 1,
-    maxSpeed: 2.5,
-    speedStep: 0.15,
-    speedEveryFrames: 600,
+    startSpeed: 0.9,
+    maxSpeed: 1.8,
+    speedStep: 0.05,
+    speedEveryFrames: 900,
     firstObstacleRatio: 0.6,
-    minObstacleGap: 260,
-    maxObstacleGap: 360,
-    maxObstacles: 3,
-    jumpVelocity: -6,
-    riseGravity: 0.18,
-    fallGravity: 0.08,
-    hangFrames: 8,
-    anticipationFrames: 6,
-    landingFrames: 3,
+    minObstacleGap: 330,
+    maxObstacleGap: 450,
+    maxObstacles: 2,
+    jumpVelocity: -6.2,
+    riseGravity: 0.16,
+    fallGravity: 0.065,
+    hangFrames: 10,
+    anticipationFrames: 3,
+    landingFrames: 5,
     sequences: []
   });
 });
@@ -90,18 +90,47 @@ test('mini game descends more slowly than it rises', function () {
     }
   } while (y < 0 && riseFrames + fallFrames < 180);
 
-  assert.ok(riseFrames >= 33 && riseFrames <= 35);
-  assert.ok(fallFrames >= 49 && fallFrames <= 51);
+  assert.ok(riseFrames >= 38 && riseFrames <= 40);
+  assert.ok(fallFrames >= 61 && fallFrames <= 63);
   assert.ok(fallFrames >= riseFrames * 1.4);
   assert.ok(velocity <= 4.2);
 });
 
-test('mini game pacing starts nearer and spaces at most three obstacles by distance', function () {
+test('mini game pacing starts nearer and spaces at most two obstacles by distance', function () {
   assert.equal(api.firstObstacleX(800), 480);
-  assert.equal(api.obstacleGap(0), 260);
-  assert.equal(api.obstacleGap(0.5), 310);
-  assert.equal(api.obstacleGap(1), 360);
-  assert.equal(api.canSpawnObstacle(800, 600, 1, 260), false);
-  assert.equal(api.canSpawnObstacle(800, 540, 1, 260), true);
-  assert.equal(api.canSpawnObstacle(800, 400, 3, 260), false);
+  assert.equal(api.obstacleGap(0), 330);
+  assert.equal(api.obstacleGap(0.5), 390);
+  assert.equal(api.obstacleGap(1), 450);
+  assert.equal(api.canSpawnObstacle(800, 600, 1, 330), false);
+  assert.equal(api.canSpawnObstacle(800, 470, 1, 330), true);
+  assert.equal(api.canSpawnObstacle(800, 400, 2, 330), false);
+});
+
+test('multi-obstacle sequences unlock only when the current speed makes them passable', function () {
+  const config = {
+    ...api.GAME_CONFIG,
+    startSpeed: 0.9,
+    maxSpeed: 1.8,
+    maxObstacles: 2,
+    jumpVelocity: -6.2,
+    riseGravity: 0.16,
+    fallGravity: 0.065,
+    hangFrames: 10
+  };
+  const doubleSmall = {
+    items: [
+      { type: 'cactus-small', gap: 28 },
+      { type: 'cactus-small', gap: 0 }
+    ]
+  };
+  const mixed = {
+    items: [
+      { type: 'cactus-small', gap: 42 },
+      { type: 'cactus-big', gap: 0 }
+    ]
+  };
+
+  assert.equal(api.isSequencePlayable(doubleSmall, 0.9, config), true);
+  assert.equal(api.isSequencePlayable(mixed, 0.9, config), false);
+  assert.equal(api.isSequencePlayable(mixed, 1.2, config), true);
 });

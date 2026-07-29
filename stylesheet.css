@@ -1081,6 +1081,12 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   margin-bottom: 4px;
   white-space: pre-wrap;
 }
+.terminal-command-line,
+.terminal-command-line [lang],
+.terminal-command-line input {
+  font-family: 'Zpix', monospace !important;
+  font-size: 15px !important;
+}
 .terminal-line .prompt { color: var(--green); }
 .terminal-line .cmd    { color: #fff; }
 .terminal-line .output { color: var(--terminal); opacity: 0.85; }
@@ -1105,12 +1111,10 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   caret-color: var(--terminal);
 }
 
-/* input 无法拆成语言 span，直接把当前英文字体应用到输入内容与 placeholder。 */
+/* 终端命令区统一使用 Zpix 15px，避免动态命令输出出现中英文字号差异。 */
 .terminal-input[data-edit-key] {
-  font-family: 'VT323', 'Zpix', monospace;
-}
-.terminal-input[data-edit-key][data-studio-font-en="true"] {
-  font-family: var(--studio-font-en) !important;
+  font-family: 'Zpix', monospace !important;
+  font-size: 15px !important;
 }
 
 .terminal-footer {
@@ -1410,6 +1414,14 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
 [data-edit-key][data-studio-font-en="true"] [lang="en"],
 [data-edit-key][data-studio-font-en="true"][lang="en"] {
   font-family: var(--studio-font-en) !important;
+}
+
+/* 命令交互文字采用固定字号与字体；编辑器中的历史样式不能覆盖它。 */
+.terminal-command-line [data-edit-key],
+.terminal-command-line [data-edit-key] [lang],
+.terminal-command-line input[data-edit-key] {
+  font-family: 'Zpix', monospace !important;
+  font-size: 15px !important;
 }
 
 /* 年份和“至今”属于同一个日期标签，统一使用中文像素字体，避免数字视觉高度偏小。 */

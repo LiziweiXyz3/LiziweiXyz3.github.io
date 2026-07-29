@@ -573,9 +573,11 @@ test('reopening returns to the panel top when the previously selected item disap
   assert.equal(harness.panel.scrollTop, 0);
 });
 
-test('terminal input applies the current V3 English font directly to its placeholder', function () {
-  assert.match(css, /\.terminal-input\[data-edit-key\][^{]*\{[^}]*font-family:\s*'VT323',\s*'Zpix',\s*monospace/);
-  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-studio-font-en="true"\][^{]*\{[^}]*font-family:\s*var\(--studio-font-en\)\s*!important/);
+test('all terminal command copy uses fixed Zpix at 15px', function () {
+  assert.match(html, /terminal-line terminal-command-line/);
+  assert.match(script, /line\.className = 'terminal-line terminal-command-line'/);
+  assert.match(css, /\.terminal-command-line[\s\S]*?font-family:\s*'Zpix',\s*monospace\s*!important;[\s\S]*?font-size:\s*15px\s*!important;/);
+  assert.match(css, /\.terminal-command-line \[data-edit-key\][\s\S]*?font-family:\s*'Zpix',\s*monospace\s*!important;[\s\S]*?font-size:\s*15px\s*!important;/);
 });
 
 test('studio CSS applies per-item scaling, font presets and selected states', function () {
@@ -623,6 +625,7 @@ test('mini game uses distance-based obstacle pacing instead of fixed-frame spawn
   assert.match(script, /firstObstacleX\(W\)/);
   assert.match(script, /canSpawnObstacle\(W, latest\.x, obstacles\.length, nextObstacleGap\)/);
   assert.match(script, /obstacleGap\(Math\.random\(\)\)/);
+  assert.match(script, /gameBehaviors\.isSequencePlayable\(sequence, speed, GAME_CONFIG\)/);
 });
 
 test('mini game reads its slower jump physics from shared configuration', function () {

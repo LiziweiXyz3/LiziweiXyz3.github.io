@@ -7,20 +7,20 @@
   'use strict';
 
   var GAME_CONFIG = Object.freeze({
-    startSpeed: 1,
-    maxSpeed: 2.5,
-    speedStep: 0.15,
-    speedEveryFrames: 600,
+    startSpeed: 0.9,
+    maxSpeed: 1.8,
+    speedStep: 0.05,
+    speedEveryFrames: 900,
     firstObstacleRatio: 0.6,
-    minObstacleGap: 260,
-    maxObstacleGap: 360,
-    maxObstacles: 3,
-    jumpVelocity: -6,
-    riseGravity: 0.18,
-    fallGravity: 0.08,
-    hangFrames: 8,
-    anticipationFrames: 6,
-    landingFrames: 3,
+    minObstacleGap: 330,
+    maxObstacleGap: 450,
+    maxObstacles: 2,
+    jumpVelocity: -6.2,
+    riseGravity: 0.16,
+    fallGravity: 0.065,
+    hangFrames: 10,
+    anticipationFrames: 3,
+    landingFrames: 5,
     sequences: []
   });
 
@@ -62,6 +62,64 @@
   function canSpawnObstacle(width, latestX, count, nextGap, config) {
     var active = config || GAME_CONFIG;
     return count < Number(active.maxObstacles) && Number(width) - Number(latestX) >= Number(nextGap);
+  }
+
+  function obstacleWidth(type) {
+    return type === 'cactus-big' ? 16 : 10;
+  }
+
+  function sequenceSpan(sequence, config) {
+    var active = config || GAME_CONFIG;
+    var items = sequence && Array.isArray(sequence.items)
+      ? sequence.items.slice(0, Number(active.maxObstacles) || 1) : [];
+    return items.reduce(function (span, item, index) {
+      var gap = index < items.length - 1 ? Math.max(24, Number(item.gap) || 40) : 0;
+      return span + obstacleWidth(item.type) + gap;
+    }, 0);
+  }
+
+  function jumpClearanceFrames(config, obstacleHeight) {
+    var active = config || GAME_CONFIG;
+    var velocity = Number(active.jumpVelocity);
+    var riseGravity = Number(active.riseGravity);
+    var fallGravity = Number(active.fallGravity);
+    var hangFrames = Math.max(0, Number(active.hangFrames) || 0);
+    var requiredRise = Math.max(0, Number(obstacleHeight) - 4);
+    var displacement = 0;
+    var hangTimer = 0;
+    var clearFrames = 0;
+
+    for (var frame = 0; frame < 360; frame++) {
+      if (hangTimer > 0) {
+        hangTimer--;
+      } else {
+        displacement -= velocity;
+        var nextVelocity = velocity + (velocity < 0 ? riseGravity : fallGravity);
+        if (velocity < 0 && nextVelocity >= 0 && hangFrames > 0) {
+          velocity = 0;
+          hangTimer = hangFrames;
+        } else {
+          velocity = nextVelocity;
+        }
+      }
+      if (displacement >= requiredRise) clearFrames++;
+      if (frame > 0 && displacement <= 0 && velocity > 0) break;
+    }
+    return clearFrames;
+  }
+
+  function isSequencePlayable(sequence, speed, config) {
+    var active = config || GAME_CONFIG;
+    var items = sequence && Array.isArray(sequence.items)
+      ? sequence.items.slice(0, Number(active.maxObstacles) || 1) : [];
+    if (items.length <= 1) return true;
+
+    var tallest = items.some(function (item) { return item.type === 'cactus-big'; }) ? 38 : 26;
+    var availableDistance = jumpClearanceFrames(active, tallest) * Math.max(0, Number(speed) || 0);
+    var playerCollisionWidth = 30;
+    var timingMargin = 8;
+    var requiredDistance = sequenceSpan({ items: items }, active) + playerCollisionWidth + timingMargin;
+    return availableDistance >= requiredDistance;
   }
 
   function createAvatarController(image, getScrollY, options) {
@@ -109,6 +167,9 @@
     firstObstacleX: firstObstacleX,
     obstacleGap: obstacleGap,
     canSpawnObstacle: canSpawnObstacle,
+    sequenceSpan: sequenceSpan,
+    jumpClearanceFrames: jumpClearanceFrames,
+    isSequencePlayable: isSequencePlayable,
     createAvatarController: createAvatarController
   };
 });
