@@ -15,6 +15,8 @@
   var SIDE_LANE_GAP = 18;
   var DEFAULT_BODY_COLOR = '#DA7756';
   var COMPLEMENTARY_BODY_COLOR = '#56B9DA';
+  var activeCharacters = [];
+  var nextCharacterId = 1;
   var COLLISION_SELECTOR = [
     '.nav',
     '#heroAvatar',
@@ -111,6 +113,32 @@
     };
   }
 
+  function resolveEqualMassCollision(firstVelocity, secondVelocity, normal, restitution) {
+    var relativeX = firstVelocity.x - secondVelocity.x;
+    var relativeY = firstVelocity.y - secondVelocity.y;
+    var approachSpeed = relativeX * normal.x + relativeY * normal.y;
+    if (approachSpeed >= 0) {
+      return {
+        first: { x: firstVelocity.x, y: firstVelocity.y },
+        second: { x: secondVelocity.x, y: secondVelocity.y }
+      };
+    }
+
+    var bounce = Number(restitution);
+    if (!Number.isFinite(bounce)) bounce = 0.92;
+    var impulse = -(1 + bounce) * approachSpeed / 2;
+    return {
+      first: {
+        x: firstVelocity.x + impulse * normal.x,
+        y: firstVelocity.y + impulse * normal.y
+      },
+      second: {
+        x: secondVelocity.x - impulse * normal.x,
+        y: secondVelocity.y - impulse * normal.y
+      }
+    };
+  }
+
   function advanceRotation(angle, angularVelocity, deltaSeconds) {
     var next = (angle + angularVelocity * deltaSeconds) % TAU;
     return next < 0 ? next + TAU : next;
@@ -200,6 +228,8 @@
     var palette = ['#4285F4', '#EA4335', '#FBBC05', '#34A853', '#00ff41', '#b388ff'];
     var pointer = { x: -1000, y: -1000, radius: 18, active: false };
     var sideLanes = null;
+    var characterId = nextCharacterId++;
+    var characterInstance = null;
     var bodyColor = typeof options.bodyColor === 'string' && options.bodyColor.trim()
       ? options.bodyColor.trim()
       : DEFAULT_BODY_COLOR;
@@ -522,6 +552,65 @@
       triggerImpact(null, collision.point, collision.normal, now, 'pointer');
     }
 
+    function receiveCharacterCollision(displacement, nextVelocity, awayNormal, point, now, otherId) {
+      position.x += displacement.x;
+      position.y += displacement.y;
+      velocity = nextVelocity;
+      chooseTarget(awayNormal);
+      triggerImpact(null, point, awayNormal, now, 'clawd-' + otherId);
+    }
+
+    function collideWithCharacters(now) {
+      if (!characterInstance) return;
+      for (var index = 0; index < activeCharacters.length; index++) {
+        var other = activeCharacters[index];
+        if (other.id <= characterId) continue;
+
+        var collision = circleCircleCollision(
+          { x: position.x, y: position.y, radius: collisionRadius },
+          other.getCircle()
+        );
+        if (!collision) continue;
+
+        var separation = (collision.penetration + 3) / 2;
+        position.x += collision.normal.x * separation;
+        position.y += collision.normal.y * separation;
+
+        var resolved = resolveEqualMassCollision(
+          velocity,
+          other.getVelocity(),
+          collision.normal,
+          0.92
+        );
+        velocity = resolved.first;
+        chooseTarget(collision.normal);
+        triggerImpact(
+          null,
+          collision.point,
+          collision.normal,
+          now,
+          'clawd-' + other.id
+        );
+
+        var oppositeNormal = {
+          x: -collision.normal.x,
+          y: -collision.normal.y
+        };
+        other.receiveCollision(
+          {
+            x: oppositeNormal.x * separation,
+            y: oppositeNormal.y * separation
+          },
+          resolved.second,
+          oppositeNormal,
+          collision.point,
+          now,
+          characterId
+        );
+        break;
+      }
+    }
+
     function updateSparks(deltaSeconds) {
       for (var index = sparks.length - 1; index >= 0; index--) {
         var spark = sparks[index];
@@ -560,6 +649,7 @@
       collideWithViewport(now);
       collideWithElements(now);
       collideWithPointer(now);
+      collideWithCharacters(now);
       angularVelocity += (baseAngularVelocity - angularVelocity) *
         (1 - Math.exp(-0.65 * deltaSeconds));
       angle = advanceRotation(angle, angularVelocity, deltaSeconds);
@@ -626,6 +716,9 @@
       doc.documentElement.removeEventListener('mouseleave', handlePointerLeave);
       doc.removeEventListener('site:ready', markCollisionDirty);
       if (observer) observer.disconnect();
+      activeCharacters = activeCharacters.filter(function (character) {
+        return character.id !== characterId;
+      });
       canvas.__floatingClawdController = null;
     }
 
@@ -657,6 +750,22 @@
       });
     }
 
+    characterInstance = {
+      id: characterId,
+      getCircle: function () {
+        return {
+          x: position.x,
+          y: position.y,
+          radius: collisionRadius
+        };
+      },
+      getVelocity: function () {
+        return { x: velocity.x, y: velocity.y };
+      },
+      receiveCollision: receiveCharacterCollision
+    };
+    activeCharacters.push(characterInstance);
+
     var controller = {
       cleanup: cleanup,
       refreshCollisions: markCollisionDirty
@@ -681,6 +790,7 @@
     circleRectCollision: circleRectCollision,
     circleCircleCollision: circleCircleCollision,
     reflectVelocity: reflectVelocity,
+    resolveEqualMassCollision: resolveEqualMassCollision,
     advanceRotation: advanceRotation,
     advancePosition: advancePosition,
     collisionReady: collisionReady,

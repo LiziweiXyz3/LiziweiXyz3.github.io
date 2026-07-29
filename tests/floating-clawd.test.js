@@ -75,6 +75,26 @@ test('velocity reflects only when moving into a surface', function () {
   );
 });
 
+test('equal-mass Clawds bounce away from each other without gaining speed', function () {
+  const resolved = physics.resolveEqualMassCollision(
+    { x: 20, y: 0 },
+    { x: -10, y: 0 },
+    { x: -1, y: 0 },
+    1
+  );
+  assert.deepEqual(resolved.first, { x: -10, y: 0 });
+  assert.deepEqual(resolved.second, { x: 20, y: 0 });
+
+  const alreadySeparating = physics.resolveEqualMassCollision(
+    { x: -10, y: 0 },
+    { x: 20, y: 0 },
+    { x: -1, y: 0 },
+    1
+  );
+  assert.deepEqual(alreadySeparating.first, { x: -10, y: 0 });
+  assert.deepEqual(alreadySeparating.second, { x: 20, y: 0 });
+});
+
 test('free rotation supports a complete upside-down pose and wraps safely', function () {
   assert.equal(physics.advanceRotation(0, Math.PI, 1), Math.PI);
   assert.equal(physics.advanceRotation(0, Math.PI, 2), 0);
