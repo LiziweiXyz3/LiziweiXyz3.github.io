@@ -741,6 +741,11 @@
   }
   function updateFontVisualHint() {
     var hint = byId('fontVisualHint');
+    var usesUnifiedDateFont = /^resume\.[^.]+\.period$/.test(selectedKey || '');
+    if (usesUnifiedDateFont) {
+      hint.hidden = true;
+      return;
+    }
     var isPressStart = byId('fontEnControl').value === 'press-start';
     hint.hidden = !isPressStart;
     if (!isPressStart) return;
@@ -768,8 +773,12 @@
     byId('textControl').value = currentText;
     var hasChinese = /[\u3400-\u9fff]/.test(currentText);
     var hasLatin = /[A-Za-z]/.test(currentText);
+    var usesUnifiedDateFont = /^resume\.[^.]+\.period$/.test(selectedKey);
+    byId('fontCnField').querySelector('span').textContent = usesUnifiedDateFont
+      ? '日期字体（数字与中文统一）'
+      : '中文字体';
     byId('fontCnField').hidden = !hasChinese && hasLatin;
-    byId('fontEnField').hidden = !hasLatin && hasChinese;
+    byId('fontEnField').hidden = usesUnifiedDateFont || (!hasLatin && hasChinese);
     byId('fontCnControl').value = style.fontCn || defaults.fontCn || 'zpix';
     byId('fontEnControl').value = style.fontEn || defaults.fontEn || 'vt323';
     byId('sizeControl').value = style.size || defaults.size || 16;

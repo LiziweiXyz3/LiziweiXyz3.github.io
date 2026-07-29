@@ -1406,6 +1406,11 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   font-family: var(--studio-font-en) !important;
 }
 
+/* 年份和“至今”属于同一个日期标签，统一使用中文像素字体，避免数字视觉高度偏小。 */
+[data-edit-key][data-edit-unified-font="cn"] [data-studio-text-part] {
+  font-family: var(--studio-font-cn, var(--font-cn-pixel)) !important;
+}
+
 [data-edit-key][data-studio-style="true"][data-studio-italic="true"] {
   font-style: italic;
 }

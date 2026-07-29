@@ -382,6 +382,7 @@
 
       var field = document.createElement('div');
       field.className = 'node-period ' + exp.type;
+      field.setAttribute('data-edit-unified-font', 'cn');
       renderTextParts(field, exp.periodParts || exp.period);
       setEditKey(field, 'resume.' + experienceId + '.period', partsToText(exp.periodParts || exp.period), exp.company + ' · 时间');
       node.appendChild(field);

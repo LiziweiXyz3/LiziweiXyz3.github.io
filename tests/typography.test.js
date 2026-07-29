@@ -57,6 +57,8 @@ test('hero scroll hint separates its Chinese copy from the ENTER key', () => {
 
 test('resume follows the agreed hierarchy and terminal copy uses readable defaults', () => {
   assert.match(script, /node-period[\s\S]*?node-company[\s\S]*?node-title[\s\S]*?node-desc[\s\S]*?node-tags/);
+  assert.match(script, /node-period[\s\S]*?data-edit-unified-font', 'cn'/);
+  assert.match(css, /data-edit-unified-font="cn"[\s\S]*?font-family:\s*var\(--studio-font-cn,\s*var\(--font-cn-pixel\)\)\s*!important/);
   assert.match(css, /--base-type-resume-company:\s*1\.25rem/);
   assert.match(css, /--base-type-resume-title:\s*1\.0625rem/);
   assert.match(css, /--base-type-resume-body:\s*1rem/);
