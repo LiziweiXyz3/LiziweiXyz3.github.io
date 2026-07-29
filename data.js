@@ -88,7 +88,7 @@ var projects = [
   {
     id: 3,
     title: "游戏直播 ChatBI",
-    desc: "面向游戏直播运营团队的对话式数据分析原型，用自然语言完成指标查询与经营诊断。",
+    desc: "用自然语言查询并诊断游戏直播经营数据。",
     tags: ["Dify", "FastAPI", "DuckDB", "SQLGlot", "Python"],
     status: "done",
     link: "https://github.com/LiziweiXyz3/gamelive-chatbi",

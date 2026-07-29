@@ -208,7 +208,7 @@
       {
         "id": "gamelive-chatbi",
         "title": "游戏直播 ChatBI",
-        "description": "面向游戏直播运营团队的对话式数据分析原型，用自然语言完成指标查询与经营诊断。",
+        "description": "用自然语言查询并诊断游戏直播经营数据。",
         "tags": [
           {
             "id": "dify",

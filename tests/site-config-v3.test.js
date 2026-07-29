@@ -37,6 +37,7 @@ test('project cards use repository-backed stacks and include GameLive ChatBI', f
 
   assert.equal(projects['gamelive-chatbi'].link, 'https://github.com/LiziweiXyz3/gamelive-chatbi');
   assert.equal(projects['gamelive-chatbi'].status, 'done');
+  assert.equal(projects['gamelive-chatbi'].description, '用自然语言查询并诊断游戏直播经营数据。');
   assert.deepEqual(projects['gamelive-chatbi'].tags.map((tag) => tag.text), [
     'Dify', 'FastAPI', 'DuckDB', 'SQLGlot', 'Python'
   ]);
