@@ -12,6 +12,8 @@
   var previewReady = false;
   var gamePreviewTimer = null;
   var activeDrag = null;
+  var pendingConfirm = null;
+  var confirmReturnFocus = null;
 
   function byId(id) { return document.getElementById(id); }
   function clone(value) { return window.SiteConfig.clone(value); }
@@ -52,6 +54,35 @@
     node.hidden = false;
     window.clearTimeout(toast.timer);
     toast.timer = window.setTimeout(function () { node.hidden = true; }, 2600);
+  }
+  function closeConfirm() {
+    var panel = byId('confirmPanel');
+    panel.hidden = true;
+    pendingConfirm = null;
+    if (confirmReturnFocus && confirmReturnFocus.focus) confirmReturnFocus.focus();
+    confirmReturnFocus = null;
+  }
+  function confirmAction(message, confirmLabel, callback) {
+    confirmReturnFocus = document.activeElement;
+    pendingConfirm = callback;
+    byId('confirmMessage').textContent = message;
+    byId('confirmAcceptButton').textContent = confirmLabel || '确认';
+    byId('confirmPanel').hidden = false;
+    byId('confirmCancelButton').focus();
+  }
+  function bindConfirmationControls() {
+    byId('confirmCancelButton').addEventListener('click', closeConfirm);
+    byId('confirmAcceptButton').addEventListener('click', function () {
+      var callback = pendingConfirm;
+      closeConfirm();
+      if (callback) callback();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !byId('confirmPanel').hidden) {
+        event.preventDefault();
+        closeConfirm();
+      }
+    });
   }
   function requestJson(url, options) {
     return fetch(url, options).then(function (response) {
@@ -116,9 +147,7 @@
     renderCurrentView();
     toast('已撤销上一步');
   }
-  function discardDraft() {
-    if (!sameConfig(draft, savedConfig) &&
-        !window.confirm('放弃全部未保存修改并恢复正式配置吗？')) return;
+  function applyDiscardDraft() {
     draft = clone(savedConfig);
     localStorage.removeItem(DRAFT_KEY);
     undoStack = [];
@@ -129,6 +158,14 @@
     renderCurrentView();
     setStatus('已恢复正式配置', false);
     toast('未保存草稿已清除');
+  }
+  function discardDraft() {
+    if (!sameConfig(draft, savedConfig)) {
+      confirmAction('放弃全部未保存修改并恢复最后一次正式保存的配置吗？',
+        '放弃草稿', applyDiscardDraft);
+      return;
+    }
+    applyDiscardDraft();
   }
 
   function textOverrides(create) {
@@ -425,8 +462,7 @@
       remove.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
-        if (!window.confirm('确定删除“' + item.label + '”吗？')) return;
-        item.onRemove();
+        confirmAction('确定删除“' + item.label + '”吗？', '删除', item.onRemove);
       });
       row.appendChild(remove);
       itemBox.appendChild(makeSortableRow(row, item.sortInfo));
@@ -443,8 +479,7 @@
     removeRecord.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
-      if (!window.confirm('确定删除“' + label + '”吗？')) return;
-      onRemove();
+      confirmAction('确定删除“' + label + '”吗？', '删除', onRemove);
     });
     row.appendChild(removeRecord);
     return makeSortableRow(row, sortInfo);
@@ -976,13 +1011,14 @@
     if (view === 'element') renderElementInspector();
   }
 
-  function pixelCursorValue(preset) {
+  function pixelCursorValue(preset, color) {
+    var cursorColor = /^#[0-9a-f]{6}$/i.test(color || '') ? color : '#b388ff';
     var shapes = {
-      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#b388ff" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
-      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#fbbc05" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
-      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="#00ff41" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="#00ff41" stroke-width="2"/></svg>',
-      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="#41d9ff" stroke-width="2"/><path stroke="#41d9ff" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
-      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="#b388ff" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="#b388ff"/></svg>'
+      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="' + cursorColor + '" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
+      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="' + cursorColor + '" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
+      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="' + cursorColor + '" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="' + cursorColor + '" stroke-width="2"/></svg>',
+      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="' + cursorColor + '" stroke-width="2"/><path stroke="' + cursorColor + '" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
+      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="' + cursorColor + '" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="' + cursorColor + '"/></svg>'
     };
     var svg = shapes[preset] || shapes['pixel-arrow'];
     var hotspot = preset === 'pixel-arrow' || preset === 'pixel-hand' ? '2 2' : '12 12';
@@ -991,7 +1027,9 @@
 
   function renderCursor() {
     byId('cursorPresetControl').value = draft.cursor.preset;
-    byId('cursorPreview').style.cursor = pixelCursorValue(draft.cursor.preset);
+    byId('cursorColorControl').value = draft.cursor.color;
+    byId('cursorColorHexControl').value = draft.cursor.color;
+    byId('cursorPreview').style.cursor = pixelCursorValue(draft.cursor.preset, draft.cursor.color);
   }
 
   function startGamePreview() {
@@ -1155,21 +1193,23 @@
         var button = el('button', '', '恢复');
         button.type = 'button';
         button.addEventListener('click', function () {
-          if (!window.confirm('恢复这个已保存版本吗？当前正式配置会先自动备份。')) return;
-          requestJson('/api/history/restore', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: entry.id })
-          }).then(function (restored) {
-            savedConfig = restored.config;
-            draft = clone(savedConfig);
-            localStorage.removeItem(DRAFT_KEY);
-            undoStack = [];
-            sendDraft();
-            buildTree();
-            renderCurrentView();
-            setStatus('已恢复历史版本', false);
-            toast('历史版本已恢复');
-            loadHistory();
-          }).catch(function (error) { toast(error.message); });
+          confirmAction('恢复这个已保存版本吗？当前正式配置会先自动备份。',
+            '恢复版本', function () {
+              requestJson('/api/history/restore', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: entry.id })
+              }).then(function (restored) {
+                savedConfig = restored.config;
+                draft = clone(savedConfig);
+                localStorage.removeItem(DRAFT_KEY);
+                undoStack = [];
+                sendDraft();
+                buildTree();
+                renderCurrentView();
+                setStatus('已恢复历史版本', false);
+                toast('历史版本已恢复');
+                loadHistory();
+              }).catch(function (error) { toast(error.message); });
+            });
         });
         row.appendChild(info); row.appendChild(button); root.appendChild(row);
       });
@@ -1201,6 +1241,7 @@
   }
 
   function bindGlobalControls() {
+    bindConfirmationControls();
     byId('undoButton').addEventListener('click', undo);
     byId('discardDraftButton').addEventListener('click', discardDraft);
     byId('saveButton').addEventListener('click', saveFormal);
@@ -1228,6 +1269,33 @@
       renderCursor();
       endChange();
     });
+    function updateCursorColor(value) {
+      if (!/^#[0-9a-f]{6}$/i.test(value || '')) return false;
+      mutate('cursor:color', function () { draft.cursor.color = value; });
+      renderCursor();
+      return true;
+    }
+    byId('cursorColorControl').addEventListener('input', function () {
+      updateCursorColor(this.value);
+    });
+    byId('cursorColorControl').addEventListener('change', endChange);
+    byId('cursorColorHexControl').addEventListener('change', function () {
+      if (!updateCursorColor(this.value)) this.value = draft.cursor.color;
+      endChange();
+    });
+    ['#e0e0e0', '#4285F4', '#EA4335', '#FBBC05', '#34A853', '#00ff41', '#41d9ff', '#b388ff']
+      .forEach(function (value) {
+        var button = el('button', 'color-swatch');
+        button.type = 'button';
+        button.style.background = value;
+        button.title = value;
+        button.setAttribute('aria-label', '光标颜色 ' + value);
+        button.addEventListener('click', function () {
+          updateCursorColor(value);
+          endChange();
+        });
+        byId('cursorColorSwatches').appendChild(button);
+      });
 
     var gameMap = {
       gameStartSpeed: 'startSpeed', gameMaxSpeed: 'maxSpeed', gameSpeedStep: 'speedStep',

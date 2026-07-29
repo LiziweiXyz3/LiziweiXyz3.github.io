@@ -1105,19 +1105,12 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   caret-color: var(--terminal);
 }
 
-/* placeholder 无法拆成语言 span，因此每个英文预设都把 Zpix 放在通用回退之前。 */
+/* input 无法拆成语言 span，直接把当前英文字体应用到输入内容与 placeholder。 */
 .terminal-input[data-edit-key] {
   font-family: 'VT323', 'Zpix', monospace;
 }
-.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="classic"],
-.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="terminal"] {
-  font-family: 'VT323', 'Zpix', monospace;
-}
-.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="arcade"] {
-  font-family: 'Press Start 2P', 'Zpix', monospace;
-}
-.terminal-input[data-edit-key][data-edit-english-class][data-studio-font="code"] {
-  font-family: 'Fira Code', 'Zpix', monospace;
+.terminal-input[data-edit-key][data-studio-font-en="true"] {
+  font-family: var(--studio-font-en) !important;
 }
 
 .terminal-footer {

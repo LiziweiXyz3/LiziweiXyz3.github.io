@@ -145,6 +145,7 @@
     var sourceCursor = isObject(source.cursor) ? source.cursor : {};
     result.cursor = {
       preset: CURSORS.indexOf(sourceCursor.preset) >= 0 ? sourceCursor.preset : 'pixel-outline',
+      color: color(sourceCursor.color, '#b388ff'),
       src: '',
       hotspotX: 8,
       hotspotY: 8

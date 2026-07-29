@@ -54,6 +54,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 button:disabled { opacity: 0.4; cursor: not-allowed; }
 button.primary { border-color: var(--studio-purple); background: #241842; color: #fff; }
+button.danger { border-color: var(--studio-red); background: #35121a; color: #fff; }
 small { display: block; color: var(--studio-dim); font-size: 11px; margin-top: 3px; }
 h2, h3, p { margin-top: 0; }
 hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
@@ -550,14 +551,33 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 .history-entry small { margin: 0; }
 .studio-toast {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  z-index: 20;
+  right: 18px;
+  bottom: 18px;
+  z-index: 30;
+  max-width: min(380px, calc(100vw - 36px));
   padding: 10px 14px;
   border: 1px solid var(--studio-purple);
   background: #111327;
   box-shadow: 4px 4px #000;
+}
+.studio-confirm {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 40;
+  width: min(390px, calc(100vw - 36px));
+  padding: 14px;
+  border: 1px solid var(--studio-red);
+  background: #141527;
+  box-shadow: 6px 6px #000;
+}
+.studio-confirm[hidden] { display: none; }
+.studio-confirm strong { display: block; color: var(--studio-yellow); }
+.studio-confirm p { margin: 9px 0 12px; color: var(--studio-text); line-height: 1.6; }
+.studio-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 @media (max-width: 1100px) {

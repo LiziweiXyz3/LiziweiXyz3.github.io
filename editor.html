@@ -172,6 +172,21 @@
                 <span>光标样式</span>
                 <select id="cursorPresetControl"></select>
               </label>
+              <div class="field-grid">
+                <label class="studio-field">
+                  <span>光标颜色</span>
+                  <input id="cursorColorControl" type="color">
+                </label>
+                <label class="studio-field">
+                  <span>颜色值（HEX）</span>
+                  <input id="cursorColorHexControl" type="text" maxlength="7">
+                </label>
+              </div>
+              <div class="swatch-heading">
+                <span>快捷色板</span>
+                <small>选择适合页面的像素色</small>
+              </div>
+              <div class="color-swatches" id="cursorColorSwatches"></div>
               <div class="cursor-preview" id="cursorPreview" aria-label="光标预览">
                 在这里移动鼠标预览
               </div>
@@ -222,6 +237,15 @@
   </main>
 
   <div id="toast" class="studio-toast" role="status" aria-live="polite" hidden></div>
+  <section id="confirmPanel" class="studio-confirm" role="alertdialog"
+           aria-labelledby="confirmTitle" aria-describedby="confirmMessage" hidden>
+    <strong id="confirmTitle">请确认操作</strong>
+    <p id="confirmMessage"></p>
+    <div class="studio-confirm-actions">
+      <button id="confirmCancelButton" type="button">取消</button>
+      <button id="confirmAcceptButton" class="danger" type="button">确认</button>
+    </div>
+  </section>
   <script src="js/site-config.js"></script>
   <script src="js/studio-editor.js"></script>
 </body>

@@ -92,6 +92,10 @@
         "preset": {
           "enum": ["pixel-arrow", "pixel-hand", "pixel-crosshair", "pixel-terminal", "pixel-outline"]
         },
+        "color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
         "src": { "type": "string" },
         "hotspotX": { "type": "integer", "minimum": 0, "maximum": 127 },
         "hotspotY": { "type": "integer", "minimum": 0, "maximum": 127 }

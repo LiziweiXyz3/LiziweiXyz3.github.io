@@ -288,9 +288,37 @@ test('cursor choices are pixel presets without asset uploads', function () {
   assert.deepEqual(schema.properties.cursor.properties.preset.enum, [
     'pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'
   ]);
+  assert.equal(schema.properties.cursor.properties.color.pattern, '^#[0-9A-Fa-f]{6}$');
   assert.match(editorScript, /像素箭头/);
   assert.match(editorScript, /像素手型/);
+  assert.match(editorHtml, /id="cursorColorControl"/);
+  assert.match(editorHtml, /id="cursorColorHexControl"/);
+  assert.match(editorHtml, /id="cursorColorSwatches"/);
+  assert.match(runtimeScript, /cursorColor = cursor && \/\^#\[0-9a-f\]\{6\}\$\/i/);
+  assert.match(runtimeScript, /stroke="' \+ cursorColor \+ '"/);
   assert.doesNotMatch(editorHtml, /type="file"[^>]*(?:cursor|Hero|项目图标)/i);
+});
+
+test('cursor color normalizes independently and defaults to pixel purple', function () {
+  const defaultCursor = api.normalizeConfig(Object.assign(api.clone(config), {
+    cursor: { preset: 'pixel-arrow' }
+  }), config);
+  assert.equal(defaultCursor.cursor.color, '#b388ff');
+
+  const next = api.clone(config);
+  next.cursor.color = '#EA4335';
+  const normalized = api.normalizeConfig(next, config);
+  assert.equal(normalized.cursor.color, '#EA4335');
+  assert.equal(normalized.cursor.preset, next.cursor.preset);
+});
+
+test('destructive confirmations and status messages stay inside the editor at the lower right', function () {
+  assert.match(editorHtml, /id="confirmPanel"/);
+  assert.match(editorHtml, /role="alertdialog"/);
+  assert.match(editorScript, /function confirmAction/);
+  assert.doesNotMatch(editorScript, /window\.confirm|confirm\(/);
+  assert.match(editorCss, /\.studio-toast\s*\{[\s\S]*?right:\s*18px;[\s\S]*?bottom:\s*18px;/);
+  assert.match(editorCss, /\.studio-confirm\s*\{[\s\S]*?right:\s*18px;[\s\S]*?bottom:\s*18px;/);
 });
 
 test('local server uses atomic saves, restricted assets and a 20 version history', function () {

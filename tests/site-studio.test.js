@@ -573,10 +573,9 @@ test('reopening returns to the panel top when the previously selected item disap
   assert.equal(harness.panel.scrollTop, 0);
 });
 
-test('terminal placeholder presets keep Zpix before the generic fallback', function () {
+test('terminal input applies the current V3 English font directly to its placeholder', function () {
   assert.match(css, /\.terminal-input\[data-edit-key\][^{]*\{[^}]*font-family:\s*'VT323',\s*'Zpix',\s*monospace/);
-  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-edit-english-class\]\[data-studio-font="arcade"\][^{]*\{[^}]*font-family:\s*'Press Start 2P',\s*'Zpix',\s*monospace/);
-  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-edit-english-class\]\[data-studio-font="code"\][^{]*\{[^}]*font-family:\s*'Fira Code',\s*'Zpix',\s*monospace/);
+  assert.match(css, /\.terminal-input\[data-edit-key\]\[data-studio-font-en="true"\][^{]*\{[^}]*font-family:\s*var\(--studio-font-en\)\s*!important/);
 });
 
 test('studio CSS applies per-item scaling, font presets and selected states', function () {

@@ -106,12 +106,14 @@
 
   function cursorValue(cursor) {
     var preset = cursor && cursor.preset;
+    var cursorColor = cursor && /^#[0-9a-f]{6}$/i.test(cursor.color || '')
+      ? cursor.color : '#b388ff';
     var shapes = {
-      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#b388ff" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
-      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="#fbbc05" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
-      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="#00ff41" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="#00ff41" stroke-width="2"/></svg>',
-      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="#41d9ff" stroke-width="2"/><path stroke="#41d9ff" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
-      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="#b388ff" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="#b388ff"/></svg>'
+      'pixel-arrow': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="' + cursorColor + '" stroke-width="2" d="M2 2v16l5-5 4 9 4-2-4-8h8z"/></svg>',
+      'pixel-hand': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path fill="#080812" stroke="' + cursorColor + '" stroke-width="2" d="M7 3h4v7h2V6h3v5h2V8h3v9l-4 5H8l-5-8v-3h3l2 3z"/></svg>',
+      'pixel-crosshair': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><path stroke="' + cursorColor + '" stroke-width="2" d="M12 1v7M12 16v7M1 12h7M16 12h7"/><rect x="9" y="9" width="6" height="6" fill="none" stroke="' + cursorColor + '" stroke-width="2"/></svg>',
+      'pixel-terminal': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="9" y="2" width="6" height="20" fill="#080812" stroke="' + cursorColor + '" stroke-width="2"/><path stroke="' + cursorColor + '" stroke-width="2" d="M5 2h14M5 22h14"/></svg>',
+      'pixel-outline': '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" shape-rendering="crispEdges"><rect x="2" y="2" width="20" height="20" fill="none" stroke="' + cursorColor + '" stroke-width="2"/><rect x="10" y="10" width="4" height="4" fill="' + cursorColor + '"/></svg>'
     };
     var svg = shapes[preset] || shapes['pixel-arrow'];
     var hotspot = preset === 'pixel-arrow' || preset === 'pixel-hand' ? '2 2' : '12 12';
