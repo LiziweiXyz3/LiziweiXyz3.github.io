@@ -201,34 +201,63 @@
 
             <section class="inspector-view" data-view="game" hidden>
               <h2>终端小游戏</h2>
-              <p class="view-help">打开本设置时，左侧预览会自动定位终端并启动试玩。参数变化后也会自动重新试玩。</p>
-              <div class="field-grid">
-                <label class="studio-field"><span>起始速度</span><input id="gameStartSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
-                <label class="studio-field"><span>最高速度</span><input id="gameMaxSpeed" type="number" min="0.5" max="2.5" step="0.1"></label>
-                <label class="studio-field"><span>加速幅度</span><input id="gameSpeedStep" type="number" min="0" max="0.5" step="0.01"></label>
-                <label class="studio-field"><span>加速间隔（帧）</span><input id="gameSpeedFrames" type="number" min="120" max="1800" step="60"></label>
-              </div>
-              <details class="advanced-panel">
-                <summary>跳跃、落地与障碍</summary>
+              <p class="view-help">先选一种游戏手感，再试玩看看。打开本设置时，左侧会自动进入终端小游戏。</p>
+              <section class="game-simple-panel" aria-labelledby="gamePresetTitle">
+                <div class="swatch-heading">
+                  <span id="gamePresetTitle">推荐手感</span>
+                  <small>同时调整速度、跳跃和障碍密度</small>
+                </div>
+                <div class="game-presets" id="gamePresets" role="group" aria-label="游戏手感">
+                  <button type="button" data-game-preset="easy"><strong>轻松</strong><small>速度慢，障碍较少</small></button>
+                  <button type="button" data-game-preset="balanced"><strong>标准</strong><small>节奏适中，容易上手</small></button>
+                  <button type="button" data-game-preset="challenge"><strong>挑战</strong><small>速度更快，障碍更密</small></button>
+                </div>
+                <output id="gameFeelSummary" class="game-feel-summary"></output>
+                <label class="studio-field range-field game-speed-field">
+                  <span>开局速度 <small>刚开始跑多快</small></span>
+                  <input id="gameStartSpeed" type="range" min="0.5" max="2.5" step="0.1">
+                  <output id="gameStartSpeedOutput"></output>
+                </label>
+                <label class="studio-field range-field game-speed-field">
+                  <span>最高速度 <small>玩久以后最快会到多快，最高 2.5</small></span>
+                  <input id="gameMaxSpeed" type="range" min="0.5" max="2.5" step="0.1">
+                  <output id="gameMaxSpeedOutput"></output>
+                </label>
+              </section>
+              <details class="advanced-panel game-advanced">
+                <summary>更多微调（一般不用改）</summary>
+                <p class="view-help">只有在推荐手感仍不合适时再调整。修改后左侧会自动重新试玩。</p>
+                <h3>游戏多久变快</h3>
+                <p class="field-help">增加量越小、等待时间越长，游戏变快得越慢。</p>
                 <div class="field-grid">
-                  <label class="studio-field"><span>跳跃力度</span><input id="gameJumpVelocity" type="number" min="-10" max="-3" step="0.1"></label>
-                  <label class="studio-field"><span>上升重力</span><input id="gameRiseGravity" type="number" min="0.05" max="0.5" step="0.01"></label>
-                  <label class="studio-field"><span>下降重力</span><input id="gameFallGravity" type="number" min="0.03" max="0.35" step="0.01"></label>
-                  <label class="studio-field"><span>最高点滞空帧</span><input id="gameHangFrames" type="number" min="0" max="30" step="1"></label>
-                  <label class="studio-field"><span>起跳蓄力帧</span><input id="gameAnticipation" type="number" min="0" max="24" step="1"></label>
-                  <label class="studio-field"><span>落地缓冲帧</span><input id="gameLanding" type="number" min="0" max="24" step="1"></label>
-                  <label class="studio-field"><span>最大障碍数</span><input id="gameMaxObstacles" type="number" min="1" max="6" step="1"></label>
-                  <label class="studio-field"><span>最小外部间距</span><input id="gameMinGap" type="number" min="180" max="700" step="10"></label>
-                  <label class="studio-field"><span>最大外部间距</span><input id="gameMaxGap" type="number" min="220" max="900" step="10"></label>
+                  <label class="studio-field"><span>每次增加多少速度</span><input id="gameSpeedStep" type="number" min="0" max="0.5" step="0.01"></label>
+                  <label class="studio-field"><span>隔多久加速一次</span><input id="gameSpeedFrames" type="number" min="120" max="1800" step="60"><small>数值越大，等待越久</small></label>
+                </div>
+                <h3>人物跳跃手感</h3>
+                <p class="field-help">跳得过低时，编辑器会提醒你无法越过障碍。</p>
+                <div class="field-grid">
+                  <label class="studio-field"><span>起跳力量</span><input id="gameJumpVelocity" type="number" min="-10" max="-3" step="0.1"><small>负数越小，跳得越高，例如 -7 比 -5 高</small></label>
+                  <label class="studio-field"><span>上升时减速速度</span><input id="gameRiseGravity" type="number" min="0.05" max="0.5" step="0.01"><small>越小，上升越慢</small></label>
+                  <label class="studio-field"><span>下落速度</span><input id="gameFallGravity" type="number" min="0.03" max="0.35" step="0.01"><small>越小，落地越慢</small></label>
+                  <label class="studio-field"><span>最高点停留时间</span><input id="gameHangFrames" type="number" min="0" max="30" step="1"><small>越大，在空中停留越久</small></label>
+                  <label class="studio-field"><span>起跳前准备时间</span><input id="gameAnticipation" type="number" min="0" max="24" step="1"><small>越大，按键后起跳越慢</small></label>
+                  <label class="studio-field"><span>落地后停顿时间</span><input id="gameLanding" type="number" min="0" max="24" step="1"><small>越大，落地动作越明显</small></label>
+                </div>
+                <h3>障碍出现密度</h3>
+                <p class="field-help">障碍越少、间距越大，游戏越容易。</p>
+                <div class="field-grid">
+                  <label class="studio-field"><span>屏幕最多出现几个障碍</span><input id="gameMaxObstacles" type="number" min="1" max="6" step="1"></label>
+                  <label class="studio-field"><span>障碍最近距离</span><input id="gameMinGap" type="number" min="180" max="700" step="10"><small>越大越容易</small></label>
+                  <label class="studio-field"><span>障碍最远距离</span><input id="gameMaxGap" type="number" min="220" max="900" step="10"><small>越大，空闲时间越长</small></label>
                 </div>
                 <div class="sequence-heading">
-                  <h3>障碍组合</h3>
-                  <button id="addSequenceButton" type="button">新增组合</button>
+                  <h3>障碍出现方式</h3>
+                  <button id="addSequenceButton" type="button">新增一种方式</button>
                 </div>
                 <div id="sequenceEditor"></div>
               </details>
               <output id="gameValidation" class="status-box"></output>
-              <button id="testGameButton" class="primary" type="button">重新定位并试玩</button>
+              <button id="testGameButton" class="primary" type="button">重新开始试玩</button>
             </section>
 
             <section class="inspector-view" data-view="history" hidden>

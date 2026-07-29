@@ -75,6 +75,36 @@ test('normalization caps game speed and preserves per-element styles', function 
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].mobileSize, 20);
 });
 
+test('friendly game presets remain playable and respect the speed cap', function () {
+  const presets = [
+    {
+      startSpeed: 0.8, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 900,
+      jumpVelocity: -6.2, riseGravity: 0.16, fallGravity: 0.065, hangFrames: 10,
+      anticipationFrames: 3, landingFrames: 5,
+      maxObstacles: 2, minObstacleGap: 330, maxObstacleGap: 450
+    },
+    {
+      startSpeed: 1, maxSpeed: 2.2, speedStep: 0.1, speedEveryFrames: 720,
+      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, hangFrames: 8,
+      anticipationFrames: 4, landingFrames: 4,
+      maxObstacles: 3, minObstacleGap: 270, maxObstacleGap: 380
+    },
+    {
+      startSpeed: 1.2, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 480,
+      jumpVelocity: -6, riseGravity: 0.2, fallGravity: 0.1, hangFrames: 6,
+      anticipationFrames: 3, landingFrames: 3,
+      maxObstacles: 3, minObstacleGap: 220, maxObstacleGap: 310
+    }
+  ];
+
+  presets.forEach(function (preset) {
+    const next = api.clone(config);
+    Object.assign(next.game, preset);
+    assert.ok(next.game.maxSpeed <= 2.5);
+    assert.equal(api.validateConfig(next).valid, true);
+  });
+});
+
 test('every typography property updates independently without touching sibling fields or modules', function () {
   const fullStyle = {
     fontCn: 'zpix',
@@ -328,6 +358,22 @@ test('editor can add and remove About items, project stacks and resume highlight
   assert.match(editorScript, /delete:highlight:/);
   assert.match(editorHtml, /id="fontVisualHint"/);
   assert.match(editorScript, /Press Start 2P 的视觉尺寸偏大/);
+});
+
+test('game editor leads with friendly presets and hides technical tuning by default', function () {
+  assert.match(editorHtml, /推荐手感/);
+  assert.match(editorHtml, /data-game-preset="easy"[\s\S]*?>轻松</);
+  assert.match(editorHtml, /data-game-preset="balanced"[\s\S]*?>标准</);
+  assert.match(editorHtml, /data-game-preset="challenge"[\s\S]*?>挑战</);
+  assert.match(editorHtml, /更多微调（一般不用改）/);
+  assert.match(editorHtml, /刚开始跑多快/);
+  assert.match(editorHtml, /越小，落地越慢/);
+  assert.doesNotMatch(editorHtml, /加速间隔（帧）|上升重力|下降重力|最高点滞空帧|出现权重/);
+  assert.match(editorScript, /var GAME_PRESETS = \{/);
+  assert.match(editorScript, /function updateGameSummary\(\)/);
+  assert.match(editorScript, /function friendlyGameErrors\(errors\)/);
+  assert.match(editorScript, /maxSpeed:\s*2\.5/);
+  assert.match(editorCss, /\.game-presets\s*\{/);
 });
 
 test('reorderable content uses drag handles instead of visible move buttons', function () {

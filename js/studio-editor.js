@@ -14,6 +14,29 @@
   var activeDrag = null;
   var pendingConfirm = null;
   var confirmReturnFocus = null;
+  var GAME_PRESETS = {
+    easy: {
+      label: '轻松',
+      startSpeed: 0.8, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 900,
+      jumpVelocity: -6.2, riseGravity: 0.16, fallGravity: 0.065, hangFrames: 10,
+      anticipationFrames: 3, landingFrames: 5,
+      maxObstacles: 2, minObstacleGap: 330, maxObstacleGap: 450
+    },
+    balanced: {
+      label: '标准',
+      startSpeed: 1, maxSpeed: 2.2, speedStep: 0.1, speedEveryFrames: 720,
+      jumpVelocity: -6, riseGravity: 0.18, fallGravity: 0.08, hangFrames: 8,
+      anticipationFrames: 4, landingFrames: 4,
+      maxObstacles: 3, minObstacleGap: 270, maxObstacleGap: 380
+    },
+    challenge: {
+      label: '挑战',
+      startSpeed: 1.2, maxSpeed: 2.5, speedStep: 0.15, speedEveryFrames: 480,
+      jumpVelocity: -6, riseGravity: 0.2, fallGravity: 0.1, hangFrames: 6,
+      anticipationFrames: 3, landingFrames: 3,
+      maxObstacles: 3, minObstacleGap: 220, maxObstacleGap: 310
+    }
+  };
 
   function byId(id) { return document.getElementById(id); }
   function clone(value) { return window.SiteConfig.clone(value); }
@@ -1108,10 +1131,57 @@
     byId('showEditorButton').hidden = !collapsed;
   }
 
+  function matchingGamePreset() {
+    var matched = null;
+    Object.keys(GAME_PRESETS).some(function (presetId) {
+      var preset = GAME_PRESETS[presetId];
+      var keys = Object.keys(preset).filter(function (key) { return key !== 'label'; });
+      var same = keys.every(function (key) {
+        return Math.abs(Number(draft.game[key]) - Number(preset[key])) < 0.0001;
+      });
+      if (same) matched = presetId;
+      return same;
+    });
+    return matched;
+  }
+
+  function updateGameSummary() {
+    var start = Number(draft.game.startSpeed);
+    var maximum = Number(draft.game.maxSpeed);
+    var speedText = maximum <= 1.8 ? '整体较慢' : maximum <= 2.2 ? '速度适中' : '后期较快';
+    var jumpText = Number(draft.game.fallGravity) <= 0.08 ? '落地较慢' : '落地较快';
+    var obstacleText = Number(draft.game.maxObstacles) <= 2 || Number(draft.game.minObstacleGap) >= 320
+      ? '障碍较少' : Number(draft.game.minObstacleGap) >= 250 ? '障碍适中' : '障碍较密';
+    var presetId = matchingGamePreset();
+
+    byId('gameStartSpeedOutput').textContent = start.toFixed(1) + ' 倍';
+    byId('gameMaxSpeedOutput').textContent = maximum.toFixed(1) + ' 倍';
+    byId('gameFeelSummary').textContent = '当前手感：' +
+      (presetId ? GAME_PRESETS[presetId].label : '自定义') + ' · ' +
+      speedText + ' · ' + jumpText + ' · ' + obstacleText;
+    document.querySelectorAll('[data-game-preset]').forEach(function (button) {
+      button.setAttribute('aria-pressed', button.getAttribute('data-game-preset') === presetId ? 'true' : 'false');
+    });
+  }
+
+  function friendlyGameErrors(errors) {
+    return (errors || []).map(function (message) {
+      if (/小游戏参数/.test(message)) return '有一项设置超出可用范围，请改回推荐手感';
+      if (/起始速度不能超过最高速度/.test(message)) return '开局速度不能快于最高速度';
+      if (/至少需要启用一个障碍组合/.test(message)) return '至少保留一种障碍出现方式';
+      if (/跳跃力度无法越过大仙人掌/.test(message)) return '人物跳得不够高，可能无法越过大仙人掌';
+      if (/内部间距至少/.test(message)) return '有一组障碍挤得太近，人物可能无法通过';
+      if (/超过当前跳跃可通过距离/.test(message)) return '有一组障碍太长，当前跳跃无法通过';
+      return message;
+    });
+  }
+
   function gameError() {
     var validation = window.SiteConfig.validateConfig(draft);
     var output = byId('gameValidation');
-    output.textContent = validation.valid ? '参数有效，可以保存并试玩。' : validation.errors.join('；');
+    output.textContent = validation.valid
+      ? '设置正常，可以直接试玩。'
+      : friendlyGameErrors(validation.errors).join('；');
     output.setAttribute('data-state', validation.valid ? 'success' : 'error');
     return validation;
   }
@@ -1124,6 +1194,7 @@
       gameMaxObstacles: 'maxObstacles', gameMinGap: 'minObstacleGap', gameMaxGap: 'maxObstacleGap'
     };
     Object.keys(map).forEach(function (id) { byId(id).value = draft.game[map[id]]; });
+    updateGameSummary();
     renderSequences();
     gameError();
   }
@@ -1155,8 +1226,8 @@
         gameError();
       });
       enabledLabel.appendChild(enabled);
-      enabledLabel.appendChild(document.createTextNode(' 启用'));
-      var remove = el('button', '', '删除');
+      enabledLabel.appendChild(document.createTextNode(' 参与随机出现'));
+      var remove = el('button', '', '删除这组');
       remove.type = 'button';
       remove.addEventListener('click', function () {
         mutate('sequence-delete:' + sequence.id, function () { draft.game.sequences.splice(sequenceIndex, 1); }, false, true);
@@ -1165,7 +1236,7 @@
       card.appendChild(head);
 
       var weightLabel = el('label', 'studio-field');
-      weightLabel.appendChild(el('span', '', '出现权重'));
+      weightLabel.appendChild(el('span', '', '出现频率（1 很少，10 很多）'));
       var weight = document.createElement('input');
       weight.type = 'number'; weight.min = '1'; weight.max = '10'; weight.value = sequence.weight;
       weight.addEventListener('input', function () {
@@ -1197,7 +1268,9 @@
         });
         var gap = document.createElement('input');
         gap.type = 'number'; gap.min = '24'; gap.max = '220'; gap.step = '2';
-        gap.value = item.gap || 40; gap.title = '与下一个障碍的内部间距';
+        gap.value = item.gap || 40;
+        gap.title = '与下一个障碍的距离';
+        gap.setAttribute('aria-label', '与下一个障碍的距离');
         gap.disabled = itemIndex === sequence.items.length - 1;
         gap.addEventListener('input', function () {
           mutate('sequence-gap:' + sequence.id + ':' + itemIndex, function () {
@@ -1208,6 +1281,9 @@
           if (normalized && normalized.items[itemIndex]) gap.value = normalized.items[itemIndex].gap;
           gameError();
         });
+        var gapField = el('label', 'sequence-gap-field');
+        gapField.appendChild(el('span', '', itemIndex === sequence.items.length - 1 ? '最后一个' : '与下个距离'));
+        gapField.appendChild(gap);
         var removeItem = el('button', '', '移除');
         removeItem.type = 'button';
         removeItem.disabled = sequence.items.length <= 1;
@@ -1217,10 +1293,10 @@
             if (current) current.items.splice(itemIndex, 1);
           }, false, true);
         });
-        row.appendChild(type); row.appendChild(gap); row.appendChild(removeItem);
+        row.appendChild(type); row.appendChild(gapField); row.appendChild(removeItem);
         items.appendChild(row);
       });
-      var addItem = el('button', '', '添加障碍');
+      var addItem = el('button', '', '在这组中添加障碍');
       addItem.type = 'button';
       addItem.disabled = sequence.items.length >= 4;
       addItem.addEventListener('click', function () {
@@ -1275,7 +1351,7 @@
 
   function saveFormal() {
     var validation = window.SiteConfig.validateConfig(draft);
-    if (!validation.valid) { toast(validation.errors.join('；')); selectTool('game'); return; }
+    if (!validation.valid) { toast(friendlyGameErrors(validation.errors).join('；')); selectTool('game'); return; }
     byId('saveButton').disabled = true;
     setStatus('正在保存…', true);
     requestJson('/api/config', {
@@ -1365,22 +1441,38 @@
       byId(id).addEventListener('input', function () {
         mutate('game:' + gameMap[id], function () { draft.game[gameMap[id]] = Number(byId(id).value); });
         byId(id).value = draft.game[gameMap[id]];
+        updateGameSummary();
         gameError();
         scheduleGamePreview(false);
       });
       byId(id).addEventListener('change', endChange);
     });
+    document.querySelectorAll('[data-game-preset]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var presetId = button.getAttribute('data-game-preset');
+        var preset = GAME_PRESETS[presetId];
+        if (!preset) return;
+        mutate('game-preset:' + presetId, function () {
+          Object.keys(preset).forEach(function (key) {
+            if (key !== 'label') draft.game[key] = preset[key];
+          });
+        });
+        endChange();
+        renderGame();
+        toast('已应用“' + preset.label + '”手感，可以在左侧直接试玩');
+      });
+    });
     byId('addSequenceButton').addEventListener('click', function () {
       mutate('sequence:add', function () {
         var id = window.SiteConfig.uniqueId('sequence', draft.game.sequences.map(function (item) { return item.id; }), 'sequence');
-        draft.game.sequences.push({ id: id, name: '新障碍组合', enabled: true, weight: 1, items: [{ type: 'cactus-small', gap: 0 }] });
+        draft.game.sequences.push({ id: id, name: '新的出现方式', enabled: true, weight: 1, items: [{ type: 'cactus-small', gap: 0 }] });
       }, false, true);
       scheduleGamePreview(false);
     });
     byId('testGameButton').addEventListener('click', function () {
       if (!gameError().valid) return;
       startGamePreview();
-      toast('左侧预览已定位终端并重新试玩');
+      toast('左侧预览已重新开始小游戏');
     });
     byId('refreshHistoryButton').addEventListener('click', loadHistory);
 

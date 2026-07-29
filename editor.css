@@ -461,6 +461,59 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 }
 .advanced-panel { margin: 12px 0; border: 1px solid var(--studio-border); padding: 9px; }
 .advanced-panel summary { cursor: pointer; color: var(--studio-yellow); margin-bottom: 9px; }
+.game-simple-panel {
+  margin-top: 12px;
+  padding: 11px;
+  border: 1px solid var(--studio-purple);
+  background: rgba(179, 136, 255, 0.06);
+}
+.game-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+.game-presets button {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 10px 7px;
+  color: var(--studio-text);
+  text-align: left;
+}
+.game-presets button strong { color: var(--studio-yellow); }
+.game-presets button small,
+.studio-field small,
+.field-help {
+  color: var(--studio-dim);
+  font-size: 11px;
+  line-height: 1.45;
+}
+.game-presets button[aria-pressed="true"] {
+  border-color: var(--studio-purple);
+  background: #241842;
+  box-shadow: inset 0 -2px var(--studio-purple);
+}
+.game-feel-summary {
+  display: block;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border-left: 2px solid var(--studio-green);
+  background: rgba(52, 168, 83, 0.07);
+  color: var(--studio-text);
+  line-height: 1.5;
+}
+.game-speed-field > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.game-advanced h3 {
+  margin: 16px 0 4px;
+  color: var(--studio-yellow);
+  font-size: 13px;
+}
+.field-help { margin: 0 0 10px; }
 .color-settings {
   margin: 12px 0;
   padding: 10px;
@@ -574,7 +627,8 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 .sequence-card-head { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; }
 .sequence-card-head input[type="text"] { min-width: 0; }
 .sequence-items { display: grid; gap: 6px; margin-top: 8px; }
-.sequence-item { display: grid; grid-template-columns: 1fr 90px auto; gap: 6px; }
+.sequence-item { display: grid; grid-template-columns: 1fr 112px auto; gap: 6px; align-items: end; }
+.sequence-gap-field { display: grid; gap: 3px; color: var(--studio-dim); font-size: 11px; }
 .history-list { display: grid; gap: 8px; margin-top: 12px; }
 .history-entry { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 9px; border: 1px solid var(--studio-border); }
 .history-entry small { margin: 0; }
