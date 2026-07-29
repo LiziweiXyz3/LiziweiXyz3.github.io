@@ -9,7 +9,7 @@
   var VERSION = 3;
   var MAX_TEXT = 5000;
   var FONT_CN = ['zpix', 'cubic-11', 'boutique-7x7'];
-  var FONT_EN = ['press-start', 'vt323', 'fira-code', 'ibm-plex-mono'];
+  var FONT_EN = ['zpix', 'press-start', 'vt323', 'fira-code', 'ibm-plex-mono'];
   var ALIGNMENTS = ['left', 'center', 'right'];
   var CURSORS = ['pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'];
   var OBSTACLES = ['cactus-small', 'cactus-big'];

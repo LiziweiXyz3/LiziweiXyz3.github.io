@@ -7,6 +7,7 @@
     'boutique-7x7': "'Boutique Bitmap 7x7', 'Zpix', monospace"
   };
   var FONT_EN = {
+    zpix: "'Zpix', monospace",
     'press-start': "'Press Start 2P', monospace",
     vt323: "'VT323', monospace",
     'fira-code': "'Fira Code', monospace",
@@ -227,6 +228,7 @@
       'cubic 11': 'cubic-11',
       zpix: 'zpix'
     } : {
+      zpix: 'zpix',
       'press start 2p': 'press-start',
       vt323: 'vt323',
       'fira code': 'fira-code',

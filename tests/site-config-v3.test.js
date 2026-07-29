@@ -26,6 +26,9 @@ test('V3 config uses stable ids for reorderable content', function () {
 
 test('versioned JSON Schema describes the complete formal configuration', function () {
   assert.equal(schema.properties.version.const, 3);
+  assert.ok(schema.$defs.textStyle.properties.fontEn.enum.includes('zpix'));
+  assert.match(editorHtml, /<option value="zpix">Zpix<\/option>/);
+  assert.match(runtimeScript, /zpix:\s*"'Zpix', monospace"/);
   assert.equal(schema.properties.game.properties.maxSpeed.maximum, 2.5);
   assert.deepEqual(schema.required, [
     'version', 'content', 'theme', 'styles', 'cursor', 'effects', 'assets', 'game'

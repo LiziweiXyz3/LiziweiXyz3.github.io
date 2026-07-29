@@ -189,7 +189,7 @@
           "enum": ["zpix", "cubic-11", "boutique-7x7"]
         },
         "fontEn": {
-          "enum": ["press-start", "vt323", "fira-code", "ibm-plex-mono"]
+          "enum": ["zpix", "press-start", "vt323", "fira-code", "ibm-plex-mono"]
         },
         "size": { "type": "number", "minimum": 8, "maximum": 96 },
         "mobileSize": { "type": "number", "minimum": 8, "maximum": 72 },
