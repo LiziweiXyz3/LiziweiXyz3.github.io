@@ -686,15 +686,29 @@
 
     var gameBehaviors = window.SiteBehaviors || {};
     var DEFAULT_GAME_CONFIG = gameBehaviors.GAME_CONFIG || {
-      startSpeed: 0.9, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 900,
+      startSpeed: 0.9, maxSpeed: 1.8, speedStep: 0.05, speedEveryFrames: 450,
       firstObstacleRatio: 0.6, minObstacleGap: 330, maxObstacleGap: 450, maxObstacles: 2,
       jumpVelocity: -6.2, riseGravity: 0.16, fallGravity: 0.065, hangFrames: 10,
       anticipationFrames: 3, landingFrames: 5
     };
     var GAME_CONFIG = Object.assign({}, DEFAULT_GAME_CONFIG,
       window.siteConfig && window.siteConfig.game ? window.siteConfig.game : {});
-    GAME_CONFIG.maxSpeed = 1.8;
-    GAME_CONFIG.startSpeed = 0.9;
+    Object.assign(GAME_CONFIG, {
+      startSpeed: 0.9,
+      maxSpeed: 1.8,
+      speedStep: 0.05,
+      speedEveryFrames: 450,
+      firstObstacleRatio: 0.6,
+      minObstacleGap: 330,
+      maxObstacleGap: 450,
+      maxObstacles: 2,
+      jumpVelocity: -6.2,
+      riseGravity: 0.16,
+      fallGravity: 0.065,
+      hangFrames: 10,
+      anticipationFrames: 3,
+      landingFrames: 5
+    });
     var firstObstacleXBase = gameBehaviors.firstObstacleX || function (width, config) {
       config = config || GAME_CONFIG;
       return Math.round(width * config.firstObstacleRatio);
@@ -747,14 +761,19 @@
     function chooseSequence() {
       var enabled = (GAME_CONFIG.sequences || []).filter(function (sequence) {
         if (!sequence || sequence.enabled === false || !sequence.items || !sequence.items.length) return false;
+        if (gameBehaviors.isSequenceUnlocked &&
+            !gameBehaviors.isSequenceUnlocked(sequence, speed, frame)) return false;
         return !gameBehaviors.isSequencePlayable ||
           gameBehaviors.isSequencePlayable(sequence, speed, GAME_CONFIG);
       });
       if (!enabled.length) return { items: [{ type: Math.random() < 0.35 ? 'cactus-big' : 'cactus-small', gap: 0 }] };
-      var total = enabled.reduce(function (sum, sequence) { return sum + Math.max(1, Number(sequence.weight) || 1); }, 0);
+      var weightFor = gameBehaviors.sequenceWeight || function (sequence) {
+        return Math.max(1, Number(sequence.weight) || 1);
+      };
+      var total = enabled.reduce(function (sum, sequence) { return sum + weightFor(sequence); }, 0);
       var cursor = Math.random() * total;
       for (var index = 0; index < enabled.length; index++) {
-        cursor -= Math.max(1, Number(enabled[index].weight) || 1);
+        cursor -= weightFor(enabled[index]);
         if (cursor <= 0) return enabled[index];
       }
       return enabled[enabled.length - 1];

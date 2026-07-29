@@ -58,7 +58,7 @@ test('mini game difficulty uses the agreed capped speed constants', function () 
     startSpeed: 0.9,
     maxSpeed: 1.8,
     speedStep: 0.05,
-    speedEveryFrames: 900,
+    speedEveryFrames: 450,
     firstObstacleRatio: 0.6,
     minObstacleGap: 330,
     maxObstacleGap: 450,
@@ -133,4 +133,31 @@ test('multi-obstacle sequences unlock only when the current speed makes them pas
   assert.equal(api.isSequencePlayable(doubleSmall, 0.9, config), true);
   assert.equal(api.isSequencePlayable(mixed, 0.9, config), false);
   assert.equal(api.isSequencePlayable(mixed, 1.2, config), true);
+});
+
+test('friendly progression delays and de-emphasizes multi-obstacle sequences', function () {
+  const doubleSmall = {
+    weight: 8,
+    items: [
+      { type: 'cactus-small', gap: 28 },
+      { type: 'cactus-small', gap: 0 }
+    ]
+  };
+  const mixed = {
+    weight: 8,
+    items: [
+      { type: 'cactus-small', gap: 42 },
+      { type: 'cactus-big', gap: 0 }
+    ]
+  };
+  const single = { weight: 4, items: [{ type: 'cactus-small', gap: 0 }] };
+
+  assert.equal(api.isSequenceUnlocked(doubleSmall, 1.8, 899), false);
+  assert.equal(api.isSequenceUnlocked(doubleSmall, 1.05, 900), false);
+  assert.equal(api.isSequenceUnlocked(doubleSmall, 1.1, 900), true);
+  assert.equal(api.isSequenceUnlocked(mixed, 1.2, 1800), false);
+  assert.equal(api.isSequenceUnlocked(mixed, 1.25, 1800), true);
+  assert.equal(api.sequenceWeight(single), 4);
+  assert.equal(api.sequenceWeight(doubleSmall), 1);
+  assert.equal(api.sequenceWeight(mixed), 1);
 });

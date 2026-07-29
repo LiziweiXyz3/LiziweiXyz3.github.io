@@ -195,8 +195,22 @@
       sequences: (Array.isArray(sourceGame.sequences) ? sourceGame.sequences : [])
         .slice(0, 12).map(normalizeSequence).filter(function (sequence) { return sequence.items.length > 0; })
     };
-    result.game.startSpeed = 0.9;
-    result.game.maxSpeed = 1.8;
+    Object.assign(result.game, {
+      startSpeed: 0.9,
+      maxSpeed: 1.8,
+      speedStep: 0.05,
+      speedEveryFrames: 450,
+      firstObstacleRatio: 0.6,
+      minObstacleGap: 330,
+      maxObstacleGap: 450,
+      maxObstacles: 2,
+      jumpVelocity: -6.2,
+      riseGravity: 0.16,
+      fallGravity: 0.065,
+      hangFrames: 10,
+      anticipationFrames: 3,
+      landingFrames: 5
+    });
     if (result.game.minObstacleGap > result.game.maxObstacleGap) {
       result.game.maxObstacleGap = result.game.minObstacleGap;
     }

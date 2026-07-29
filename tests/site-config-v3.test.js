@@ -56,7 +56,7 @@ test('versioned JSON Schema describes the complete formal configuration', functi
   ]);
 });
 
-test('normalization caps game speed and preserves per-element styles', function () {
+test('normalization locks built-in game settings and preserves per-element styles', function () {
   const next = api.clone(config);
   next.game.maxSpeed = 8;
   next.game.startSpeed = 5;
@@ -71,7 +71,7 @@ test('normalization caps game speed and preserves per-element styles', function 
   const normalized = api.normalizeConfig(next, config);
   assert.equal(normalized.game.maxSpeed, 1.8);
   assert.equal(normalized.game.startSpeed, 0.9);
-  assert.equal(normalized.game.hangFrames, 30);
+  assert.equal(normalized.game.hangFrames, 10);
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].fontCn, 'cubic-11');
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].mobileSize, 20);
 });
@@ -79,6 +79,8 @@ test('normalization caps game speed and preserves per-element styles', function 
 test('formal game configuration uses the fixed playable speed range', function () {
   assert.equal(config.game.startSpeed, 0.9);
   assert.equal(config.game.maxSpeed, 1.8);
+  assert.equal(config.game.speedStep, 0.05);
+  assert.equal(config.game.speedEveryFrames, 450);
   assert.equal(api.validateConfig(config).valid, true);
   const stale = api.clone(config);
   stale.game.startSpeed = 1.2;
@@ -86,6 +88,8 @@ test('formal game configuration uses the fixed playable speed range', function (
   const normalized = api.normalizeConfig(stale, config);
   assert.equal(normalized.game.startSpeed, 0.9);
   assert.equal(normalized.game.maxSpeed, 1.8);
+  assert.equal(normalized.game.speedStep, 0.05);
+  assert.equal(normalized.game.speedEveryFrames, 450);
 });
 
 test('every typography property updates independently without touching sibling fields or modules', function () {
@@ -361,8 +365,11 @@ test('editor can add and remove About items, project stacks and resume highlight
 test('game tuning is an internal website behavior rather than an editor feature', function () {
   assert.doesNotMatch(editorHtml, /gameStartSpeed|gameJumpVelocity|sequenceEditor|testGameButton/);
   assert.doesNotMatch(editorScript, /gameStartSpeed|gameJumpVelocity|sequence:add|studio:start-game/);
-  assert.match(publicScript, /GAME_CONFIG\.maxSpeed = 1\.8/);
-  assert.match(publicScript, /GAME_CONFIG\.startSpeed = 0\.9/);
+  assert.match(publicScript, /startSpeed:\s*0\.9/);
+  assert.match(publicScript, /maxSpeed:\s*1\.8/);
+  assert.match(publicScript, /speedEveryFrames:\s*450/);
+  assert.match(publicScript, /isSequenceUnlocked\(sequence, speed, frame\)/);
+  assert.match(publicScript, /sequenceWeight/);
 });
 
 test('reorderable content uses drag handles instead of visible move buttons', function () {

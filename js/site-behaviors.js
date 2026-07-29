@@ -10,7 +10,7 @@
     startSpeed: 0.9,
     maxSpeed: 1.8,
     speedStep: 0.05,
-    speedEveryFrames: 900,
+    speedEveryFrames: 450,
     firstObstacleRatio: 0.6,
     minObstacleGap: 330,
     maxObstacleGap: 450,
@@ -122,6 +122,21 @@
     return availableDistance >= requiredDistance;
   }
 
+  function isSequenceUnlocked(sequence, speed, elapsedFrames) {
+    var items = sequence && Array.isArray(sequence.items) ? sequence.items : [];
+    if (items.length <= 1) return true;
+    if (Number(elapsedFrames) < 900) return false;
+    var containsBigObstacle = items.some(function (item) { return item.type === 'cactus-big'; });
+    var unlockSpeed = containsBigObstacle ? 1.25 : 1.1;
+    return Number(speed) + 0.0001 >= unlockSpeed;
+  }
+
+  function sequenceWeight(sequence) {
+    var items = sequence && Array.isArray(sequence.items) ? sequence.items : [];
+    if (items.length > 1) return 1;
+    return Math.max(1, Number(sequence && sequence.weight) || 1);
+  }
+
   function createAvatarController(image, getScrollY, options) {
     options = options || {};
     var state = 'stand';
@@ -170,6 +185,8 @@
     sequenceSpan: sequenceSpan,
     jumpClearanceFrames: jumpClearanceFrames,
     isSequencePlayable: isSequencePlayable,
+    isSequenceUnlocked: isSequenceUnlocked,
+    sequenceWeight: sequenceWeight,
     createAvatarController: createAvatarController
   };
 });
