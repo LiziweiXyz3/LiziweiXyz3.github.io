@@ -170,6 +170,19 @@ test('editor can add and remove About items, project stacks and resume highlight
   assert.match(editorScript, /Press Start 2P 的视觉尺寸偏大/);
 });
 
+test('reorderable content uses drag handles instead of visible move buttons', function () {
+  assert.match(editorScript, /function createDragHandle/);
+  assert.match(editorScript, /addEventListener\('dragstart'/);
+  assert.match(editorScript, /addEventListener\('drop'/);
+  assert.match(editorScript, /drag-sort:/);
+  assert.match(editorScript, /按技能等级降序排列/);
+  assert.match(editorScript, /sort:skills:level-desc/);
+  assert.doesNotMatch(editorScript, /\['上移',\s*-1\]/);
+  assert.doesNotMatch(editorScript, /\['下移',\s*1\]/);
+  assert.match(editorCss, /\.tree-drag-handle\s*\{/);
+  assert.match(editorCss, /\.tree-sort-row\.drop-before::before/);
+});
+
 test('preview stays visible while the editor scrolls and can collapse', function () {
   assert.match(editorCss, /\.inspector-body\s*\{[\s\S]*?grid-template-rows:[\s\S]*?overflow:\s*hidden;/);
   assert.match(editorCss, /\.settings-group\s*\{[\s\S]*?overflow-y:\s*auto;/);

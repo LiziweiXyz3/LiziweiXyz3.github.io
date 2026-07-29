@@ -11,6 +11,7 @@
   var activeHistoryGroup = null;
   var previewReady = false;
   var gamePreviewTimer = null;
+  var activeDrag = null;
 
   function byId(id) { return document.getElementById(id); }
   function clone(value) { return window.SiteConfig.clone(value); }
@@ -308,35 +309,102 @@
     return button;
   }
 
-  function recordActions(kind, id, list, index, onAddChild, addChildLabel) {
-    var actions = el('div', 'tree-record-actions');
-    [
-      ['上移', -1],
-      ['下移', 1]
-    ].forEach(function (entry) {
-      var button = el('button', '', entry[0]);
-      button.type = 'button';
-      button.disabled = index + entry[1] < 0 || index + entry[1] >= list.length;
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        mutate('move:' + kind + ':' + id, function () {
-          var next = index + entry[1];
-          var item = list.splice(index, 1)[0];
-          list.splice(next, 0, item);
-        }, true, true);
-      });
-      actions.appendChild(button);
+  function clearDropIndicators() {
+    document.querySelectorAll('.drop-before, .drop-after').forEach(function (node) {
+      node.classList.remove('drop-before', 'drop-after');
     });
-    if (onAddChild) {
-      var add = el('button', '', addChildLabel || '新增内容');
-      add.type = 'button';
-      add.addEventListener('click', function (event) { event.preventDefault(); onAddChild(); });
-      actions.appendChild(add);
-    }
+  }
+
+  function moveListItem(sortInfo, targetId, placeAfter) {
+    var list = sortInfo.list;
+    var sourceIndex = list.findIndex(function (item) { return String(item.id) === String(sortInfo.id); });
+    var targetIndex = list.findIndex(function (item) { return String(item.id) === String(targetId); });
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+    var insertIndex = targetIndex + (placeAfter ? 1 : 0);
+    var item = list.splice(sourceIndex, 1)[0];
+    if (sourceIndex < insertIndex) insertIndex -= 1;
+    list.splice(insertIndex, 0, item);
+  }
+
+  function createDragHandle(sortInfo, label) {
+    var handle = el('span', 'tree-drag-handle', '⠿');
+    handle.draggable = true;
+    handle.tabIndex = 0;
+    handle.title = '拖动排序';
+    handle.setAttribute('role', 'button');
+    handle.setAttribute('aria-label', '拖动排序：' + label);
+    handle.addEventListener('dragstart', function (event) {
+      activeDrag = sortInfo;
+      handle.closest('.tree-sort-row').classList.add('is-dragging');
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', sortInfo.kind + ':' + sortInfo.id);
+      }
+    });
+    handle.addEventListener('dragend', function () {
+      activeDrag = null;
+      clearDropIndicators();
+      document.querySelectorAll('.is-dragging').forEach(function (node) {
+        node.classList.remove('is-dragging');
+      });
+    });
+    handle.addEventListener('keydown', function (event) {
+      if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
+      event.preventDefault();
+      var list = sortInfo.list;
+      var index = list.findIndex(function (item) { return String(item.id) === String(sortInfo.id); });
+      var next = index + (event.key === 'ArrowUp' ? -1 : 1);
+      if (index < 0 || next < 0 || next >= list.length) return;
+      mutate('keyboard-sort:' + sortInfo.kind + ':' + sortInfo.id, function () {
+        var item = list.splice(index, 1)[0];
+        list.splice(next, 0, item);
+      }, true, true);
+    });
+    return handle;
+  }
+
+  function makeSortableRow(row, sortInfo) {
+    if (!sortInfo) return row;
+    row.classList.add('tree-sort-row');
+    row.setAttribute('data-sort-kind', sortInfo.kind);
+    row.setAttribute('data-sort-id', sortInfo.id);
+    row.insertBefore(createDragHandle(sortInfo, sortInfo.label), row.firstChild);
+    row.addEventListener('dragover', function (event) {
+      if (!activeDrag || activeDrag.kind !== sortInfo.kind || activeDrag.list !== sortInfo.list) return;
+      event.preventDefault();
+      clearDropIndicators();
+      var rect = row.getBoundingClientRect();
+      row.classList.add(event.clientY > rect.top + rect.height / 2 ? 'drop-after' : 'drop-before');
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    });
+    row.addEventListener('dragleave', function (event) {
+      if (!row.contains(event.relatedTarget)) row.classList.remove('drop-before', 'drop-after');
+    });
+    row.addEventListener('drop', function (event) {
+      if (!activeDrag || activeDrag.kind !== sortInfo.kind || activeDrag.list !== sortInfo.list) return;
+      event.preventDefault();
+      var placeAfter = row.classList.contains('drop-after');
+      var moving = activeDrag;
+      activeDrag = null;
+      clearDropIndicators();
+      mutate('drag-sort:' + moving.kind + ':' + moving.id, function () {
+        moveListItem(moving, sortInfo.id, placeAfter);
+      }, true, true);
+    });
+    return row;
+  }
+
+  function recordActions(onAddChild, addChildLabel) {
+    if (!onAddChild) return null;
+    var actions = el('div', 'tree-record-actions');
+    var add = el('button', '', addChildLabel || '新增内容');
+    add.type = 'button';
+    add.addEventListener('click', function (event) { event.preventDefault(); onAddChild(); });
+    actions.appendChild(add);
     return actions;
   }
 
-  function createRecord(label, items, actions, onRemove) {
+  function createRecord(label, items, actions, onRemove, sortInfo) {
     var details = el('details', 'tree-record');
     if (items.some(function (item) { return item.key === selectedKey; })) details.open = true;
     details.appendChild(el('summary', '', label));
@@ -358,7 +426,7 @@
         item.onRemove();
       });
       row.appendChild(remove);
-      itemBox.appendChild(row);
+      itemBox.appendChild(makeSortableRow(row, item.sortInfo));
     });
     details.appendChild(itemBox);
     if (actions) details.appendChild(actions);
@@ -376,17 +444,26 @@
       onRemove();
     });
     row.appendChild(removeRecord);
-    return row;
+    return makeSortableRow(row, sortInfo);
   }
 
-  function createGroupHeader(label, count, addLabel, addAction) {
+  function createGroupHeader(label, count, addLabel, addAction, sortAction) {
     var header = el('div', 'tree-group-header');
     header.appendChild(el('span', '', label + '（' + count + '）'));
+    var actions = el('div', 'tree-group-actions');
+    if (sortAction) {
+      var sort = el('button', 'tree-group-sort', '等级 ↓');
+      sort.type = 'button';
+      sort.setAttribute('aria-label', '按技能等级降序排列');
+      sort.addEventListener('click', sortAction);
+      actions.appendChild(sort);
+    }
     var add = el('button', 'tree-group-add', '＋ 新增');
     add.type = 'button';
     add.setAttribute('aria-label', addLabel);
     add.addEventListener('click', addAction);
-    header.appendChild(add);
+    actions.appendChild(add);
+    header.appendChild(actions);
     return header;
   }
 
@@ -459,6 +536,22 @@
       selectedKey = 'about.skills.' + id;
     }, true, true);
   }
+  function sortSkillsByLevel() {
+    var sorted = draft.content.about.skills.slice().sort(function (left, right) {
+      return Number(right.level) - Number(left.level);
+    });
+    var alreadySorted = sorted.every(function (item, index) {
+      return item.id === draft.content.about.skills[index].id;
+    });
+    if (alreadySorted) {
+      toast('技能已经按等级从高到低排列');
+      return;
+    }
+    mutate('sort:skills:level-desc', function () {
+      draft.content.about.skills.splice.apply(draft.content.about.skills, [0, draft.content.about.skills.length].concat(sorted));
+    }, true, true);
+    toast('技能已按等级从高到低排列');
+  }
 
   function buildTree() {
     var root = byId('structureTree');
@@ -479,18 +572,17 @@
       return createRecord(stat.name, [
         { key: 'about.stats.' + stat.id + '.name', label: '属性名称' },
         { key: 'about.stats.' + stat.id + '.value', label: '属性数值' }
-      ], recordActions('stat', stat.id, list, index), function () {
+      ], null, function () {
         removeRecord('stat', stat.id, list, index);
-      });
+      }, { kind: 'stat', id: stat.id, list: list, label: stat.name });
     });
     var skillRecords = draft.content.about.skills.map(function (skill, index, list) {
-      return createRecord(skill.name, [{ key: 'about.skills.' + skill.id, label: '技能文字' }],
-        recordActions('skill', skill.id, list, index), function () {
+      return createRecord(skill.name, [{ key: 'about.skills.' + skill.id, label: '技能文字' }], null, function () {
           removeRecord('skill', skill.id, list, index);
-        });
+        }, { kind: 'skill', id: skill.id, list: list, label: skill.name });
     });
     var aboutRecords = [createGroupHeader('属性条', statRecords.length, '新增属性条', addStat)]
-      .concat(statRecords, [createGroupHeader('技能', skillRecords.length, '新增技能', addSkill)], skillRecords);
+      .concat(statRecords, [createGroupHeader('技能', skillRecords.length, '新增技能', addSkill, sortSkillsByLevel)], skillRecords);
     root.appendChild(createSection('About', aboutRecords, [
       { key: 'about.heading', label: '模块标题' },
       { key: 'about.intro', label: '个人介绍' },
@@ -507,6 +599,7 @@
         return {
           key: 'projects.' + project.id + '.tag.' + tag.id,
           label: '技术栈 · ' + tag.text,
+          sortInfo: { kind: 'project-tag-' + project.id, id: tag.id, list: project.tags, label: tag.text },
           onRemove: function () {
             mutate('delete:project-tag:' + project.id + ':' + tag.id, function () {
               project.tags.splice(tagIndex, 1);
@@ -515,7 +608,7 @@
           }
         };
       }));
-      return createRecord(project.title, items, recordActions('project', project.id, list, index, function () {
+      return createRecord(project.title, items, recordActions(function () {
         mutate('add:project-tag:' + project.id, function () {
           var used = project.tags.map(function (item) { return item.id; });
           var tagId = window.SiteConfig.uniqueId('tag', used, 'tag');
@@ -524,7 +617,7 @@
         }, true, true);
       }, '新增技术栈'), function () {
         removeRecord('project', project.id, list, index);
-      });
+      }, { kind: 'project', id: project.id, list: list, label: project.title });
     });
     root.appendChild(createSection('Projects', projectRecords, [
       { key: 'projects.heading', label: '模块标题' },
@@ -541,6 +634,7 @@
         return {
           key: 'resume.' + experience.id + '.highlight.' + highlight.id,
           label: '亮点 · ' + highlight.text,
+          sortInfo: { kind: 'highlight-' + experience.id, id: highlight.id, list: experience.highlights, label: highlight.text },
           onRemove: function () {
             mutate('delete:highlight:' + experience.id + ':' + highlight.id, function () {
               experience.highlights.splice(highlightIndex, 1);
@@ -550,7 +644,7 @@
         };
       }));
       return createRecord(experience.company + ' · ' + experience.title, items,
-        recordActions('experience', experience.id, list, index, function () {
+        recordActions(function () {
           mutate('add:highlight:' + experience.id, function () {
             var used = experience.highlights.map(function (item) { return item.id; });
             var highlightId = window.SiteConfig.uniqueId('highlight', used, 'highlight');
@@ -559,7 +653,7 @@
           }, true, true);
         }, '新增亮点'), function () {
           removeRecord('experience', experience.id, list, index);
-        });
+        }, { kind: 'experience', id: experience.id, list: list, label: experience.company + ' · ' + experience.title });
     });
     root.appendChild(createSection('Resume', resumeRecords, [
       { key: 'resume.heading', label: '模块标题' },

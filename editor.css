@@ -228,6 +228,22 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
   background: rgba(0, 255, 65, 0.05);
   font-size: 10px;
 }
+.tree-group-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.tree-group-sort {
+  padding: 4px 7px;
+  border-color: var(--studio-purple);
+  color: var(--studio-purple);
+  background: rgba(179, 136, 255, 0.06);
+  font-size: 10px;
+}
+.tree-group-sort:hover {
+  background: rgba(179, 136, 255, 0.15);
+  color: #fff;
+}
 .tree-group-add:hover {
   background: rgba(0, 255, 65, 0.14);
   color: #fff;
@@ -246,11 +262,47 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 .tree-record > summary { color: var(--studio-text); font-family: inherit; }
 .tree-record-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 4px;
   align-items: start;
   margin: 6px;
 }
+.tree-drag-handle {
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  padding: 5px 3px;
+  border: 1px solid transparent;
+  color: var(--studio-dim);
+  cursor: grab;
+  user-select: none;
+}
+.tree-drag-handle:hover,
+.tree-drag-handle:focus-visible {
+  border-color: var(--studio-purple);
+  color: #fff;
+  outline: none;
+}
+.tree-drag-handle:active { cursor: grabbing; }
+.tree-sort-row {
+  position: relative;
+  transition: opacity 120ms ease, background 120ms ease;
+}
+.tree-sort-row.is-dragging { opacity: 0.42; }
+.tree-sort-row.drop-before::before,
+.tree-sort-row.drop-after::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  left: 2px;
+  right: 2px;
+  height: 2px;
+  background: var(--studio-purple);
+  box-shadow: 0 0 6px var(--studio-purple);
+}
+.tree-sort-row.drop-before::before { top: -3px; }
+.tree-sort-row.drop-after::after { bottom: -3px; }
 .tree-record-row .tree-record {
   min-width: 0;
   margin: 0;
@@ -269,7 +321,7 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
 .tree-items { display: grid; gap: 3px; padding: 0 7px 7px; }
 .tree-item-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 4px;
   align-items: stretch;
 }
