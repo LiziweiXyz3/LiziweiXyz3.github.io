@@ -99,6 +99,13 @@
     if (rebuildTree) buildTree();
     if (rerenderInspector) renderCurrentView();
   }
+  function mutateElementStyle(key, property, value, group, rebuildTree, rerenderInspector) {
+    var targetKey = key;
+    if (!targetKey) return;
+    mutate(group || ('style:' + targetKey + ':' + property), function () {
+      draft = window.SiteConfig.updateElementStyle(draft, targetKey, property, value);
+    }, rebuildTree, rerenderInspector);
+  }
   function undo() {
     if (!undoStack.length) return;
     draft = undoStack.pop();
@@ -282,10 +289,6 @@
   }
 
   function sectionForKey(key) { return key.split('.')[0]; }
-  function styleForKey(key) {
-    draft.styles.elements[key] = draft.styles.elements[key] || {};
-    return draft.styles.elements[key];
-  }
 
   function createTreeItem(key, label) {
     var button = el('button', 'tree-item');
@@ -842,7 +845,8 @@
   function bindElementControls() {
     byId('textControl').addEventListener('input', function () {
       if (!selectedKey) return;
-      mutate('text:' + selectedKey, function () { setText(selectedKey, byId('textControl').value); });
+      var targetKey = selectedKey;
+      mutate('text:' + targetKey, function () { setText(targetKey, byId('textControl').value); });
     });
     byId('textControl').addEventListener('blur', function () {
       endChange();
@@ -856,13 +860,10 @@
     ].forEach(function (entry) {
       byId(entry[0]).addEventListener(entry[2], function () {
         if (!selectedKey) return;
+        var targetKey = selectedKey;
         var value = byId(entry[0]).value;
         if (['lineHeight', 'weight', 'letterSpacing'].includes(entry[1])) value = Number(value);
-        mutate('style:' + selectedKey + ':' + entry[1], function () {
-          var style = styleForKey(selectedKey);
-          if (value === '') delete style[entry[1]];
-          else style[entry[1]] = value;
-        });
+        mutateElementStyle(targetKey, entry[1], value);
         if (entry[0] === 'letterSpacingControl') {
           byId('letterSpacingOutput').textContent = value + 'px';
         }
@@ -871,60 +872,66 @@
       byId(entry[0]).addEventListener('change', endChange);
     });
     byId('sizeControl').addEventListener('input', function () {
-      mutate('style:' + selectedKey + ':size', function () { styleForKey(selectedKey).size = Number(byId('sizeControl').value); });
+      if (!selectedKey) return;
+      mutateElementStyle(selectedKey, 'size', Number(byId('sizeControl').value));
       updateFontVisualHint();
     });
     byId('sizeControl').addEventListener('change', endChange);
     byId('boldControl').addEventListener('change', function () {
-      mutate('style:' + selectedKey + ':bold', function () {
-        styleForKey(selectedKey).weight = byId('boldControl').checked ? 700 : 400;
-      });
+      if (!selectedKey) return;
+      mutateElementStyle(selectedKey, 'weight', byId('boldControl').checked ? 700 : 400,
+        'style:' + selectedKey + ':weight');
       endChange();
     });
     byId('italicControl').addEventListener('change', function () {
-      mutate('style:' + selectedKey + ':italic', function () { styleForKey(selectedKey).italic = byId('italicControl').checked; });
+      if (!selectedKey) return;
+      mutateElementStyle(selectedKey, 'italic', byId('italicControl').checked);
       endChange();
     });
     document.querySelectorAll('input[name="alignControl"]').forEach(function (input) {
       input.addEventListener('change', function () {
         if (!selectedKey || !input.checked) return;
-        mutate('style:' + selectedKey + ':align', function () {
-          styleForKey(selectedKey).align = input.value;
-        });
+        mutateElementStyle(selectedKey, 'align', input.value);
         endChange();
       });
     });
-    function updateElementColor(group) {
+    function updateElementColor(group, targetKey) {
+      if (!targetKey) return;
       var hex = byId('colorControl').value;
       var opacity = Number(byId('opacityControl').value);
       byId('colorHexControl').value = hex;
       byId('opacityOutput').textContent = opacity + '%';
       updateContrast(hex);
-      mutate(group, function () { styleForKey(selectedKey).color = rgba(hex, opacity); }, false, true);
+      mutateElementStyle(targetKey, 'color', rgba(hex, opacity), group, false, true);
     }
-    byId('colorControl').addEventListener('input', function () { updateElementColor('style:' + selectedKey + ':color'); });
-    byId('opacityControl').addEventListener('input', function () { updateElementColor('style:' + selectedKey + ':opacity'); });
+    byId('colorControl').addEventListener('input', function () {
+      updateElementColor('style:' + selectedKey + ':color', selectedKey);
+    });
+    byId('opacityControl').addEventListener('input', function () {
+      updateElementColor('style:' + selectedKey + ':opacity', selectedKey);
+    });
     byId('colorHexControl').addEventListener('change', function () {
       if (!/^#[0-9a-f]{6}$/i.test(this.value)) { this.value = byId('colorControl').value; return; }
       byId('colorControl').value = this.value;
-      updateElementColor('style:' + selectedKey + ':color');
+      updateElementColor('style:' + selectedKey + ':color', selectedKey);
       endChange();
     });
     byId('linkedColorControl').addEventListener('input', function () {
-      var target = linkedColorTarget(selectedKey);
+      var targetKey = selectedKey;
+      var target = linkedColorTarget(targetKey);
       if (!target) return;
-      mutate('linked-color:' + selectedKey, function () { target.set(byId('linkedColorControl').value); });
+      mutate('linked-color:' + targetKey, function () { target.set(byId('linkedColorControl').value); });
     });
     byId('restoreGradientButton').addEventListener('click', function () {
       if (!selectedKey) return;
-      mutate('style:' + selectedKey + ':restore-gradient', function () {
-        delete styleForKey(selectedKey).color;
-      }, true, true);
+      mutateElementStyle(selectedKey, 'color', undefined,
+        'style:' + selectedKey + ':restore-gradient', true, true);
     });
     byId('resetElementButton').addEventListener('click', function () {
-      mutate('reset:' + selectedKey, function () {
-        delete draft.styles.elements[selectedKey];
-        if (draft.content.overrides && draft.content.overrides.text) delete draft.content.overrides.text[selectedKey];
+      var targetKey = selectedKey;
+      mutate('reset:' + targetKey, function () {
+        delete draft.styles.elements[targetKey];
+        if (draft.content.overrides && draft.content.overrides.text) delete draft.content.overrides.text[targetKey];
       }, true, true);
     });
     byId('resetSectionButton').addEventListener('click', function () {
@@ -942,12 +949,13 @@
       button.style.background = value;
       button.title = value;
       button.addEventListener('click', function () {
+        var targetKey = selectedKey;
+        if (!targetKey) return;
         byId('colorControl').value = value;
         byId('colorHexControl').value = value;
         byId('opacityControl').value = 100;
-        mutate('style:' + selectedKey + ':color', function () {
-          styleForKey(selectedKey).color = value;
-        }, false, true);
+        mutateElementStyle(targetKey, 'color', value,
+          'style:' + targetKey + ':color', false, true);
         endChange();
       });
       swatches.appendChild(button);

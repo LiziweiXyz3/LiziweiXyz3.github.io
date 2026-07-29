@@ -11,6 +11,10 @@
   var FONT_CN = ['zpix', 'cubic-11', 'boutique-7x7'];
   var FONT_EN = ['zpix', 'press-start', 'vt323', 'fira-code', 'ibm-plex-mono'];
   var ALIGNMENTS = ['left', 'center', 'right'];
+  var ELEMENT_STYLE_PROPERTIES = [
+    'fontCn', 'fontEn', 'size', 'mobileSize', 'lineHeight', 'weight',
+    'italic', 'letterSpacing', 'align', 'color'
+  ];
   var CURSORS = ['pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'];
   var OBSTACLES = ['cactus-small', 'cactus-big'];
 
@@ -73,6 +77,21 @@
     if (ALIGNMENTS.indexOf(value.align) >= 0) style.align = value.align;
     if (value.color) style.color = color(value.color, '#e0e0e0');
     return style;
+  }
+
+  function updateElementStyle(config, key, property, value) {
+    var result = clone(isObject(config) ? config : {});
+    if (!/^[a-z0-9._-]{1,120}$/i.test(String(key || '')) ||
+        ELEMENT_STYLE_PROPERTIES.indexOf(property) < 0) return result;
+    result.styles = isObject(result.styles) ? result.styles : {};
+    result.styles.elements = isObject(result.styles.elements) ? result.styles.elements : {};
+    var nextStyle = isObject(result.styles.elements[key]) ? clone(result.styles.elements[key]) : {};
+    if (value === undefined || value === null || value === '') delete nextStyle[property];
+    else nextStyle[property] = value;
+    nextStyle = normalizeElementStyle(nextStyle);
+    if (Object.keys(nextStyle).length) result.styles.elements[key] = nextStyle;
+    else delete result.styles.elements[key];
+    return result;
   }
 
   function normalizeSequence(sequence, index) {
@@ -271,9 +290,11 @@
     FONT_CN: FONT_CN,
     FONT_EN: FONT_EN,
     CURSORS: CURSORS,
+    ELEMENT_STYLE_PROPERTIES: ELEMENT_STYLE_PROPERTIES,
     clone: clone,
     normalizeConfig: normalizeConfig,
     normalizeElementStyle: normalizeElementStyle,
+    updateElementStyle: updateElementStyle,
     normalizeSequence: normalizeSequence,
     validateConfig: validateConfig,
     migrateLegacyDraft: migrateLegacyDraft,

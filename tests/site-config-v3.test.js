@@ -55,6 +55,90 @@ test('normalization caps game speed and preserves per-element styles', function 
   assert.equal(normalized.styles.elements['resume.huya-2024.title'].mobileSize, 20);
 });
 
+test('every typography property updates independently without touching sibling fields or modules', function () {
+  const fullStyle = {
+    fontCn: 'zpix',
+    fontEn: 'vt323',
+    size: 18,
+    mobileSize: 16,
+    lineHeight: 1.6,
+    weight: 700,
+    italic: false,
+    letterSpacing: 2,
+    align: 'center',
+    color: 'rgba(66, 133, 244, 0.8)'
+  };
+  const siblingStyle = {
+    fontCn: 'cubic-11',
+    fontEn: 'fira-code',
+    size: 21,
+    lineHeight: 1.8,
+    weight: 400,
+    italic: true,
+    letterSpacing: 1,
+    align: 'left',
+    color: '#34A853'
+  };
+  const base = api.clone(config);
+  base.styles.elements['hero.scrollHint'] = api.clone(fullStyle);
+  base.styles.elements['hero.subtitle'] = api.clone(siblingStyle);
+  base.styles.elements['resume.southampton-2021.title'] = api.clone(siblingStyle);
+  const changes = {
+    fontCn: 'boutique-7x7',
+    fontEn: 'press-start',
+    size: 24,
+    mobileSize: 20,
+    lineHeight: 2.1,
+    weight: 400,
+    italic: true,
+    letterSpacing: 5,
+    align: 'right',
+    color: '#EA4335'
+  };
+
+  Object.entries(changes).forEach(function ([property, value]) {
+    const next = api.updateElementStyle(base, 'hero.scrollHint', property, value);
+    assert.equal(next.styles.elements['hero.scrollHint'][property], value, property + ' 应更新');
+    Object.keys(fullStyle).filter(function (key) { return key !== property; }).forEach(function (key) {
+      assert.deepEqual(next.styles.elements['hero.scrollHint'][key], fullStyle[key],
+        property + ' 不应改变同元素的 ' + key);
+    });
+    assert.deepEqual(next.styles.elements['hero.subtitle'], siblingStyle,
+      property + ' 不应影响同模块的其他元素');
+    assert.deepEqual(next.styles.elements['resume.southampton-2021.title'], siblingStyle,
+      property + ' 不应影响其他模块');
+    assert.deepEqual(base.styles.elements['hero.scrollHint'], fullStyle,
+      property + ' 不应回写原草稿对象');
+  });
+});
+
+test('removing one style property and save normalization preserve every other property', function () {
+  const base = api.clone(config);
+  const style = {
+    fontCn: 'zpix',
+    fontEn: 'zpix',
+    size: 19,
+    lineHeight: 1.7,
+    weight: 700,
+    italic: true,
+    letterSpacing: 3,
+    align: 'right',
+    color: '#FBBC05'
+  };
+  base.styles.elements['hero.title'] = api.clone(style);
+  base.styles.elements['resume.huya-2024.period'] = {
+    fontCn: 'cubic-11', size: 15, lineHeight: 1.4, color: '#4285F4'
+  };
+
+  const changed = api.updateElementStyle(base, 'hero.title', 'color', undefined);
+  const saved = api.normalizeConfig(JSON.parse(JSON.stringify(changed)), base);
+  const expected = api.clone(style);
+  delete expected.color;
+  assert.deepEqual(saved.styles.elements['hero.title'], expected);
+  assert.deepEqual(saved.styles.elements['resume.huya-2024.period'],
+    base.styles.elements['resume.huya-2024.period']);
+});
+
 test('reordering experiences does not change their style keys', function () {
   const next = api.clone(config);
   next.styles.elements['resume.huya-2024.title'] = { color: '#ff0000' };
@@ -137,6 +221,9 @@ test('element formatting applies only the properties explicitly changed', functi
   assert.match(editorHtml, /字号（px）/);
   assert.match(editorScript, /letterSpacingOutput'\)\.textContent = value \+ 'px'/);
   assert.doesNotMatch(editorHtml, /继承默认|字重|weightControl/);
+  assert.match(editorScript, /function mutateElementStyle/);
+  assert.match(editorScript, /SiteConfig\.updateElementStyle\(draft, targetKey, property, value\)/);
+  assert.doesNotMatch(editorScript, /styleForKey\(/);
 });
 
 test('editor distinguishes gradient text from solid colors and labels the quick palette', function () {
