@@ -27,6 +27,7 @@ test('V3 config uses stable ids for reorderable content', function () {
 test('versioned JSON Schema describes the complete formal configuration', function () {
   assert.equal(schema.properties.version.const, 3);
   assert.ok(schema.$defs.textStyle.properties.fontEn.enum.includes('zpix'));
+  assert.ok(schema.$defs.textStyle.properties.gradient.enum.includes('arcade-rainbow'));
   assert.match(editorHtml, /<option value="zpix">Zpix<\/option>/);
   assert.match(runtimeScript, /zpix:\s*"'Zpix', monospace"/);
   assert.equal(schema.properties.game.properties.maxSpeed.maximum, 2.5);
@@ -93,7 +94,8 @@ test('every typography property updates independently without touching sibling f
     italic: true,
     letterSpacing: 5,
     align: 'right',
-    color: '#EA4335'
+    color: '#EA4335',
+    gradient: 'arcade-rainbow'
   };
 
   Object.entries(changes).forEach(function ([property, value]) {
@@ -137,6 +139,39 @@ test('removing one style property and save normalization preserve every other pr
   assert.deepEqual(saved.styles.elements['hero.title'], expected);
   assert.deepEqual(saved.styles.elements['resume.huya-2024.period'],
     base.styles.elements['resume.huya-2024.period']);
+});
+
+test('Hero gradient and solid color modes replace only each other', function () {
+  const base = api.clone(config);
+  base.styles.elements['hero.title'] = {
+    fontCn: 'zpix',
+    size: 28,
+    lineHeight: 1.4,
+    weight: 700,
+    letterSpacing: 4,
+    align: 'center',
+    color: '#EA4335'
+  };
+  base.styles.elements['resume.huya-2024.title'] = {
+    fontCn: 'cubic-11', size: 18, lineHeight: 1.6, color: '#e0e0e0'
+  };
+
+  let gradient = api.updateElementStyle(base, 'hero.title', 'color', undefined);
+  gradient = api.updateElementStyle(gradient, 'hero.title', 'gradient', 'cyber-mint');
+  assert.equal(gradient.styles.elements['hero.title'].color, undefined);
+  assert.equal(gradient.styles.elements['hero.title'].gradient, 'cyber-mint');
+  assert.equal(gradient.styles.elements['hero.title'].size, 28);
+  assert.equal(gradient.styles.elements['hero.title'].lineHeight, 1.4);
+  assert.deepEqual(gradient.styles.elements['resume.huya-2024.title'],
+    base.styles.elements['resume.huya-2024.title']);
+
+  let solid = api.updateElementStyle(gradient, 'hero.title', 'gradient', undefined);
+  solid = api.updateElementStyle(solid, 'hero.title', 'color', '#FBBC05');
+  assert.equal(solid.styles.elements['hero.title'].gradient, undefined);
+  assert.equal(solid.styles.elements['hero.title'].color, '#FBBC05');
+  assert.equal(solid.styles.elements['hero.title'].letterSpacing, 4);
+  assert.deepEqual(solid.styles.elements['resume.huya-2024.title'],
+    base.styles.elements['resume.huya-2024.title']);
 });
 
 test('reordering experiences does not change their style keys', function () {
@@ -231,6 +266,8 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
   assert.match(runtimeScript, /gradient:\s*hasGradientText \? backgroundImage/);
   assert.match(runtimeScript, /defaultGradient:\s*defaultGradient/);
   assert.match(editorHtml, /id="gradientColorPreview"/);
+  assert.match(editorHtml, /id="heroGradientControls"/);
+  assert.match(editorHtml, /id="heroGradientPresets"/);
   assert.match(editorHtml, />快捷色板</);
   assert.match(editorHtml, /id="restoreGradientButton"/);
   assert.match(editorHtml, /<section class="color-settings"[\s\S]*?>快捷色板<[\s\S]*?<\/section>/);
@@ -239,8 +276,14 @@ test('editor distinguishes gradient text from solid colors and labels the quick 
   assert.match(editorScript, /文字清晰易读/);
   assert.match(editorScript, /文字不够清晰/);
   assert.doesNotMatch(editorScript, /通过 AA/);
-  assert.match(editorScript, /restoreGradientButton'\)\.hidden = !defaultGradient \|\| !style\.color/);
+  assert.match(editorScript, /restoreGradientButton'\)\.hidden = !defaultGradient \|\| \(!style\.color && !style\.gradient\)/);
+  assert.match(editorScript, /function mutateElementAppearance/);
+  assert.match(editorScript, /街机彩虹/);
+  assert.match(editorScript, /赛博薄荷/);
+  assert.match(runtimeScript, /data-studio-gradient/);
+  assert.match(runtimeScript, /--studio-gradient/);
   assert.match(publicCss, /data-studio-color="true"[\s\S]*?-webkit-text-fill-color:\s*var\(--studio-color\)\s*!important/);
+  assert.match(publicCss, /data-studio-gradient="true"[\s\S]*?background-image:\s*var\(--studio-gradient\)\s*!important/);
 });
 
 test('editor can add and remove About items, project stacks and resume highlights', function () {

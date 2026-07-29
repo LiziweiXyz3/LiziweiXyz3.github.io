@@ -13,6 +13,7 @@
     'fira-code': "'Fira Code', monospace",
     'ibm-plex-mono': "'IBM Plex Mono', monospace"
   };
+  var GRADIENTS = window.SiteConfig && window.SiteConfig.GRADIENTS || {};
   var COLOR_VARS = {
     bgDeep: '--bg-deep',
     bgSurface: '--bg-surface',
@@ -169,6 +170,7 @@
       element.removeAttribute('data-studio-weight');
       element.removeAttribute('data-studio-letter-spacing');
       element.removeAttribute('data-studio-color');
+      element.removeAttribute('data-studio-gradient');
       element.removeAttribute('data-studio-align');
       element.style.removeProperty('--studio-font-cn');
       element.style.removeProperty('--studio-font-en');
@@ -177,6 +179,7 @@
       element.style.removeProperty('--studio-weight');
       element.style.removeProperty('--studio-letter-spacing');
       element.style.removeProperty('--studio-color');
+      element.style.removeProperty('--studio-gradient');
       element.style.removeProperty('--studio-align');
       element.removeAttribute('data-studio-italic');
     });
@@ -212,6 +215,10 @@
       if (style.color) {
         element.setAttribute('data-studio-color', 'true');
         element.style.setProperty('--studio-color', style.color);
+      }
+      if (GRADIENTS[style.gradient]) {
+        element.setAttribute('data-studio-gradient', 'true');
+        element.style.setProperty('--studio-gradient', GRADIENTS[style.gradient]);
       }
       if (style.align) {
         element.setAttribute('data-studio-align', 'true');

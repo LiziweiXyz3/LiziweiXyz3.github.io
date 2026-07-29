@@ -1385,6 +1385,19 @@ html[data-site-studio-preview="true"] .hero-scroll-hint {
   -webkit-text-fill-color: var(--studio-color) !important;
 }
 
+[data-edit-key][data-studio-gradient="true"] {
+  color: transparent !important;
+  background-image: var(--studio-gradient) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-edit-key][data-studio-gradient="true"] [data-studio-text-part] {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
 [data-edit-key][data-studio-align="true"] {
   text-align: var(--studio-align);
 }

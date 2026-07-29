@@ -11,9 +11,16 @@
   var FONT_CN = ['zpix', 'cubic-11', 'boutique-7x7'];
   var FONT_EN = ['zpix', 'press-start', 'vt323', 'fira-code', 'ibm-plex-mono'];
   var ALIGNMENTS = ['left', 'center', 'right'];
+  var GRADIENTS = {
+    'arcade-rainbow': 'linear-gradient(90deg, #4285f4, #00ff41, #fbbc05, #ea4335, #b388ff)',
+    'sunset-pixel': 'linear-gradient(90deg, #fbbc05, #ff8a3d, #ea4335, #ff66b3)',
+    'cyber-mint': 'linear-gradient(90deg, #00ff41, #41d9ff, #4285f4)',
+    'gold-fire': 'linear-gradient(90deg, #fff3a3, #fbbc05, #ff7a00, #ea4335)',
+    'violet-pulse': 'linear-gradient(90deg, #41d9ff, #b388ff, #ff66cc)'
+  };
   var ELEMENT_STYLE_PROPERTIES = [
     'fontCn', 'fontEn', 'size', 'mobileSize', 'lineHeight', 'weight',
-    'italic', 'letterSpacing', 'align', 'color'
+    'italic', 'letterSpacing', 'align', 'color', 'gradient'
   ];
   var CURSORS = ['pixel-arrow', 'pixel-hand', 'pixel-crosshair', 'pixel-terminal', 'pixel-outline'];
   var OBSTACLES = ['cactus-small', 'cactus-big'];
@@ -76,6 +83,7 @@
     if (value.letterSpacing !== undefined) style.letterSpacing = clamp(value.letterSpacing, -2, 12, 0);
     if (ALIGNMENTS.indexOf(value.align) >= 0) style.align = value.align;
     if (value.color) style.color = color(value.color, '#e0e0e0');
+    if (Object.prototype.hasOwnProperty.call(GRADIENTS, value.gradient)) style.gradient = value.gradient;
     return style;
   }
 
@@ -291,6 +299,7 @@
     FONT_CN: FONT_CN,
     FONT_EN: FONT_EN,
     CURSORS: CURSORS,
+    GRADIENTS: GRADIENTS,
     ELEMENT_STYLE_PROPERTIES: ELEMENT_STYLE_PROPERTIES,
     clone: clone,
     normalizeConfig: normalizeConfig,

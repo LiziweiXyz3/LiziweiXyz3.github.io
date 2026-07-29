@@ -137,6 +137,20 @@
       draft = window.SiteConfig.updateElementStyle(draft, targetKey, property, value);
     }, rebuildTree, rerenderInspector);
   }
+  function mutateElementAppearance(key, mode, value, group, rebuildTree, rerenderInspector) {
+    var targetKey = key;
+    if (!targetKey) return;
+    mutate(group || ('style:' + targetKey + ':' + mode), function () {
+      if (mode === 'solid') {
+        draft = window.SiteConfig.updateElementStyle(draft, targetKey, 'gradient', undefined);
+        draft = window.SiteConfig.updateElementStyle(draft, targetKey, 'color', value);
+      } else {
+        draft = window.SiteConfig.updateElementStyle(draft, targetKey, 'color', undefined);
+        draft = window.SiteConfig.updateElementStyle(draft, targetKey, 'gradient',
+          mode === 'gradient' ? value : undefined);
+      }
+    }, rebuildTree, rerenderInspector);
+  }
   function undo() {
     if (!undoStack.length) return;
     draft = undoStack.pop();
@@ -803,8 +817,12 @@
     var style = draft.styles.elements[selectedKey] || {};
     var defaults = selectionDefaults[selectedKey] || {};
     var defaultGradient = defaults.defaultGradient || (defaults.colorMode === 'gradient' ? defaults.gradient : '');
-    var usesDefaultGradient = !!defaultGradient && !style.color;
-    var parsed = parseColor(style.color || defaults.color || draft.theme.colors.text);
+    var customGradient = window.SiteConfig.GRADIENTS[style.gradient] || '';
+    var activeGradient = customGradient || (!style.color ? defaultGradient : '');
+    var usesGradient = !!activeGradient;
+    var usesDefaultGradient = usesGradient && !customGradient;
+    var parsed = parseColor(style.color || (usesGradient ? draft.theme.colors.text : defaults.color) ||
+      draft.theme.colors.text);
     byId('elementScope').textContent = sectionForKey(selectedKey) + ' / ' + selectedKey.split('.').slice(1, -1).join(' / ');
     byId('elementLabel').textContent = keyLabel(selectedKey);
     var currentText = getText(selectedKey);
@@ -834,13 +852,23 @@
     byId('colorHexControl').value = parsed.hex;
     byId('opacityControl').value = parsed.opacity;
     byId('opacityOutput').textContent = parsed.opacity + '%';
-    byId('gradientColorNotice').hidden = !usesDefaultGradient;
-    byId('gradientColorPreview').style.backgroundImage = usesDefaultGradient ? defaultGradient : '';
-    byId('solidColorLabel').textContent = usesDefaultGradient ? '改为单色' : '文字颜色';
-    byId('solidHexLabel').textContent = usesDefaultGradient ? '单色颜色值（HEX）' : '颜色值（HEX）';
-    byId('opacityLabel').textContent = usesDefaultGradient ? '单色透明度' : '透明度';
-    byId('restoreGradientButton').hidden = !defaultGradient || !style.color;
-    if (usesDefaultGradient) {
+    byId('gradientColorNotice').hidden = !usesGradient;
+    byId('gradientColorPreview').style.backgroundImage = activeGradient;
+    byId('gradientColorDescription').textContent = usesDefaultGradient
+      ? '当前使用默认蓝紫红渐变。选择下方预设可直接替换。'
+      : '当前使用已选择的渐变色。选择下面的颜色后会改为单色。';
+    byId('heroGradientControls').hidden = selectedKey !== 'hero.title';
+    document.querySelectorAll('[data-gradient-preset]').forEach(function (button) {
+      var id = button.getAttribute('data-gradient-preset');
+      button.setAttribute('aria-pressed', id === 'default'
+        ? String(usesDefaultGradient)
+        : String(style.gradient === id));
+    });
+    byId('solidColorLabel').textContent = usesGradient ? '改为单色' : '文字颜色';
+    byId('solidHexLabel').textContent = usesGradient ? '单色颜色值（HEX）' : '颜色值（HEX）';
+    byId('opacityLabel').textContent = usesGradient ? '单色透明度' : '透明度';
+    byId('restoreGradientButton').hidden = !defaultGradient || (!style.color && !style.gradient);
+    if (usesGradient) {
       byId('contrastOutput').textContent = '当前使用渐变色；改成单色后，这里会提示文字是否容易看清。';
       byId('contrastOutput').removeAttribute('data-pass');
     } else {
@@ -937,7 +965,7 @@
       byId('colorHexControl').value = hex;
       byId('opacityOutput').textContent = opacity + '%';
       updateContrast(hex);
-      mutateElementStyle(targetKey, 'color', rgba(hex, opacity), group, false, true);
+      mutateElementAppearance(targetKey, 'solid', rgba(hex, opacity), group, false, true);
     }
     byId('colorControl').addEventListener('input', function () {
       updateElementColor('style:' + selectedKey + ':color', selectedKey);
@@ -959,7 +987,7 @@
     });
     byId('restoreGradientButton').addEventListener('click', function () {
       if (!selectedKey) return;
-      mutateElementStyle(selectedKey, 'color', undefined,
+      mutateElementAppearance(selectedKey, 'default', undefined,
         'style:' + selectedKey + ':restore-gradient', true, true);
     });
     byId('resetElementButton').addEventListener('click', function () {
@@ -989,11 +1017,40 @@
         byId('colorControl').value = value;
         byId('colorHexControl').value = value;
         byId('opacityControl').value = 100;
-        mutateElementStyle(targetKey, 'color', value,
+        mutateElementAppearance(targetKey, 'solid', value,
           'style:' + targetKey + ':color', false, true);
         endChange();
       });
       swatches.appendChild(button);
+    });
+    var gradientLabels = {
+      'default': '默认蓝紫红',
+      'arcade-rainbow': '街机彩虹',
+      'sunset-pixel': '像素日落',
+      'cyber-mint': '赛博薄荷',
+      'gold-fire': '金色火焰',
+      'violet-pulse': '紫电脉冲'
+    };
+    var gradientPreviews = Object.assign({
+      'default': 'linear-gradient(90deg, #4285f4, #b388ff, #ea4335)'
+    }, window.SiteConfig.GRADIENTS);
+    Object.keys(gradientLabels).forEach(function (id) {
+      var button = el('button', 'gradient-preset');
+      button.type = 'button';
+      button.setAttribute('data-gradient-preset', id);
+      button.setAttribute('aria-pressed', 'false');
+      var preview = el('span', 'gradient-preset-preview');
+      preview.style.backgroundImage = gradientPreviews[id];
+      button.appendChild(preview);
+      button.appendChild(el('span', '', gradientLabels[id]));
+      button.addEventListener('click', function () {
+        if (selectedKey !== 'hero.title') return;
+        mutateElementAppearance(selectedKey, id === 'default' ? 'default' : 'gradient',
+          id === 'default' ? undefined : id,
+          'style:' + selectedKey + ':gradient', false, true);
+        endChange();
+      });
+      byId('heroGradientPresets').appendChild(button);
     });
   }
 

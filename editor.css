@@ -494,6 +494,35 @@ hr { border: 0; border-top: 1px solid var(--studio-border); margin: 18px 0; }
   border: 1px solid var(--studio-border);
   background: linear-gradient(90deg, #4285f4, #b388ff, #ea4335);
 }
+.hero-gradient-controls {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--studio-border);
+}
+.hero-gradient-controls[hidden] { display: none; }
+.gradient-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.gradient-preset {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 7px;
+  color: var(--studio-dim);
+  text-align: left;
+}
+.gradient-preset-preview {
+  display: block;
+  height: 20px;
+  border: 1px solid rgba(255,255,255,0.24);
+}
+.gradient-preset[aria-pressed="true"] {
+  border-color: var(--studio-yellow);
+  color: #fff;
+  box-shadow: inset 0 -2px var(--studio-yellow);
+}
 .swatch-heading {
   display: flex;
   align-items: baseline;

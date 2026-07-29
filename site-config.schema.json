@@ -205,6 +205,9 @@
         "color": {
           "type": "string",
           "pattern": "^(#[0-9A-Fa-f]{6}|rgba?\\(.+\\))$"
+        },
+        "gradient": {
+          "enum": ["arcade-rainbow", "sunset-pixel", "cyber-mint", "gold-fire", "violet-pulse"]
         }
       },
       "additionalProperties": true
